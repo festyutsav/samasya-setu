@@ -175,11 +175,17 @@
   filter: blur(70px);
   pointer-events: none;
   animation: ss-float-slow 14s ease-in-out infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .ss-float {
   animation: ss-float 7s ease-in-out infinite;
   animation-delay: var(--ss-delay, 0ms);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 /* ---------- Marquee ---------- */
@@ -188,6 +194,9 @@
   display: flex;
   width: max-content;
   animation: ss-marquee 32s linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .ss-marquee:hover .ss-marquee-track {

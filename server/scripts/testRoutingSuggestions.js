@@ -11,8 +11,9 @@
 // change to weights or profiles can be eyeballed quickly.
 
 const dotenv = require("dotenv");
+const path = require("path");
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
