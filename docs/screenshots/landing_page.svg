@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#073f3a"/>
+      <stop offset="100%" stop-color="#04221f"/>
+    </linearGradient>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b514a"/>
+      <stop offset="100%" stop-color="#062f2b"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="800" height="480" rx="16" fill="url(#bg)"/>
+
+  <!-- Top Bar -->
+  <rect x="0" y="0" width="800" height="60" fill="#042a26" rx="16"/>
+  <circle cx="36" cy="30" r="6" fill="#ef4444"/>
+  <circle cx="56" cy="30" r="6" fill="#f59e0b"/>
+  <circle cx="76" cy="30" r="6" fill="#10b981"/>
+  <rect x="240" y="16" width="320" height="28" rx="14" fill="#073f3a"/>
+  <text x="400" y="35" fill="#a3d9cf" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" text-anchor="middle">https://samasyasetu.gov.in</text>
+
+  <!-- Hero Section -->
+  <rect x="330" y="80" width="140" height="22" rx="11" fill="#c9933b" fill-opacity="0.2"/>
+  <text x="400" y="95" fill="#e9c985" font-family="-apple-system, sans-serif" font-size="10" font-weight="800" text-anchor="middle" letter-spacing="1">GOVERNMENT OF JHARKHAND</text>
+
+  <text x="400" y="132" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">SamasyaSetu | समस्या सेतु</text>
+  <text x="400" y="154" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="13" text-anchor="middle">Connecting Citizen Problems to University Research &amp; Industry CSR</text>
+
+  <!-- 4 Portal Cards -->
+  <!-- Card 1: Citizen -->
+  <rect x="40" y="180" width="165" height="250" rx="12" fill="url(#cardBg)" stroke="#1a6e64" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="75" cy="215" r="18" fill="#175e55"/>
+  <text x="75" y="222" font-size="18" text-anchor="middle">👥</text>
+  <text x="60" y="255" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="15" font-weight="800">Citizen Hub</text>
+  <text x="60" y="275" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">Submit grievances</text>
+  <text x="60" y="292" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• GPS Auto-detect</text>
+  <text x="60" y="309" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Live Email OTP</text>
+  <text x="60" y="326" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• 5-Stage Stepper</text>
+  <rect x="60" y="380" width="125" height="32" rx="8" fill="#c9933b"/>
+  <text x="122" y="401" fill="#04221f" font-family="-apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">Enter Portal →</text>
+
+  <!-- Card 2: Government -->
+  <rect x="225" y="180" width="165" height="250" rx="12" fill="url(#cardBg)" stroke="#1a6e64" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="260" cy="215" r="18" fill="#175e55"/>
+  <text x="260" y="222" font-size="18" text-anchor="middle">🏛️</text>
+  <text x="245" y="255" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="15" font-weight="800">Govt Admin</text>
+  <text x="245" y="275" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">Review &amp; Allocate</text>
+  <text x="245" y="292" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• 0-100 Priority AI</text>
+  <text x="245" y="309" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Spatial Clusters</text>
+  <text x="245" y="326" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• 24-District Stats</text>
+  <rect x="245" y="380" width="125" height="32" rx="8" fill="#c9933b"/>
+  <text x="307" y="401" fill="#04221f" font-family="-apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">Admin Login →</text>
+
+  <!-- Card 3: University -->
+  <rect x="410" y="180" width="165" height="250" rx="12" fill="url(#cardBg)" stroke="#1a6e64" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="445" cy="215" r="18" fill="#175e55"/>
+  <text x="445" y="222" font-size="18" text-anchor="middle">🎓</text>
+  <text x="430" y="255" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="15" font-weight="800">University</text>
+  <text x="430" y="275" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">R&amp;D Workspaces</text>
+  <text x="430" y="292" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Student Capstones</text>
+  <text x="430" y="309" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Solution Proposals</text>
+  <text x="430" y="326" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• NEP 2020 Credits</text>
+  <rect x="430" y="380" width="125" height="32" rx="8" fill="#c9933b"/>
+  <text x="492" y="401" fill="#04221f" font-family="-apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">Campus Login →</text>
+
+  <!-- Card 4: Industry -->
+  <rect x="595" y="180" width="165" height="250" rx="12" fill="url(#cardBg)" stroke="#1a6e64" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="630" cy="215" r="18" fill="#175e55"/>
+  <text x="630" y="222" font-size="18" text-anchor="middle">🏭</text>
+  <text x="615" y="255" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="15" font-weight="800">Industry CSR</text>
+  <text x="615" y="275" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">Co-Dev &amp; Grants</text>
+  <text x="615" y="292" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• 2% CSR Matching</text>
+  <text x="615" y="309" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Tech Transfer</text>
+  <text x="615" y="326" fill="#9dc3b8" font-family="-apple-system, sans-serif" font-size="11">• Milestone Escrow</text>
+  <rect x="615" y="380" width="125" height="32" rx="8" fill="#c9933b"/>
+  <text x="677" y="401" fill="#04221f" font-family="-apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">Partner Login →</text>
+</svg>

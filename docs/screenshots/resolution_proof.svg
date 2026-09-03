@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480">
+  <defs>
+    <linearGradient id="certBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f5f9f7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Certificate Border -->
+  <rect width="800" height="480" rx="16" fill="#0b514a"/>
+  <rect x="12" y="12" width="776" height="456" rx="12" fill="#c9933b"/>
+  <rect x="16" y="16" width="768" height="448" rx="10" fill="url(#certBg)"/>
+
+  <!-- Watermark -->
+  <circle cx="400" cy="240" r="140" fill="#0b514a" fill-opacity="0.04"/>
+
+  <!-- Certificate Header -->
+  <text x="400" y="52" fill="#0b514a" font-family="-apple-system, sans-serif" font-size="12" font-weight="900" text-anchor="middle" letter-spacing="2">GOVERNMENT OF JHARKHAND</text>
+  <text x="400" y="70" fill="#71827c" font-family="-apple-system, sans-serif" font-size="10" font-weight="700" text-anchor="middle">DEPARTMENT OF HIGHER, TECHNICAL EDUCATION &amp; SKILL DEVELOPMENT</text>
+  <text x="400" y="98" fill="#073f3a" font-family="Georgia, serif" font-size="22" font-weight="900" text-anchor="middle">OFFICIAL PROOF OF RESOLUTION CERTIFICATE</text>
+  <line x1="280" y1="108" x2="520" y2="108" stroke="#c9933b" stroke-width="2"/>
+
+  <!-- Certificate Body Text -->
+  <text x="400" y="130" fill="#315d56" font-family="-apple-system, sans-serif" font-size="12" text-anchor="middle">
+    This certifies that Problem <tspan font-weight="700">#PRB-8921</tspan> has been successfully verified, resolved, and deployed on-ground.
+  </text>
+
+  <!-- Side-by-Side Comparison Boxes -->
+  <!-- Box 1: BEFORE -->
+  <rect x="52" y="150" width="330" height="200" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+  <rect x="68" y="164" width="90" height="22" rx="4" fill="#ef4444"/>
+  <text x="113" y="179" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="11" font-weight="800" text-anchor="middle">BEFORE FIX</text>
+  
+  <rect x="68" y="196" width="298" height="96" rx="6" fill="#fee2e2"/>
+  <text x="217" y="235" font-size="32" text-anchor="middle">🚰</text>
+  <text x="217" y="265" fill="#991b1b" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Reddish, High-Fluoride Contaminated Water</text>
+
+  <text x="68" y="312" fill="#7f1d1d" font-family="-apple-system, sans-serif" font-size="11" font-weight="700">Reported By: Sunita Devi &bull; Leslieganj, Palamu</text>
+  <text x="68" y="328" fill="#991b1b" font-family="-apple-system, sans-serif" font-size="10">Lab Fluoride Test: 5.4 mg/L (WHO Danger Level &gt; 1.0)</text>
+
+  <!-- Box 2: AFTER -->
+  <rect x="418" y="150" width="330" height="200" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <rect x="434" y="164" width="90" height="22" rx="4" fill="#10b981"/>
+  <text x="479" y="179" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="11" font-weight="800" text-anchor="middle">AFTER FIX</text>
+  
+  <rect x="434" y="196" width="298" height="96" rx="6" fill="#dcfce7"/>
+  <text x="583" y="235" font-size="32" text-anchor="middle">💧</text>
+  <text x="583" y="265" fill="#166534" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Solar Activated Alumina Filtration Unit Active</text>
+
+  <text x="434" y="312" fill="#14532d" font-family="-apple-system, sans-serif" font-size="11" font-weight="700">Executed By: BIT Mesra R&amp;D Team &amp; Bokaro Steel CSR</text>
+  <text x="434" y="328" fill="#166534" font-family="-apple-system, sans-serif" font-size="10">Post-Fix Lab Test: &lt; 0.4 mg/L (Certified Safe Potable Water)</text>
+
+  <!-- Footer Signatures -->
+  <line x1="100" y1="410" x2="260" y2="410" stroke="#71827c" stroke-width="1"/>
+  <text x="180" y="426" fill="#315d56" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Dr. Rajesh Kumar</text>
+  <text x="180" y="440" fill="#71827c" font-family="-apple-system, sans-serif" font-size="10" text-anchor="middle">Lead Investigator, BIT Mesra</text>
+
+  <circle cx="400" cy="405" r="26" fill="#0b514a"/>
+  <circle cx="400" cy="405" r="23" fill="none" stroke="#c9933b" stroke-width="2"/>
+  <text x="400" y="411" fill="#ffffff" font-size="14" text-anchor="middle">🏛️</text>
+
+  <line x1="540" y1="410" x2="700" y2="410" stroke="#71827c" stroke-width="1"/>
+  <text x="620" y="426" fill="#315d56" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Nodal Officer (IAS)</text>
+  <text x="620" y="440" fill="#71827c" font-family="-apple-system, sans-serif" font-size="10" text-anchor="middle">Govt. of Jharkhand</text>
+</svg>

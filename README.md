@@ -32,30 +32,76 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 └─────────────────────────┘                                       └─────────────────────────┘
 ```
 
+## 🖥️ Platform Interface Tour & Core Portals
+
+> SamasyaSetu is built as a unified Digital Public Infrastructure spanning four dedicated portals engineered with sub-second responsiveness, GPU-accelerated micro-interactions, and real-time AI triage.
+
+<div align="center">
+
+### 🌐 01. Citizen Gateway & Multi-Portal Selector
+*The high-performance entry point connecting Citizens, Higher Education Institutions, Heavy Industries, and State Administrators.*
+
+<img src="docs/screenshots/landing_page.png" alt="SamasyaSetu Portal Selector" width="95%" />
+
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🚀 **Universal Access** | Instant 1-click routing into Citizen, University, Industry, or Government portal |
+| ⚡ **GPU-Accelerated Motion** | Butter-smooth 60fps marquee tracks & atmospheric floating orbs using `translate3d` |
+| 🛡️ **Public Discovery** | Explore open challenges, active student capstones, and district statistics without an account |
+
 ---
 
-## 📸 Visual Showcase
+### 🏛️ 02. Government Administrator AI Triage Dashboard
+*The nerve centre for state nodal officers: automatic category clustering, priority scoring (0–100), and institutional allocation.*
 
-| 🌐 Citizen Hub & Portal Selection | 🏛️ Government Admin & AI Triage |
-| :---: | :---: |
-| ![Landing Page](docs/screenshots/landing_page.png) <br> *Bilingual, high-performance gateway connecting all 4 stakeholders* | ![Admin Dashboard](docs/screenshots/admin_dashboard.png) <br> *Real-time urgency heatmaps, duplicate clustering & institutional allocation* |
+<img src="docs/screenshots/admin_dashboard.png" alt="Government Admin AI Triage Dashboard" width="95%" />
 
-| 🎓 University & Industry Workspace | 📜 "Before & After" Resolution Proof |
-| :---: | :---: |
-| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.png) <br> *Collaborative R&D portal with milestones, student teams & CSR funding* | ![Resolution Proof](docs/screenshots/resolution_proof.png) <br> *Official state-sealed verification certificate & 1-click executive PDF export* |
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🔥 **Urgency Priority Queue** | Deterministic score ($0\text{--}100$) dynamically calculated from severity, scale, and cluster size |
+| 🗺️ **24-District Telemetry** | Real-time breakdown of submitted, in-progress, and verified resolved challenges across Jharkhand |
+| 📄 **1-Click Executive Brief** | Native `@media print` engine compiles a minister-ready, high-contrast 1-page PDF dossier |
 
 ---
 
-## 🔑 Evaluator & Recruiter Quick Access (1-Click Test Accounts)
+### 🎓 03. University R&D & Multidisciplinary Capstone Workspace
+*Operationalizing NEP 2020: student engineering cohorts and research faculty building field solutions for academic credit.*
 
-Explore the full live platform across all four roles without creating new accounts:
+<img src="docs/screenshots/collaboration_workspace.png" alt="University Workspace" width="95%" />
 
-| Portal | Role in Ecosystem | Demo Email | Password | Real-World Persona & Capabilities |
-| :--- | :--- | :--- | :--- | :--- |
-| **🏛️ Government Portal** | State Administrator | `admin@example.com` | `admin123` | Reviews incoming citizen reports, validates AI triage, assigns HEIs, and monitors state-wide analytics across 24 districts. |
-| **🎓 University Portal** | Academic Lead / Faculty | `birla_institute_of_technology_mesra@edu.in` | `bitm@2025` | Reviews allocated challenges, forms student R&D teams, drafts solution proposals, and manages project milestones. |
-| **🏭 Industry Portal** | CSR & Innovation Partner | `bokaro_steel_plant@com` | `bsp@2025` | Discovers academic projects, pledges CSR funding, provides technical mentorship, and scales field deployments. |
-| **👥 Citizen Portal** | Grassroots Citizen | `sunita.devi@example.com` | `citizen123` | Reports local issues with GPS coordinates, receives live OTP emails, and tracks resolution progress on an interactive stepper. |
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 👥 **Multidisciplinary Teams** | Cross-departmental student roster (Chemical + Mechanical + Computer Science) with faculty advisors |
+| 📅 **Milestone Roadmap** | 4-stage tracking (Baseline Spectroscopy $\rightarrow$ CAD Prototyping $\rightarrow$ Pilot Testing $\rightarrow$ Handover) |
+| 💰 **CSR Co-Funding Tracker** | Real-time visibility into industry grant tranches, disbursed funds, and expenditure receipts |
+
+---
+
+### 📜 04. Problem Management & Verification Pipeline
+*Transparent governance: reviewing community grievances with photographic evidence and verifying resolution outcomes.*
+
+<img src="docs/screenshots/resolution_proof.png" alt="Problem Management and Verification" width="95%" />
+
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🔍 **Spatial Clustering Filter** | Automatically groups duplicate reports within 5 km to eliminate administrative backlog |
+| 🏷️ **AI Confidence Badges** | Visual urgency badges (`Elevated · 52`, `Standard · 34`) with explainable match metrics |
+| 📸 **Evidence Inspection** | High-resolution Cloudinary photo viewer with GPS metadata and timestamped audit logs |
+
+</div>
+
+---
+
+## 🔑 Evaluator & Recruiter Quick Demo Accounts
+
+Explore the full platform across all four roles without signing up:
+
+| Portal | Ecosystem Role | Test Credentials (Email & Pass) | Platform Capabilities |
+| :--- | :--- | :--- | :--- |
+| **🏛️ Government** | State Administrator | `admin@example.com`<br>`admin123` | Full AI triage, 24-district heatmaps, institutional routing |
+| **🎓 University** | Academic Lead / Faculty | `birla_institute_of_technology_mesra@edu.in`<br>`bitm@2025` | Solution proposals, multidisciplinary teams, R&D workspace |
+| **🏭 Industry** | CSR & Innovation Partner | `bokaro_steel_plant@com`<br>`bsp@2025` | 2% CSR fund pledging, co-development, milestone sign-offs |
+| **👥 Citizen** | Grassroots User | `sunita.devi@example.com`<br>`citizen123` | Challenge reporting, GPS auto-detect, 5-stage live stepper |
 
 ---
 
@@ -246,15 +292,6 @@ node scripts/testRoutingSuggestions.js
 
 ---
 
-## 💼 Resume & Interview Talking Points
-
-* **Engineered Multi-Role RBAC**: Architected an enterprise portal serving Citizens, Universities, Industry Partners, and Government Admins with JWT session security and role-specific UI routing.
-* **On-Device Machine Learning**: Embedded HuggingFace NLP models directly into Node.js to deliver 89% category classification accuracy and semantic routing without recurring SaaS costs.
-* **Geospatial civic intelligence**: Utilized MongoDB 2dsphere indexing and the Haversine formula to detect duplicate complaints within a 5 km radius, preventing administrative fatigue.
-* **Full-Stack Performance**: Optimized the client bundle to build in **139ms** and hardware-accelerated animations using `translate3d` and `will-change` for zero-lag rendering.
-* **Civic Technology Impact**: Designed to bridge NEP 2020 experiential learning goals with real-world district challenges across all 24 districts of Jharkhand.
-
----
 
 ## 📄 License & Attribution
 Developed for the **Smart India Hackathon (SIH)**.  
