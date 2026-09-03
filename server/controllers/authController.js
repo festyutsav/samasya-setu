@@ -331,7 +331,6 @@ const sendRegistrationOtp = async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({
@@ -339,11 +338,9 @@ const sendRegistrationOtp = async (req, res) => {
       });
     }
 
-    // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Upsert OTP record
     await Otp.findOneAndUpdate(
       { email: cleanEmail },
       {
@@ -355,7 +352,6 @@ const sendRegistrationOtp = async (req, res) => {
       { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
 
-    // Send email
     const emailResult = await sendOtpEmail({
       to: cleanEmail,
       name: name?.trim() || "Citizen",
@@ -392,31 +388,26 @@ const verifyOtpAndRegister = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanOtp = String(otp).trim();
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({ message: "An account with this email already exists. Please log in." });
     }
 
-    // Find OTP record
     const otpRecord = await Otp.findOne({ email: cleanEmail });
     if (!otpRecord) {
       return res.status(400).json({ message: "Verification code expired or not requested. Please request a new code." });
     }
 
-    // Check expiration
     if (new Date() > new Date(otpRecord.expiresAt)) {
       await Otp.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: "Verification code has expired. Please request a new code." });
     }
 
-    // Check attempts limit (max 5 tries)
     if (otpRecord.attempts >= 5) {
       await Otp.deleteOne({ _id: otpRecord._id });
       return res.status(429).json({ message: "Too many incorrect attempts. Please request a new verification code." });
     }
 
-    // Validate OTP
     if (otpRecord.otp !== cleanOtp) {
       otpRecord.attempts += 1;
       await otpRecord.save();
@@ -426,7 +417,6 @@ const verifyOtpAndRegister = async (req, res) => {
       });
     }
 
-    // Code is valid! Hash password and create citizen user
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name: name.trim(),
@@ -436,10 +426,8 @@ const verifyOtpAndRegister = async (req, res) => {
       isEmailVerified: true,
     });
 
-    // Delete used OTP
     await Otp.deleteOne({ _id: otpRecord._id });
 
-    // Generate JWT token
     const token = jwt.sign(
       {
         id: user._id,

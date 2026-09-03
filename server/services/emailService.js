@@ -1,9 +1,6 @@
 // ========================================
 // EMAIL NOTIFICATION SERVICE
 // ========================================
-// Dispatches verification OTPs and transactional updates.
-// Uses Nodemailer when SMTP credentials are provided in .env;
-// otherwise operates in Dev/Demo Mode logging to the console.
 
 let nodemailer;
 try {
@@ -17,7 +14,6 @@ const getTransporter = () => {
 
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SERVICE } = process.env;
 
-  // Custom SMTP
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     return nodemailer.createTransport({
       host: SMTP_HOST,
@@ -30,7 +26,6 @@ const getTransporter = () => {
     });
   }
 
-  // Pre-configured service (e.g. Gmail)
   if (SMTP_SERVICE && SMTP_USER && SMTP_PASS) {
     return nodemailer.createTransport({
       service: SMTP_SERVICE,
@@ -44,14 +39,6 @@ const getTransporter = () => {
   return null;
 };
 
-/**
- * Sends a 6-digit OTP verification email.
- * @param {Object} params
- * @param {string} params.to - Recipient email
- * @param {string} params.name - Recipient full name
- * @param {string} params.otp - 6-digit verification code
- * @returns {Promise<{ sent: boolean, simulated: boolean, message: string }>}
- */
 const sendOtpEmail = async ({ to, name, otp }) => {
   const transporter = getTransporter();
   const { SMTP_USER } = process.env;
@@ -73,10 +60,7 @@ const sendOtpEmail = async ({ to, name, otp }) => {
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f7f5; padding: 32px 12px;">
         <tr>
           <td align="center">
-            <!-- Main Container Table -->
             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #d8e2dc; box-shadow: 0 6px 24px rgba(0,0,0,0.06);">
-              
-              <!-- Top Banner Header (Jharkhand State Colors) -->
               <tr>
                 <td style="background-color: #0b514a; padding: 34px 28px; text-align: center; border-bottom: 4px solid #c9933b;">
                   <div style="font-size: 11px; font-weight: 800; color: #a3d9cf; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
@@ -90,40 +74,31 @@ const sendOtpEmail = async ({ to, name, otp }) => {
                   </div>
                 </td>
               </tr>
-
-              <!-- Email Body -->
               <tr>
                 <td style="padding: 36px 32px 28px 32px;">
                   <p style="font-size: 17px; font-weight: 700; color: #173d3a; margin: 0 0 14px 0;">
                     Namaste ${name || "Citizen"},
                   </p>
-                  
                   <p style="font-size: 15px; line-height: 1.6; color: #4a5c56; margin: 0 0 26px 0;">
                     Thank you for creating an account on <strong>SamasyaSetu</strong>, Jharkhand's digital platform connecting citizen challenges to university innovation and industry collaboration.
                     <br/><br/>
                     Please use the following 6-digit One-Time Password (OTP) to verify your email address:
                   </p>
-
-                  <!-- Highlighted OTP Card -->
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 26px 0;">
                     <tr>
                       <td align="center" style="background-color: #eaf5f1; border: 2px dashed #0b6b60; border-radius: 14px; padding: 26px 20px; text-align: center;">
                         <div style="font-size: 11px; font-weight: 800; color: #0b6b60; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
                           YOUR VERIFICATION CODE
                         </div>
-                        
                         <div style="font-size: 40px; font-weight: 900; letter-spacing: 8px; color: #073f3a; font-family: 'Courier New', Courier, monospace; line-height: 1; padding: 6px 0;">
                           ${otp}
                         </div>
-
                         <div style="font-size: 12px; color: #5c6f69; margin-top: 10px; font-weight: 500;">
                           ⏱️ Valid for <strong>10 minutes</strong> &bull; One-time use only
                         </div>
                       </td>
                     </tr>
                   </table>
-
-                  <!-- Security Advisory Box -->
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; margin: 0 0 24px 0;">
                     <tr>
                       <td style="padding: 14px 16px; font-size: 13px; line-height: 1.5; color: #92400e;">
@@ -131,25 +106,21 @@ const sendOtpEmail = async ({ to, name, otp }) => {
                       </td>
                     </tr>
                   </table>
-
                   <p style="font-size: 13px; line-height: 1.5; color: #71827c; margin: 0;">
                     If you did not request this registration, you can safely ignore this email.
                   </p>
                 </td>
               </tr>
-
-              <!-- Official Footer -->
               <tr>
                 <td style="background-color: #f7fbf9; border-top: 1px solid #eef2ee; padding: 22px 28px; text-align: center;">
                   <p style="font-size: 12px; font-weight: 600; color: #315d56; margin: 0 0 4px 0;">
                     Government of Jharkhand &bull; SamasyaSetu Innovation Portal
                   </p>
                   <p style="font-size: 11px; color: #8a9993; margin: 0; line-height: 1.5;">
-                    Smart India Hackathon (SIH) Initiative &bull; Ranchi, Jharkhand, India
+                    Department of Higher &amp; Technical Education &bull; Ranchi, Jharkhand
                   </p>
                 </td>
               </tr>
-
             </table>
           </td>
         </tr>
@@ -175,14 +146,6 @@ const sendOtpEmail = async ({ to, name, otp }) => {
       console.warn(`[EMAIL SERVICE] SMTP dispatch failed (${err.message}). Falling back to demo mode.`);
     }
   }
-
-  // Fallback dev / demo mode: output to console
-  console.log(`\n==================================================`);
-  console.log(`  [DEMO OTP SERVICE] Email: ${to}`);
-  console.log(`  [DEMO OTP SERVICE] Recipient: ${name}`);
-  console.log(`  [DEMO OTP SERVICE] VERIFICATION OTP: >>> ${otp} <<<`);
-  console.log(`  [DEMO OTP SERVICE] Valid for 10 minutes`);
-  console.log(`==================================================\n`);
 
   return {
     sent: false,
