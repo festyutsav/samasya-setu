@@ -38,13 +38,13 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 
 | 🌐 Citizen Hub & Portal Gateway | 🏛️ Government Admin AI Triage |
 | :--- | :--- |
-| ![Landing Gateway](docs/screenshots/landing_page.svg) | ![Admin Dashboard](docs/screenshots/admin_dashboard.svg) |
+| ![Landing Gateway](docs/screenshots/landing_page.png) | ![Admin Dashboard](docs/screenshots/admin_dashboard.png) |
 | *Bilingual, high-performance gateway connecting all 4 stakeholders* | *Real-time urgency heatmaps, duplicate triage & institutional routing* |
 
-| 🎓 University & Industry Workspace | 📜 "Before & After" Resolution Proof |
+| 🎓 University & Industry Workspace | 📜 Problem Details & Verification |
 | :--- | :--- |
-| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.svg) | ![Resolution Proof](docs/screenshots/resolution_proof.svg) |
-| *Collaborative R&D workspace with milestones, teams & CSR budgets* | *Official state-sealed verification certificate & 1-click PDF export* |
+| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.png) | ![Problem Details](docs/screenshots/resolution_proof.png) |
+| *Collaborative R&D workspace with milestones, teams & CSR budgets* | *Active problem review queue, AI urgency tags & evidence inspection* |
 
 ---
 
