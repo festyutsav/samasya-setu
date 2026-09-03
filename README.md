@@ -32,25 +32,63 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 └─────────────────────────┘                                       └─────────────────────────┘
 ```
 
+## 🖥️ Platform Interface Tour & Core Portals
+
+> SamasyaSetu is built as a unified Digital Public Infrastructure spanning four dedicated portals engineered with sub-second responsiveness, GPU-accelerated micro-interactions, and real-time AI triage.
+
+<div align="center">
+
+### 🌐 01. Citizen Gateway & Multi-Portal Selector
+*The high-performance entry point connecting Citizens, Higher Education Institutions, Heavy Industries, and State Administrators.*
+
+<img src="docs/screenshots/landing_page.png" alt="SamasyaSetu Portal Selector" width="95%" />
+
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🚀 **Universal Access** | Instant 1-click routing into Citizen, University, Industry, or Government portal |
+| ⚡ **GPU-Accelerated Motion** | Butter-smooth 60fps marquee tracks & atmospheric floating orbs using `translate3d` |
+| 🛡️ **Public Discovery** | Explore open challenges, active student capstones, and district statistics without an account |
+
 ---
 
-## 📸 Visual Interface Showcase
+### 🏛️ 02. Government Administrator AI Triage Dashboard
+*The nerve centre for state nodal officers: automatic category clustering, priority scoring (0–100), and institutional allocation.*
 
-<p align="center">
-  <img src="docs/screenshots/landing_page.png" width="49%" alt="Landing Page Gateway" />
-  <img src="docs/screenshots/admin_dashboard.png" width="49%" alt="Admin AI Triage Dashboard" />
-</p>
-<p align="center">
-  <em>(Left) Bilingual portal selection gateway &bull; (Right) State admin AI urgency scoring &amp; 24-district triage</em>
-</p>
+<img src="docs/screenshots/admin_dashboard.png" alt="Government Admin AI Triage Dashboard" width="95%" />
 
-<p align="center">
-  <img src="docs/screenshots/collaboration_workspace.png" width="49%" alt="University R&D Workspace" />
-  <img src="docs/screenshots/resolution_proof.png" width="49%" alt="Problem Management & Verification" />
-</p>
-<p align="center">
-  <em>(Left) University multidisciplinary R&amp;D workspace &bull; (Right) Active problem review queue &amp; evidence inspection</em>
-</p>
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🔥 **Urgency Priority Queue** | Deterministic score ($0\text{--}100$) dynamically calculated from severity, scale, and cluster size |
+| 🗺️ **24-District Telemetry** | Real-time breakdown of submitted, in-progress, and verified resolved challenges across Jharkhand |
+| 📄 **1-Click Executive Brief** | Native `@media print` engine compiles a minister-ready, high-contrast 1-page PDF dossier |
+
+---
+
+### 🎓 03. University R&D & Multidisciplinary Capstone Workspace
+*Operationalizing NEP 2020: student engineering cohorts and research faculty building field solutions for academic credit.*
+
+<img src="docs/screenshots/collaboration_workspace.png" alt="University Workspace" width="95%" />
+
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 👥 **Multidisciplinary Teams** | Cross-departmental student roster (Chemical + Mechanical + Computer Science) with faculty advisors |
+| 📅 **Milestone Roadmap** | 4-stage tracking (Baseline Spectroscopy $\rightarrow$ CAD Prototyping $\rightarrow$ Pilot Testing $\rightarrow$ Handover) |
+| 💰 **CSR Co-Funding Tracker** | Real-time visibility into industry grant tranches, disbursed funds, and expenditure receipts |
+
+---
+
+### 📜 04. Problem Management & Verification Pipeline
+*Transparent governance: reviewing community grievances with photographic evidence and verifying resolution outcomes.*
+
+<img src="docs/screenshots/resolution_proof.png" alt="Problem Management and Verification" width="95%" />
+
+| Core Experience | Technical Architecture |
+| :--- | :--- |
+| 🔍 **Spatial Clustering Filter** | Automatically groups duplicate reports within 5 km to eliminate administrative backlog |
+| 🏷️ **AI Confidence Badges** | Visual urgency badges (`Elevated · 52`, `Standard · 34`) with explainable match metrics |
+| 📸 **Evidence Inspection** | High-resolution Cloudinary photo viewer with GPS metadata and timestamped audit logs |
+
+</div>
 
 ---
 
