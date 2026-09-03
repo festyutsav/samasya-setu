@@ -34,28 +34,30 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 
 ---
 
-## 📸 Visual Showcase
+## 📸 Visual Interface Showcase
 
-| 🌐 Citizen Hub & Portal Selection | 🏛️ Government Admin & AI Triage |
-| :---: | :---: |
-| ![Landing Page](docs/screenshots/landing_page.png) <br> *Bilingual, high-performance gateway connecting all 4 stakeholders* | ![Admin Dashboard](docs/screenshots/admin_dashboard.png) <br> *Real-time urgency heatmaps, duplicate clustering & institutional allocation* |
+| 🌐 Citizen Hub & Portal Gateway | 🏛️ Government Admin AI Triage |
+| :--- | :--- |
+| ![Landing Gateway](docs/screenshots/landing_page.svg) | ![Admin Dashboard](docs/screenshots/admin_dashboard.svg) |
+| *Bilingual, high-performance gateway connecting all 4 stakeholders* | *Real-time urgency heatmaps, duplicate triage & institutional routing* |
 
 | 🎓 University & Industry Workspace | 📜 "Before & After" Resolution Proof |
-| :---: | :---: |
-| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.png) <br> *Collaborative R&D portal with milestones, student teams & CSR funding* | ![Resolution Proof](docs/screenshots/resolution_proof.png) <br> *Official state-sealed verification certificate & 1-click executive PDF export* |
+| :--- | :--- |
+| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.svg) | ![Resolution Proof](docs/screenshots/resolution_proof.svg) |
+| *Collaborative R&D workspace with milestones, teams & CSR budgets* | *Official state-sealed verification certificate & 1-click PDF export* |
 
 ---
 
-## 🔑 Evaluator & Recruiter Quick Access (1-Click Test Accounts)
+## 🔑 Evaluator & Recruiter Quick Demo Accounts
 
-Explore the full live platform across all four roles without creating new accounts:
+Explore the full platform across all four roles without signing up:
 
-| Portal | Role in Ecosystem | Demo Email | Password | Real-World Persona & Capabilities |
+| Portal | Role | Demo Email | Password | Capabilities |
 | :--- | :--- | :--- | :--- | :--- |
-| **🏛️ Government Portal** | State Administrator | `admin@example.com` | `admin123` | Reviews incoming citizen reports, validates AI triage, assigns HEIs, and monitors state-wide analytics across 24 districts. |
-| **🎓 University Portal** | Academic Lead / Faculty | `birla_institute_of_technology_mesra@edu.in` | `bitm@2025` | Reviews allocated challenges, forms student R&D teams, drafts solution proposals, and manages project milestones. |
-| **🏭 Industry Portal** | CSR & Innovation Partner | `bokaro_steel_plant@com` | `bsp@2025` | Discovers academic projects, pledges CSR funding, provides technical mentorship, and scales field deployments. |
-| **👥 Citizen Portal** | Grassroots Citizen | `sunita.devi@example.com` | `citizen123` | Reports local issues with GPS coordinates, receives live OTP emails, and tracks resolution progress on an interactive stepper. |
+| **🏛️ Government** | State Admin | `admin@example.com` | `admin123` | Full AI triage, 24-district heatmaps, institutional routing |
+| **🎓 University** | Academic Lead | `birla_institute_of_technology_mesra@edu.in` | `bitm@2025` | Solution proposals, multidisciplinary teams, R&D workspace |
+| **🏭 Industry** | CSR Partner | `bokaro_steel_plant@com` | `bsp@2025` | 2% CSR fund pledging, co-development, milestone sign-offs |
+| **👥 Citizen** | Grassroots User | `sunita.devi@example.com` | `citizen123` | Challenge reporting, GPS auto-detect, 5-stage live stepper |
 
 ---
 
