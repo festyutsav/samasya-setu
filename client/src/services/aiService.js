@@ -1,7 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL =
-  "http://127.0.0.1:5001/api/ai/predict-category";
+const API_URL = `${API_BASE_URL}/api/ai/predict-category`;
 
 export const predictCategory = async (
   title,

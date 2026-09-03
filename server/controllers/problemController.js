@@ -163,6 +163,20 @@ const buildProblemResponse = async (problemId) => {
     }))
     .filter((item) => item.partner);
 
+  // Link active Project (university team & industry collaborators) if constituted
+  try {
+    const Project = require("../models/Project");
+    const project = await Project.findOne({ problem: problemId })
+      .populate("partner", "name type location email")
+      .populate("collaborators.partner", "name type location email");
+
+    if (project) {
+      problemResponse.linkedProject = project;
+    }
+  } catch (projErr) {
+    console.warn("Failed to populate linked project:", projErr.message);
+  }
+
   return problemResponse;
 };
 
@@ -176,8 +190,15 @@ const createProblem = async (req, res) => {
     // GET DATA FROM REQUEST
     // ========================================
 
-    const { title, description, category, location, affectedPeople, severity } =
-      req.body;
+    const {
+      title,
+      description,
+      category,
+      location,
+      affectedPeople,
+      severity,
+      submitterType,
+    } = req.body;
 
     // ========================================
     // PARSE LOCATION DETAILS
@@ -238,13 +259,15 @@ const createProblem = async (req, res) => {
     // ========================================
     // UPLOAD IMAGES TO CLOUDINARY
     // ========================================
+    // With the fields-based media uploader req.files is an
+    // object keyed by field name (images / videos / documents).
 
     const uploadedImages = [];
 
-    if (req.files && req.files.length > 0) {
-      console.log(`Uploading ${req.files.length} image(s) to Cloudinary...`);
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      console.log(`Uploading ${req.files.images.length} image(s) to Cloudinary...`);
 
-      for (const file of req.files) {
+      for (const file of req.files.images) {
         console.log("Uploading:", file.originalname);
 
         const result = await new Promise((resolve, reject) => {
@@ -273,6 +296,93 @@ const createProblem = async (req, res) => {
           url: result.secure_url,
 
           publicId: result.public_id,
+        });
+      }
+    }
+
+    // ========================================
+    // UPLOAD VIDEO TO CLOUDINARY
+    // ========================================
+
+    const uploadedVideos = [];
+
+    if (req.files && req.files.videos && req.files.videos.length > 0) {
+      const videoFile = req.files.videos[0];
+
+      console.log("Uploading video:", videoFile.originalname);
+
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "samasyasetu/problems/videos",
+
+            resource_type: "video",
+          },
+
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          },
+        );
+
+        stream.end(videoFile.buffer);
+      });
+
+      console.log("Cloudinary video upload successful:", result.secure_url);
+
+      uploadedVideos.push({
+        url: result.secure_url,
+
+        publicId: result.public_id,
+      });
+    }
+
+    // ========================================
+    // UPLOAD DOCUMENTS TO CLOUDINARY
+    // ========================================
+    // PDF / Word / text files are stored as "raw" resources.
+
+    const uploadedDocuments = [];
+
+    if (req.files && req.files.documents && req.files.documents.length > 0) {
+      console.log(`Uploading ${req.files.documents.length} document(s) to Cloudinary...`);
+
+      for (const file of req.files.documents) {
+        console.log("Uploading:", file.originalname);
+
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "samasyasetu/problems/documents",
+
+              resource_type: "raw",
+            },
+
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            },
+          );
+
+          stream.end(file.buffer);
+        });
+
+        console.log("Cloudinary document upload successful:", result.secure_url);
+
+        uploadedDocuments.push({
+          url: result.secure_url,
+
+          publicId: result.public_id,
+
+          originalName: file.originalname,
+
+          fileType: file.mimetype,
         });
       }
     }
@@ -424,6 +534,18 @@ const createProblem = async (req, res) => {
       images: uploadedImages,
 
       // ========================================
+      // VIDEO EVIDENCE
+      // ========================================
+
+      videos: uploadedVideos,
+
+      // ========================================
+      // SUPPORTING DOCUMENTS
+      // ========================================
+
+      documents: uploadedDocuments,
+
+      // ========================================
       // IMPACT
       // ========================================
 
@@ -458,10 +580,12 @@ const createProblem = async (req, res) => {
       embedding,
 
       // ========================================
-      // USER
+      // USER & SUBMITTER TYPE
       // ========================================
 
       submittedBy: req.user._id,
+
+      submitterType: submitterType || "individual",
     });
 
     // ========================================
@@ -723,6 +847,52 @@ const deleteMyProblem = async (req, res) => {
             console.error(
               "Failed to delete Cloudinary image:",
               imageError.message,
+            );
+          }
+        }
+      }
+    }
+
+    // ========================================
+    // DELETE CLOUDINARY VIDEOS
+    // ========================================
+
+    if (problem.videos && problem.videos.length > 0) {
+      for (const video of problem.videos) {
+        if (video.publicId) {
+          try {
+            await cloudinary.uploader.destroy(video.publicId, {
+              resource_type: "video",
+            });
+
+            console.log("Deleted Cloudinary video:", video.publicId);
+          } catch (videoError) {
+            console.error(
+              "Failed to delete Cloudinary video:",
+              videoError.message,
+            );
+          }
+        }
+      }
+    }
+
+    // ========================================
+    // DELETE CLOUDINARY DOCUMENTS
+    // ========================================
+
+    if (problem.documents && problem.documents.length > 0) {
+      for (const document of problem.documents) {
+        if (document.publicId) {
+          try {
+            await cloudinary.uploader.destroy(document.publicId, {
+              resource_type: "raw",
+            });
+
+            console.log("Deleted Cloudinary document:", document.publicId);
+          } catch (documentError) {
+            console.error(
+              "Failed to delete Cloudinary document:",
+              documentError.message,
             );
           }
         }

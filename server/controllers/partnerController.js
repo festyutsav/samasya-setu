@@ -1,5 +1,7 @@
 const Partner = require("../models/Partner");
 const User = require("../models/User");
+const Project = require("../models/Project");
+const Problem = require("../models/Problem");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const path = require("path");
@@ -418,13 +420,91 @@ const deletePartner = async (req, res) => {
 
 const getPartnerDirectory = async (req, res) => {
   try {
+    const { type, expertise, q, excludeSelf } = req.query;
 
-    const partners = await Partner.find()
+    const filter = {};
+
+    if (type && ["university", "industry", "ngo", "government"].includes(type)) {
+      filter.type = type;
+    }
+
+    if (expertise) {
+      filter.expertise = String(expertise).trim();
+    }
+
+    if (q && String(q).trim()) {
+      const pattern = new RegExp(
+        String(q).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
+
+      filter.$or = [{ name: pattern }, { description: pattern }];
+    }
+
+    if (excludeSelf === "true" && req.user.partner) {
+      filter._id = { $ne: req.user.partner };
+    }
+
+    const partners = await Partner.find(filter)
       .select("name type description location expertise capabilities")
       .sort({ name: 1 });
 
+    // ========================================
+    // PUBLIC ACTIVITY COUNTS + UNIVERSITY PROJECTS
+    // ========================================
+    // Every partner sees how much live work each organization
+    // has; universities additionally expose their open projects
+    // so other partners can request to collaborate.
+
+    const partnerIds = partners.map((partner) => partner._id);
+
+    const projects = partnerIds.length
+      ? await Project.find({
+          partner: { $in: partnerIds },
+          status: { $in: ["planning", "active"] },
+        })
+          .select("partner title status problem")
+          .populate("problem", "title")
+      : [];
+
+    const problemCounts = partnerIds.length
+      ? await Problem.aggregate([
+          {
+            $match: {
+              assignedPartner: { $in: partnerIds },
+              status: { $ne: "solved" },
+            },
+          },
+          { $group: { _id: "$assignedPartner", count: { $sum: 1 } } },
+        ])
+      : [];
+
+    const countMap = new Map(
+      problemCounts.map((entry) => [String(entry._id), entry.count]),
+    );
+
+    const partnersWithActivity = partners.map((partner) => {
+      const partnerProjects = projects
+        .filter(
+          (project) => String(project.partner?._id || project.partner) === String(partner._id),
+        )
+        .map((project) => ({
+          _id: project._id,
+          title: project.title,
+          status: project.status,
+          problemTitle: project.problem?.title || "",
+        }));
+
+      return {
+        ...partner.toObject(),
+        activeProjects: partnerProjects.length,
+        assignedProblems: countMap.get(String(partner._id)) || 0,
+        projects: partnerProjects,
+      };
+    });
+
     return res.status(200).json({
-      partners,
+      partners: partnersWithActivity,
     });
 
   } catch (error) {

@@ -18,6 +18,13 @@ router.get(
   adminController.getDashboardStats
 );
 
+router.get(
+  "/analytics",
+  protect,
+  authorizeRoles("admin"),
+  adminController.getAnalytics
+);
+
 router.put(
   "/problems/:problemId/status",
   protect,
@@ -30,6 +37,13 @@ router.get(
   protect,
   authorizeRoles("admin"),
   adminController.downloadPartnerCredentials
+);
+
+router.delete(
+  "/problems/:problemId",
+  protect,
+  authorizeRoles("admin"),
+  adminController.deleteProblemByAdmin
 );
 
 module.exports = router;

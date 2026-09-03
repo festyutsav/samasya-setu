@@ -31,13 +31,6 @@ const createProject = async (req, res) => {
       });
     }
 
-    if (partner.type !== "university") {
-      return res.status(403).json({
-        message:
-          "Only university partners can create projects. Industries can mentor, fund or field-test instead.",
-      });
-    }
-
     const { title, description, problem: problemId, team, milestones } =
       req.body;
 
@@ -86,6 +79,8 @@ const createProject = async (req, res) => {
             title: String(milestone.title).trim(),
 
             completed: Boolean(milestone.completed),
+
+            dueDate: milestone.dueDate ? new Date(milestone.dueDate) : null,
           }))
       : [];
 
@@ -253,12 +248,13 @@ const inviteCollaborator = async (req, res) => {
     }
 
     // One live engagement per partner per project — an already
-    // invited or accepted partner cannot be invited again.
+    // invited, requested or accepted partner cannot be invited
+    // again.
 
     const liveCollaborator = project.collaborators.find(
       (collaborator) =>
         collaborator.partner.equals(collaboratorPartner._id) &&
-        ["invited", "accepted"].includes(collaborator.status),
+        ["invited", "requested", "accepted"].includes(collaborator.status),
     );
 
     if (liveCollaborator) {
@@ -266,7 +262,9 @@ const inviteCollaborator = async (req, res) => {
         message:
           liveCollaborator.status === "invited"
             ? "This partner already has a pending invitation."
-            : "This partner is already collaborating on the project.",
+            : liveCollaborator.status === "requested"
+              ? "This partner already has a pending collaboration request."
+              : "This partner is already collaborating on the project.",
       });
     }
 
@@ -334,11 +332,15 @@ const inviteCollaborator = async (req, res) => {
 };
 
 // ========================================
-// RESPOND TO AN INVITATION (COLLABORATOR)
+// RESPOND TO AN INVITATION OR REQUEST
 // ========================================
-// The invited partner accepts or declines. Accepting makes
-// them an active collaborator; both outcomes notify the lead
-// university and admins.
+// Two flows share this endpoint:
+//   - a partner invited by the lead responds for itself
+//     (status "invited"), or
+//   - the lead university responds to a partner's request to
+//     join (status "requested").
+// Accepting makes the partner an active collaborator; both
+// outcomes notify the other side and admins.
 
 const respondToInvite = async (req, res) => {
   try {
@@ -350,29 +352,46 @@ const respondToInvite = async (req, res) => {
       });
     }
 
-    const project = await Project.findOne({
-      _id: req.params.id,
-
-      "collaborators.partner": req.user.partner,
-    });
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({
-        message: "Project not found or you have not been invited to it.",
+        message: "Project not found.",
       });
     }
 
-    const collaborator = project.collaborators.find((entry) =>
+    let collaborator = project.collaborators.find((entry) =>
       entry.partner.equals(req.user.partner),
     );
 
-    if (collaborator.status !== "invited") {
-      return res.status(400).json({
-        message:
-          collaborator.status === "accepted"
-            ? "You have already accepted this invitation."
-            : "This invitation is no longer pending.",
-      });
+    let actingAs = "collaborator";
+
+    if (!(collaborator && collaborator.status === "invited")) {
+      // Not an invited partner responding — must be the lead
+      // university answering a collaboration request.
+
+      if (!project.partner.equals(req.user.partner)) {
+        return res.status(403).json({
+          message:
+            "Only the lead university can respond to this collaboration request.",
+        });
+      }
+
+      collaborator = project.collaborators.id(req.params.collaboratorId);
+
+      if (!collaborator) {
+        return res.status(404).json({
+          message: "Collaboration record not found.",
+        });
+      }
+
+      if (collaborator.status !== "requested") {
+        return res.status(400).json({
+          message: "This collaboration request is no longer pending.",
+        });
+      }
+
+      actingAs = "lead";
     }
 
     collaborator.status = response;
@@ -386,41 +405,76 @@ const respondToInvite = async (req, res) => {
       .populate("partner", "name type location")
       .populate("collaborators.partner", "name type location expertise");
 
-    const collaboratorPartner = populated.collaborators.find((entry) =>
-      entry.partner._id.equals(req.user.partner),
-    ).partner;
+    const matchedCollab = populated.collaborators.find((entry) =>
+      entry.partner &&
+      (entry.partner._id
+        ? entry.partner._id.equals(collaborator.partner)
+        : String(entry.partner) === String(collaborator.partner))
+    );
+
+    const collaboratorPartner = matchedCollab?.partner || { name: "Partner" };
+
+    const responseLabel = response === "accepted" ? "accepted" : "declined";
 
     // ========================================
-    // NOTIFY LEAD UNIVERSITY + ADMINS
+    // NOTIFY THE OTHER SIDE + ADMINS
     // ========================================
 
-    const responseLabel =
-      response === "accepted" ? "accepted" : "declined";
+    if (actingAs === "lead") {
+      // Lead answered a partner's request — notify requester.
 
-    await notifyPartnerUser({
-      partnerId: project.partner,
+      await notifyPartnerUser({
+        partnerId: collaborator.partner,
 
-      type: "collaboration_responded",
+        type: "collaboration_request_responded",
 
-      title: `Invitation ${responseLabel}`,
+        title: `Collaboration request ${responseLabel}`,
 
-      message: `${collaboratorPartner.name} ${responseLabel} your invitation to collaborate on "${populated.title}" as a ${collaborator.role.replace("-", " ")}.`,
+        message: `${populated.partner.name} ${responseLabel} your request to join "${populated.title}" as a ${collaborator.role.replace("-", " ")}.`,
 
-      problemId: populated.problem._id,
-    });
+        problemId: populated.problem._id,
+      });
 
-    await notifyAdmins({
-      type: "collaboration_responded",
+      await notifyAdmins({
+        type: "collaboration_request_responded",
 
-      title: `Collaboration invitation ${responseLabel}`,
+        title: `Collaboration request ${responseLabel}`,
 
-      message: `${collaboratorPartner.name} ${responseLabel} the invitation from ${populated.partner.name} to collaborate on "${populated.title}".`,
+        message: `${populated.partner.name} ${responseLabel} ${collaboratorPartner.name}'s request to join "${populated.title}".`,
 
-      problemId: populated.problem._id,
-    });
+        problemId: populated.problem._id,
+      });
+    } else {
+      // Partner answered the lead's invitation — notify lead.
+
+      await notifyPartnerUser({
+        partnerId: project.partner,
+
+        type: "collaboration_responded",
+
+        title: `Invitation ${responseLabel}`,
+
+        message: `${collaboratorPartner.name} ${responseLabel} your invitation to collaborate on "${populated.title}" as a ${collaborator.role.replace("-", " ")}.`,
+
+        problemId: populated.problem._id,
+      });
+
+      await notifyAdmins({
+        type: "collaboration_responded",
+
+        title: `Collaboration invitation ${responseLabel}`,
+
+        message: `${collaboratorPartner.name} ${responseLabel} the invitation from ${populated.partner.name} to collaborate on "${populated.title}".`,
+
+        problemId: populated.problem._id,
+      });
+    }
 
     return res.status(200).json({
-      message: `Invitation ${responseLabel}.`,
+      message:
+        actingAs === "lead"
+          ? `Request ${responseLabel}.`
+          : `Invitation ${responseLabel}.`,
 
       project: populated,
     });
@@ -463,13 +517,15 @@ const withdrawCollaborator = async (req, res) => {
       });
     }
 
-    if (!["invited", "accepted"].includes(collaborator.status)) {
+    if (!["invited", "requested", "accepted"].includes(collaborator.status)) {
       return res.status(400).json({
         message: "Only pending or active collaborations can be withdrawn.",
       });
     }
 
     const wasAccepted = collaborator.status === "accepted";
+
+    const wasRequested = collaborator.status === "requested";
 
     const collaboratorPartnerId = collaborator.partner;
 
@@ -490,7 +546,9 @@ const withdrawCollaborator = async (req, res) => {
 
     const actionLabel = wasAccepted
       ? "removed from"
-      : "withdrew the invitation for";
+      : wasRequested
+        ? "declined the collaboration request from"
+        : "withdrew the invitation for";
 
     await notifyPartnerUser({
       partnerId: collaboratorPartnerId,
@@ -582,9 +640,14 @@ const addContribution = async (req, res) => {
       .populate("partner", "name type location")
       .populate("collaborators.partner", "name type location expertise");
 
-    const collaboratorPartner = populated.collaborators.find((entry) =>
-      entry.partner._id.equals(req.user.partner),
-    ).partner;
+    const matchedCollab = populated.collaborators.find((entry) =>
+      entry.partner &&
+      (entry.partner._id
+        ? entry.partner._id.equals(req.user.partner)
+        : String(entry.partner) === String(req.user.partner))
+    );
+
+    const collaboratorPartner = matchedCollab?.partner || { name: "Collaborator" };
 
     // ========================================
     // NOTIFY LEAD UNIVERSITY + ADMINS
@@ -791,13 +854,378 @@ const toggleMilestone = async (req, res) => {
   }
 };
 
+// ========================================
+// SET A MILESTONE DUE DATE
+// ========================================
+// Lead university only. Lets the lead plan the project
+// timeline; overdue (past due, not completed) milestones are
+// highlighted in the workspace and countable on the
+// government dashboard.
+
+const setMilestoneDueDate = async (req, res) => {
+  try {
+    const { milestoneIndex, dueDate } = req.body;
+
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or you do not have permission to update it.",
+      });
+    }
+
+    const index = Number(milestoneIndex);
+
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= project.milestones.length
+    ) {
+      return res.status(400).json({
+        message: "Invalid milestone.",
+      });
+    }
+
+    if (dueDate !== null && dueDate !== "" && dueDate !== undefined) {
+      const parsed = new Date(dueDate);
+
+      if (Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({
+          message: "Invalid due date.",
+        });
+      }
+
+      project.milestones[index].dueDate = parsed;
+    } else {
+      project.milestones[index].dueDate = null;
+    }
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location submittedBy")
+      .populate("partner", "name type location");
+
+    return res.status(200).json({
+      message: "Milestone due date updated successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Set milestone due date error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating milestone due date.",
+    });
+  }
+};
+
+// ========================================
+// UPDATE INNOVATION OUTCOMES
+// ========================================
+// Only the lead university can record measurable project
+// outcomes: patents, startups, publications, deployments.
+// These feed the government analytics dashboard's
+// "Innovation Outcomes" panel.
+
+const updateProjectOutcomes = async (req, res) => {
+  try {
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const { patents, startups, publications, deployments } = req.body;
+
+    // ========================================
+    // VALIDATE NUMBERS
+    // ========================================
+
+    const fields = { patents, startups, publications, deployments };
+
+    for (const [name, value] of Object.entries(fields)) {
+      if (
+        value !== undefined &&
+        (Number.isNaN(Number(value)) || Number(value) < 0)
+      ) {
+        return res.status(400).json({
+          message: `Invalid value for ${name}.`,
+        });
+      }
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message:
+          "Project not found or you do not have permission to update it.",
+      });
+    }
+
+    project.outcomes = {
+      ...project.outcomes.toObject(),
+
+      ...Object.fromEntries(
+        Object.entries(fields)
+          .filter(([, value]) => value !== undefined)
+          .map(([name, value]) => [name, Math.floor(Number(value))]),
+      ),
+    };
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location submittedBy")
+      .populate("partner", "name type location");
+
+    return res.status(200).json({
+      message: "Innovation outcomes updated successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Update project outcomes error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating innovation outcomes.",
+    });
+  }
+};
+
+// ========================================
+// REQUEST TO COLLABORATE (PARTNER-INITIATED)
+// ========================================
+// The reverse of inviteCollaborator: a partner browsing the
+// directory asks to join a university-led project in a given
+// role. The lead university then accepts or declines via the
+// shared respond endpoint. Guards:
+//   - requester must not be the lead
+//   - no live invitation / request / collaboration already
+//   - project must still be open (planning or active)
+
+const requestCollaboration = async (req, res) => {
+  try {
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const { role, message } = req.body;
+
+    const allowedRoles = ["mentor", "funder", "co-developer", "adopter"];
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message:
+          "Please choose a valid role (mentor, funder, co-developer or adopter).",
+      });
+    }
+
+    const project = await Project.findById(req.params.id).populate(
+      "partner",
+      "name type",
+    );
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found.",
+      });
+    }
+
+    if (project.partner._id.equals(req.user.partner)) {
+      return res.status(400).json({
+        message: "Your organization already leads this project.",
+      });
+    }
+
+    if (!["planning", "active"].includes(project.status)) {
+      return res.status(400).json({
+        message: "This project is completed and no longer open for requests.",
+      });
+    }
+
+    const liveCollaborator = project.collaborators.find(
+      (collaborator) =>
+        collaborator.partner.equals(req.user.partner) &&
+        ["invited", "requested", "accepted"].includes(collaborator.status),
+    );
+
+    if (liveCollaborator) {
+      return res.status(409).json({
+        message:
+          liveCollaborator.status === "requested"
+            ? "You already have a pending request for this project."
+            : liveCollaborator.status === "invited"
+              ? "The university has already invited you — respond to the invitation instead."
+              : "Your organization is already collaborating on this project.",
+      });
+    }
+
+    const collaborator = {
+      partner: req.user.partner,
+
+      role,
+
+      status: "requested",
+
+      message: String(message || "").trim().slice(0, 500),
+
+      contributions: [],
+
+      invitedBy: req.user._id,
+
+      respondedAt: null,
+    };
+
+    project.collaborators.push(collaborator);
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    const requester = await Partner.findById(req.user.partner);
+
+    // ========================================
+    // NOTIFY LEAD UNIVERSITY + ADMINS
+    // ========================================
+
+    await notifyPartnerUser({
+      partnerId: project.partner._id || project.partner,
+
+      type: "collaboration_requested",
+
+      title: "Collaboration request",
+
+      message: `${requester.name} asked to join "${populated.title}" as a ${role.replace("-", " ")}.`,
+
+      problemId: populated.problem._id,
+    });
+
+    await notifyAdmins({
+      type: "collaboration_requested",
+
+      title: "Partner collaboration request",
+
+      message: `${requester.name} requested to join "${populated.title}" (lead: ${populated.partner.name}) as a ${role.replace("-", " ")}.`,
+
+      problemId: populated.problem._id,
+    });
+
+    return res.status(201).json({
+      message: `Request sent to ${populated.partner.name}.`,
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Request collaboration error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while sending collaboration request.",
+    });
+  }
+};
+
+// ========================================
+// GET A SINGLE PROJECT (SHARED WORKSPACE)
+// ========================================
+// Accessible to the lead university and any live collaborator
+// (invited, requested or accepted). Returns the caller's
+// relation so the UI can render role-based actions.
+
+const getProjectById = async (req, res) => {
+  try {
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found.",
+      });
+    }
+
+    const isLead = project.partner.equals(req.user.partner);
+
+    const myCollaborator = project.collaborators.find((entry) =>
+      entry.partner.equals(req.user.partner),
+    );
+
+    const isCollaborator =
+      myCollaborator &&
+      ["invited", "requested", "accepted"].includes(myCollaborator.status);
+
+    if (!isLead && !isCollaborator) {
+      return res.status(403).json({
+        message:
+          "You do not have access to this project. Collaborate on it first.",
+      });
+    }
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location description")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    return res.status(200).json({
+      project: populated,
+
+      viewerRole: isLead ? "lead" : "collaborator",
+
+      myCollaboration: isCollaborator
+        ? {
+            _id: myCollaborator._id,
+
+            status: myCollaborator.status,
+
+            role: myCollaborator.role,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Get project error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while fetching the project.",
+    });
+  }
+};
+
 module.exports = {
   createProject,
   getMyProjects,
   updateProjectStatus,
   toggleMilestone,
+  setMilestoneDueDate,
+
+  updateProjectOutcomes,
   inviteCollaborator,
   respondToInvite,
   withdrawCollaborator,
   addContribution,
+  requestCollaboration,
+  getProjectById,
 };

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { getProblemById } from "../services/problemService";
+import ProblemEvidence from "../components/ProblemEvidence";
+import LifecycleStepper from "../components/LifecycleStepper";
+import ResolutionProof from "../components/ResolutionProof";
+import ExportBriefButton from "../components/ExportBriefButton";
 
 const ProblemDetails = ({
   problemId,
@@ -124,19 +128,34 @@ const ProblemDetails = ({
       <div className="mx-auto max-w-4xl">
 
         {/* ========================================
-            BACK BUTTON
+            ACTION BAR (BACK + EXPORT BRIEF)
         ======================================== */}
 
-        <button
-          type="button"
-          onClick={() =>
-            setCurrentPage(backPage)
-          }
-          className="mb-8 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
-        >
-          {backButtonText}
-        </button>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage(backPage)
+            }
+            className="text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
+          >
+            {backButtonText}
+          </button>
 
+          <ExportBriefButton />
+        </div>
+
+        {/* ========================================
+            LIFECYCLE PROGRESS STEPPER
+        ======================================== */}
+
+        <LifecycleStepper
+          status={problem.status}
+          assignedPartner={problem.assignedPartner}
+          createdAt={problem.createdAt}
+          updatedAt={problem.updatedAt}
+          className="mb-6"
+        />
 
         {/* ========================================
             DUPLICATE MERGE BANNER
@@ -311,6 +330,13 @@ const ProblemDetails = ({
             </section>
 
           )}
+
+
+          {/* ========================================
+              VIDEO + DOCUMENT EVIDENCE
+          ======================================== */}
+
+          <ProblemEvidence problem={problem} className="mt-8" />
 
 
           {/* ========================================
@@ -518,6 +544,12 @@ const ProblemDetails = ({
           </section>
 
         </article>
+
+        {/* ========================================
+            RESOLUTION PROOF (SOLVED CHALLENGES)
+        ======================================== */}
+
+        <ResolutionProof problem={problem} className="mt-8" />
 
       </div>
 

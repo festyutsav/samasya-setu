@@ -15,6 +15,9 @@ const getStatusStyle = (status) => {
     case "invited":
       return "bg-[#f7ebd8] text-[#a25a1b]";
 
+    case "requested":
+      return "bg-[#e0d7ef] text-[#564680]";
+
     case "accepted":
       return "bg-[#d8ebe4] text-[#087f70]";
 
@@ -35,7 +38,11 @@ const formatRole = (role) =>
 
 const emptyContribution = { title: "", detail: "" };
 
-const PartnerCollaborations = ({ user }) => {
+const PartnerCollaborations = ({
+  user,
+  setPartnerPage,
+  setSelectedPartnerProjectId,
+}) => {
   // ========================================
   // STATE
   // ========================================
@@ -87,20 +94,47 @@ const PartnerCollaborations = ({ user }) => {
   // MY COLLABORATION ON A PROJECT
   // ========================================
 
+  const getPartnerId = (p) => {
+    if (!p) return "";
+    if (typeof p === "object") return String(p._id || p.id || "");
+    return String(p);
+  };
+
+  const currentOrgId = String(
+    user?.organization?.id ||
+    user?.organization?._id ||
+    user?.partner?._id ||
+    user?.partner ||
+    ""
+  );
+
   const myCollaboration = (project) =>
     (project.collaborators || []).find(
-      (collaborator) =>
-        collaborator.partner &&
-        collaborator.partner._id === user?.organization?.id,
+      (collaborator) => getPartnerId(collaborator?.partner) === currentOrgId,
     );
 
+  const isLead = (project) =>
+    getPartnerId(project?.partner) === currentOrgId;
+
+  const leadProjects = projects.filter((project) => isLead(project));
+
   const invitations = projects.filter(
-    (project) => myCollaboration(project)?.status === "invited",
+    (project) => !isLead(project) && myCollaboration(project)?.status === "invited",
+  );
+
+  const sentRequests = projects.filter(
+    (project) => !isLead(project) && myCollaboration(project)?.status === "requested",
   );
 
   const activeCollaborations = projects.filter(
-    (project) => myCollaboration(project)?.status === "accepted",
+    (project) => !isLead(project) && myCollaboration(project)?.status === "accepted",
   );
+
+  const handleOpenWorkspace = (projectId) => {
+    setSelectedPartnerProjectId(projectId);
+
+    setPartnerPage("workspace");
+  };
 
   // ========================================
   // ACCEPT / DECLINE
@@ -112,11 +146,18 @@ const PartnerCollaborations = ({ user }) => {
 
       setMessage("");
 
+      const collab = myCollaboration(project);
+      if (!collab) {
+        setMessage("Collaboration record not found.");
+        setMessageType("error");
+        return;
+      }
+
       const token = localStorage.getItem("token");
 
       const data = await respondToCollaboration(
         project._id,
-        myCollaboration(project)._id,
+        collab._id,
         response,
         token,
       );
@@ -160,6 +201,13 @@ const PartnerCollaborations = ({ user }) => {
 
     if (!project) return;
 
+    const collab = myCollaboration(project);
+    if (!collab) {
+      setMessage("Collaboration record not found.");
+      setMessageType("error");
+      return;
+    }
+
     try {
       setBusyId(project._id);
 
@@ -169,7 +217,7 @@ const PartnerCollaborations = ({ user }) => {
 
       const data = await addCollaborationContribution(
         project._id,
-        myCollaboration(project)._id,
+        collab._id,
         {
           title: contributionForm.title,
           detail: contributionForm.detail,
@@ -208,59 +256,82 @@ const PartnerCollaborations = ({ user }) => {
   // PROJECT CARD BODY
   // ========================================
 
-  const renderProjectCard = (project, collaborator) => (
-    <article
-      key={project._id}
-      className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm"
-    >
-      {/* HEADER */}
+  const renderProjectCard = (project, collaborator) => {
+    const lead = isLead(project);
+    const status = collaborator ? collaborator.status : project.status;
+    const role = collaborator ? collaborator.role : "lead";
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-[#173d3a]">
-            {project.title}
-          </h3>
+    return (
+      <article
+        key={project._id}
+        className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm"
+      >
+        {/* HEADER */}
 
-          {project.problem && (
-            <p className="mt-1 text-sm text-[#71827c]">
-              Problem: {project.problem.title}
-            </p>
-          )}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-bold text-[#173d3a]">
+              {project.title}
+            </h3>
+
+            {project.problem && (
+              <p className="mt-1 text-sm text-[#71827c]">
+                <span className="font-semibold text-[#5c6f69]">Linked Problem:</span> {project.problem.title}
+              </p>
+            )}
+          </div>
+
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(status)}`}
+            >
+              {formatStatus(status)}
+            </span>
+
+            <span className="rounded-full bg-[#31527c]/10 px-3 py-1 text-xs font-semibold text-[#31527c]">
+              {lead ? "Project Lead" : formatRole(role)}
+            </span>
+          </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(collaborator.status)}`}
-          >
-            {formatStatus(collaborator.status)}
-          </span>
+        {/* LEAD / HOST ORGANIZATION */}
 
-          <span className="rounded-full bg-[#31527c]/10 px-3 py-1 text-xs font-semibold text-[#31527c]">
-            {formatRole(collaborator.role)}
-          </span>
-        </div>
-      </div>
-
-      {/* LEAD UNIVERSITY */}
-
-      {project.partner && (
         <p className="mt-3 text-sm text-[#5c6f69]">
-          Lead university:{" "}
-          <span className="font-semibold text-[#173d3a]">
-            {project.partner.name}
-          </span>
+          {lead ? (
+            <span className="font-semibold text-[#087f70]">
+              ✦ Led by your organization
+            </span>
+          ) : (
+            <>
+              Lead partner:{" "}
+              <span className="font-semibold text-[#173d3a]">
+                {project.partner?.name || "Partner"}
+              </span>
+            </>
+          )}
         </p>
-      )}
 
-      {/* DESCRIPTION */}
+        {/* WORKSPACE LINK (LEAD OR ACTIVE COLLABORATION) */}
 
-      <p className="mt-4 text-sm leading-relaxed text-[#5c6f69]">
-        {project.description}
-      </p>
+        {(lead || collaborator?.status === "accepted") && (
+          <button
+            type="button"
+            onClick={() => handleOpenWorkspace(project._id)}
+            className="mt-4 rounded-xl border border-[#0b514a] px-4 py-2 text-sm font-semibold text-[#0b514a] transition hover:bg-[#e9f4f0]"
+          >
+            Open Workspace
+          </button>
+        )}
+
+        {/* DESCRIPTION */}
+
+        <p className="mt-4 text-sm leading-relaxed text-[#5c6f69]">
+          {project.description}
+        </p>
 
       {/* PENDING INVITATION ACTIONS */}
 
-      {collaborator.status === "invited" && (
+      {collaborator?.status === "invited" && (
         <div className="mt-6 flex flex-wrap gap-3 border-t border-[#eef2ee] pt-4">
           <button
             onClick={() => handleRespond(project, "accepted")}
@@ -282,7 +353,7 @@ const PartnerCollaborations = ({ user }) => {
 
       {/* ACTIVE COLLABORATION: CONTRIBUTIONS */}
 
-      {collaborator.status === "accepted" && (
+      {collaborator?.status === "accepted" && (
         <div className="mt-5 border-t border-[#eef2ee] pt-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#899892]">
@@ -384,7 +455,8 @@ const PartnerCollaborations = ({ user }) => {
         </div>
       )}
     </article>
-  );
+    );
+  };
 
   // ========================================
   // LOADING
@@ -438,6 +510,35 @@ const PartnerCollaborations = ({ user }) => {
           </div>
         )}
 
+        {/* PROJECTS LED BY THIS ORGANIZATION */}
+
+        {leadProjects.length > 0 && (
+          <section className="mb-10">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-[#173d3a]">
+                Projects Led by Your Organization{" "}
+                <span className="text-base font-semibold text-[#087f70]">
+                  ({leadProjects.length})
+                </span>
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setPartnerPage("projects")}
+                className="text-sm font-semibold text-[#0b6b60] hover:underline"
+              >
+                Manage in Projects tab →
+              </button>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              {leadProjects.map((project) =>
+                renderProjectCard(project, null),
+              )}
+            </div>
+          </section>
+        )}
+
         {/* PENDING INVITATIONS */}
 
         <section className="mb-10">
@@ -458,6 +559,39 @@ const PartnerCollaborations = ({ user }) => {
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
               {invitations.map((project) =>
+                renderProjectCard(project, myCollaboration(project)),
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* SENT COLLABORATION REQUESTS */}
+
+        <section className="mb-10">
+          <h2 className="mb-4 text-2xl font-bold text-[#173d3a]">
+            My Requests{" "}
+            <span className="text-base font-semibold text-[#a1aca7]">
+              ({sentRequests.length})
+            </span>
+          </h2>
+
+          {sentRequests.length === 0 ? (
+            <div className="rounded-2xl border border-[#e3e9e3] bg-white p-8 text-center shadow-sm">
+              <p className="text-sm text-[#71827c]">
+                No pending requests. Browse the{" "}
+                <button
+                  type="button"
+                  onClick={() => setPartnerPage("directory")}
+                  className="font-semibold text-[#0b6b60] hover:underline"
+                >
+                  Discover Partners
+                </button>{" "}
+                page to find university projects and ask to collaborate.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {sentRequests.map((project) =>
                 renderProjectCard(project, myCollaboration(project)),
               )}
             </div>

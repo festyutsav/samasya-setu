@@ -1,26 +1,30 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 // ========================================
 // API URLS
 // ========================================
 
-const PARTNER_API_URL =
-  "http://127.0.0.1:5001/api/partners";
-
-const PROBLEM_API_URL =
-  "http://127.0.0.1:5001/api/problems";
+const PARTNER_API_URL = `${API_BASE_URL}/api/partners`;
+const PROBLEM_API_URL = `${API_BASE_URL}/api/problems`;
 
 
 // ========================================
 // AUTH CONFIG
 // ========================================
 
-const getAuthConfig = (token) => {
-  return {
+const getAuthConfig = (token, params) => {
+  const config = {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   };
+
+  if (params) {
+    config.params = params;
+  }
+
+  return config;
 };
 
 
@@ -156,8 +160,7 @@ export const updatePartnerProblemStatus = async (
 // PROJECT API (UNIVERSITY PARTNERS)
 // ========================================
 
-const PROJECT_API_URL =
-  "http://127.0.0.1:5001/api/projects";
+const PROJECT_API_URL = `${API_BASE_URL}/api/projects`;
 
 
 // ========================================
@@ -241,15 +244,105 @@ export const toggleProjectMilestone = async (
 
 
 // ========================================
-// PARTNER DIRECTORY
+// SET MILESTONE DUE DATE
+// PARTNER (LEAD UNIVERSITY) ONLY
+// ========================================
+
+export const setMilestoneDueDate = async (
+  projectId,
+  milestoneIndex,
+  dueDate,
+  token,
+) => {
+  const response = await axios.patch(
+    `${PROJECT_API_URL}/${projectId}/milestones/due-date`,
+    {
+      milestoneIndex,
+
+      dueDate,
+    },
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
+// UPDATE INNOVATION OUTCOMES
+// PARTNER (LEAD UNIVERSITY) ONLY
+// ========================================
+// Records measurable project outcomes — patents, startups,
+// publications, deployments — for the analytics dashboard.
+
+export const updateProjectOutcomes = async (
+  projectId,
+  outcomes,
+  token,
+) => {
+  const response = await axios.patch(
+    `${PROJECT_API_URL}/${projectId}/outcomes`,
+    outcomes,
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
+// GET PARTNER DIRECTORY
 // PARTNER ONLY
 // ========================================
-// Used by universities to pick industry partners when
-// inviting collaborators onto a project.
+// Powers the Discover Partners page: filter by type or
+// expertise, search by name, and exclude the caller's own
+// organization. Response includes public activity counts and
+// each university's open projects.
 
-export const getPartnerDirectory = async (token) => {
+export const getPartnerDirectory = async (token, params = {}) => {
   const response = await axios.get(
     `${PARTNER_API_URL}/directory`,
+    getAuthConfig(token, params),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
+// GET SINGLE PROJECT (SHARED WORKSPACE)
+// LEAD + LIVE COLLABORATORS ONLY
+// ========================================
+
+export const getProjectById = async (projectId, token) => {
+  const response = await axios.get(
+    `${PROJECT_API_URL}/${projectId}`,
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
+// REQUEST TO COLLABORATE
+// PARTNER-INITIATED
+// ========================================
+// A partner asks to join a university-led project; the lead
+// university accepts or declines.
+
+export const requestCollaboration = async (
+  projectId,
+  role,
+  message,
+  token,
+) => {
+  const response = await axios.post(
+    `${PROJECT_API_URL}/${projectId}/requests`,
+    {
+      role,
+      message,
+    },
     getAuthConfig(token),
   );
 

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import JharkhandEmblem from "../components/JharkhandEmblem";
 
 /* ============================================================
    SamasyaSetu — Landing experience
-   "Every problem deserves a bridge."
+   "Every problem deserves a bridge to solutions."
    Deep-teal night hero · animated Setu bridge · scroll reveals
    ============================================================ */
 
@@ -26,7 +27,7 @@ const HEADLINE = [
   { text: "a", accent: false },
   { text: "bridge", accent: true },
   { text: "to", accent: false },
-  { text: "possibility.", accent: true },
+  { text: "solutions.", accent: true },
 ];
 
 const JOURNEY = [
@@ -38,7 +39,7 @@ const JOURNEY = [
   {
     step: "02",
     title: "Understand",
-    copy: "AI categorises, prioritises and de-duplicates every submission across ten domains of impact.",
+    copy: "AI categorizes, prioritizes and de-duplicates every submission across ten domains of impact.",
   },
   {
     step: "03",
@@ -61,7 +62,7 @@ const portals = [
   {
     id: "citizen",
     eyebrow: "FOR COMMUNITIES",
-    title: "Citizen portal",
+    title: "Citizen Portal",
     copy: "Raise a challenge, add local context, and follow the journey from submission to impact.",
     icon: "◎",
     accent: "bg-[#e1f1ed] text-[#087f70]",
@@ -70,7 +71,7 @@ const portals = [
   {
     id: "partner",
     eyebrow: "FOR INNOVATORS",
-    title: "University & industry",
+    title: "University & Industry Portal",
     copy: "Discover real-world problems, build multidisciplinary teams, and take solutions to the field.",
     icon: "✦",
     accent: "bg-[#f7ebd8] text-[#a25a1b]",
@@ -79,7 +80,7 @@ const portals = [
   {
     id: "admin",
     eyebrow: "FOR GOVERNANCE",
-    title: "Government portal",
+    title: "Government Portal",
     copy: "Coordinate priorities, route challenges, and measure outcomes across Jharkhand.",
     icon: "⌂",
     accent: "bg-[#e2e9f4] text-[#31527c]",
@@ -192,7 +193,7 @@ const Bridge = () => (
     <circle cx="50" cy="228" r="7" fill="#e9c985" className="ss-float" style={{ animationDuration: "3.5s" }} />
     <circle cx="470" cy="228" r="7" fill="#e9c985" className="ss-float" style={{ animationDuration: "3.5s", animationDelay: ".6s" }} />
     <text x="50" y="266" textAnchor="middle" fill="#9dc3b8" fontSize="12" letterSpacing="3">PROBLEM</text>
-    <text x="470" y="266" textAnchor="middle" fill="#9dc3b8" fontSize="12" letterSpacing="3">POSSIBILITY</text>
+    <text x="470" y="266" textAnchor="middle" fill="#9dc3b8" fontSize="12" letterSpacing="3">SOLUTION</text>
     <text x="260" y="40" textAnchor="middle" fill="#e9c985" fontSize="13" letterSpacing="6" fontStyle="italic" fontFamily="Fraunces, serif">SETU</text>
   </svg>
 );
@@ -222,8 +223,26 @@ const PortalSelection = ({ onSelectPortal }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    let ticking = false;
+
+    const onScroll = () => {
+      if (ticking) return;
+
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        setScrolled((prev) => {
+          const next = window.scrollY > 24;
+
+          return next === prev ? prev : next;
+        });
+
+        ticking = false;
+      });
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -234,25 +253,24 @@ const PortalSelection = ({ onSelectPortal }) => {
     <main className="min-h-screen bg-[#f7f8f5] text-[#173d3a]">
       {/* ============ DARK NIGHT WRAPPER ============ */}
       <div className="ss-grain relative overflow-hidden bg-gradient-to-b from-[#031a17] via-[#0b514a] to-[#0e5d54] text-[#f4f7f4]">
-        {/* atmosphere */}
-        <div className="ss-orb left-[-6rem] top-[-4rem] h-80 w-80 bg-[#0f7a6c]/50" />
-        <div className="ss-orb right-[-8rem] top-24 h-[26rem] w-[26rem] bg-[#e9c985]/15" style={{ animationDelay: "-5s" }} />
-        <div className="ss-orb bottom-[-6rem] left-1/3 h-72 w-72 bg-[#0f7a6c]/40" style={{ animationDelay: "-9s" }} />
+        {/* atmosphere — pre-softened gradient orbs (no filter blur) */}
+        <div className="ss-orb left-[-6rem] top-[-4rem] h-80 w-80" style={{ "--orb-color": "rgba(15,122,108,.55)" }} />
+        <div className="ss-orb right-[-8rem] top-24 h-[26rem] w-[26rem]" style={{ "--orb-color": "rgba(233,201,133,.16)", animationDelay: "-5s" }} />
+        <div className="ss-orb bottom-[-6rem] left-1/3 h-72 w-72" style={{ "--orb-color": "rgba(15,122,108,.45)", animationDelay: "-9s" }} />
 
         {/* marquee */}
         <div className="relative">
           <Marquee />
         </div>
 
-        {/* nav */}
-        <nav className={`relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 transition-all duration-500 lg:px-10 ${scrolled ? "backdrop-blur-md" : ""}`}>
+        {/* nav — solid background on scroll; animating backdrop-blur
+            while the orbs move underneath caused constant repaints */}
+        <nav className={`relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 transition-colors duration-500 lg:px-10 ${scrolled ? "bg-[#031a17]/85 shadow-lg shadow-black/20" : ""}`}>
           <div className="ss-enter flex items-center gap-3" style={{ "--ss-delay": "100ms" }}>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e9c985]/15 text-xl font-bold text-[#e9c985] ring-1 ring-[#e9c985]/40">
-              S
-            </div>
+            <JharkhandEmblem className="h-11 w-11 shrink-0 drop-shadow" />
             <div>
               <p className="font-display text-lg font-semibold tracking-tight">SamasyaSetu</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9dc3b8]">Problems to possibilities</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9dc3b8]">Problems to solutions</p>
             </div>
           </div>
           <span className="ss-enter hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-[#cfe4dc] backdrop-blur-sm sm:block" style={{ "--ss-delay": "220ms" }}>
@@ -326,7 +344,7 @@ const PortalSelection = ({ onSelectPortal }) => {
             {/* floating chips */}
             <div className="ss-float absolute -left-4 top-6 hidden rounded-2xl border border-[#dce5dd] bg-white px-4 py-3 shadow-xl sm:block" style={{ "--ss-delay": ".4s" }}>
               <p className="text-[10px] font-bold tracking-[0.16em] text-[#899892]">AI ENGINE</p>
-              <p className="text-sm font-bold text-[#0b514a]">Categorise · Dedupe · Route</p>
+              <p className="text-sm font-bold text-[#0b514a]">Categorize · Dedupe · Route</p>
             </div>
             <div className="ss-float absolute -bottom-5 -right-3 hidden rounded-2xl border border-white/10 bg-[#062722] px-4 py-3 shadow-xl sm:block" style={{ "--ss-delay": "1.2s" }}>
               <p className="text-[10px] font-bold tracking-[0.16em] text-[#9dc3b8]">CITIZEN → UNIVERSITY → INDUSTRY</p>
@@ -336,7 +354,7 @@ const PortalSelection = ({ onSelectPortal }) => {
         </section>
 
         {/* ============ STAT BAND ============ */}
-        <section className="relative z-10 border-t border-white/10 bg-[#031a17]/60 backdrop-blur-sm">
+        <section className="relative z-10 border-t border-white/10 bg-[#031a17]/70">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 px-6 py-12 sm:grid-cols-4 lg:px-10">
             {[
               { value: 24, suffix: "", label: "districts of Jharkhand, one network" },
@@ -431,7 +449,10 @@ const PortalSelection = ({ onSelectPortal }) => {
       <footer className="border-t border-[#e3e9e3] bg-[#f7f8f5] px-6 py-10 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-xs text-[#8a9791] sm:flex-row">
           <p>A demand-driven innovation ecosystem for communities across Jharkhand.</p>
-          <p className="font-display italic text-[#0b6b60]">SamasyaSetu — problems to possibilities.</p>
+          <p className="flex items-center gap-2 font-display italic text-[#0b6b60]">
+            <JharkhandEmblem className="h-5 w-5 shrink-0" />
+            SamasyaSetu — problems to solutions.
+          </p>
         </div>
       </footer>
     </main>

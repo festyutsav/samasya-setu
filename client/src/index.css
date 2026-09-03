@@ -168,13 +168,22 @@
 }
 
 /* ---------- Orbs / atmosphere ---------- */
+/* Pre-softened radial gradients instead of filter: blur() —
+   an animated 70px blur forced full re-rasterization of large
+   layers every frame and made scrolling janky. */
 
 .ss-orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(70px);
   pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    var(--orb-color, rgba(15, 122, 108, 0.5)) 0%,
+    transparent 72%
+  );
   animation: ss-float-slow 14s ease-in-out infinite;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .ss-float {
@@ -461,3 +470,35 @@ html {
   top: 0;
   bottom: 0;
 }
+
+/* ========================================
+   PRINT STYLING (EXECUTIVE BRIEFS)
+   ======================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  nav,
+  header,
+  footer,
+  .no-print,
+  button:not(.allow-print) {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  article, section {
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
+

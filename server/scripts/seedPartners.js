@@ -22,6 +22,12 @@ const Partner = require(path.join(__dirname, "..", "models", "Partner"));
 // SEED DATA
 // ========================================
 
+// Enrichment overlay: verified profiles, corrections and new
+// partners (research labs, government agencies, NGOs). See
+// partnerData.js.
+
+const { enrichments, removals, additions } = require("./partnerData");
+
 const universities = [
   {
     name: "Central University of Jharkhand",
@@ -1282,6 +1288,26 @@ const seedPartners = async () => {
     for (let i = 0; i < allPartners.length; i++) {
       const data = allPartners[i];
 
+      // Skip factually incorrect partners (see partnerData.js
+      // removals). Their logins are removed too so stale
+      // accounts never persist.
+
+      if (removals.includes(data.name)) {
+        const legacy = await Partner.findOne({ name: data.name });
+
+        if (legacy) {
+          if (legacy.user) {
+            await User.findByIdAndDelete(legacy.user);
+          }
+
+          await Partner.findByIdAndDelete(legacy._id);
+
+          console.log(`  ✗ Removed: ${legacy.name}`);
+        }
+
+        continue;
+      }
+
       const username = generateUsername(data.name, i + 1);
 
       const password = data.password || generatePassword(data.name);
@@ -1290,7 +1316,11 @@ const seedPartners = async () => {
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      let user = await User.findOne({ username });
+      // Lookup by email: the User schema has no username field,
+      // so a username lookup can never match and re-runs would
+      // crash on the unique email index.
+
+      let user = await User.findOne({ email });
 
       if (!user) {
         user = await User.create({
@@ -1318,9 +1348,48 @@ const seedPartners = async () => {
           user: user._id,
         });
 
+        // Partner login resolves the organization through
+        // User.partner — without this link the login is
+        // rejected with "No organization is linked to this
+        // account."
+
+        await User.findByIdAndUpdate(user._id, {
+
+          partner: partner._id,
+
+        });
+
         console.log(`  ✓ ${partner.name}`);
       } else {
         console.log(`  → ${partner.name} already exists, skipping.`);
+      }
+
+      // Apply the verified enrichment overlay (partnerData.js)
+      // so fresh seeds carry the same researched profiles as
+      // the live database.
+
+      const enrichment = enrichments[data.name];
+
+      if (enrichment) {
+        partner.description = enrichment.description;
+
+        partner.website = enrichment.website;
+
+        partner.expertise = enrichment.expertise;
+
+        partner.capabilities = enrichment.capabilities;
+
+        partner.districtsServed = enrichment.districtsServed;
+
+        if (enrichment.location) {
+          partner.location = enrichment.location;
+        }
+
+        if (enrichment.email) {
+          partner.email = enrichment.email;
+        }
+
+        await partner.save();
       }
 
       credentials.push({
@@ -1329,6 +1398,99 @@ const seedPartners = async () => {
         username,
         password,
         email: data.email,
+        website: data.website,
+      });
+
+      await sleep(100);
+    }
+
+    // ========================================
+    // NEW PARTNERS (partnerData.js additions)
+    // ========================================
+    // Research laboratories, government agencies and NGOs
+    // added during enrichment. Username indices continue after
+    // the main list so accounts match the live database.
+
+    for (let i = 0; i < additions.length; i++) {
+      const data = additions[i];
+
+      const username = generateUsername(data.name, allPartners.length + i + 1);
+
+      const password = generatePassword(data.name);
+
+      const email = generateEmail(data.name, data.type);
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Lookup by email: the User schema has no username field,
+      // so a username lookup can never match and re-runs would
+      // crash on the unique email index.
+
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        user = await User.create({
+          username,
+
+          name: data.name,
+
+          email,
+
+          password: hashedPassword,
+
+          role: "partner",
+        });
+      }
+
+      let partner = await Partner.findOne({ name: data.name });
+
+      if (!partner) {
+        partner = await Partner.create({
+          name: data.name,
+
+          type: data.type,
+
+          description: data.description,
+
+          location: data.location,
+
+          email: data.email,
+
+          website: data.website,
+
+          expertise: data.expertise || [],
+
+          capabilities: data.capabilities || [],
+
+          districtsServed: data.districtsServed || [],
+
+          user: user._id,
+        });
+
+        // Link the login to the organization (see note above).
+
+        await User.findByIdAndUpdate(user._id, {
+
+          partner: partner._id,
+
+        });
+
+        console.log(`  ✓ ${partner.name}`);
+      } else {
+        console.log(`  → ${partner.name} already exists, skipping.`);
+      }
+
+      credentials.push({
+        name: data.name,
+
+        type: data.type,
+
+        username,
+
+        password,
+
+        email: data.email,
+
         website: data.website,
       });
 

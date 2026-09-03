@@ -1,0 +1,23 @@
+{
+  "name": "SamasyaSetu — Govt. of Jharkhand",
+  "short_name": "SamasyaSetu",
+  "description": "Crowdsource societal challenges and collaborate with universities and industry to solve them.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#073f3a",
+  "theme_color": "#0b514a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

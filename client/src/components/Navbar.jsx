@@ -1,5 +1,6 @@
 import { useState } from "react";
 import NotificationBell from "./NotificationBell";
+import JharkhandEmblem from "./JharkhandEmblem";
 
 const Navbar = ({
   user,
@@ -37,9 +38,7 @@ const Navbar = ({
           onClick={() => handleNavigation(isAdmin ? "admin-dashboard" : "home")}
           className="flex shrink-0 items-center gap-3"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0b514a] text-lg font-bold text-[#e9c985] shadow-sm">
-            S
-          </div>
+          <JharkhandEmblem className="h-10 w-10 shrink-0 drop-shadow-sm" />
 
           <div className="hidden text-left sm:block">
             <h1 className="whitespace-nowrap text-base font-bold leading-tight text-[#173d3a]">
