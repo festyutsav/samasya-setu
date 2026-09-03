@@ -1,89 +1,136 @@
+import { useState } from "react";
+import NotificationBell from "./NotificationBell";
+
 const AdminNavbar = ({
   user,
   handleLogout,
   currentPage,
   setCurrentPage,
 }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: "Dashboard", page: "dashboard" },
+    { label: "Partners", page: "partners" },
+  ];
+
   return (
-    <nav className="border-b border-slate-200 bg-white shadow-sm">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-40 border-b border-[#e3e9e3] bg-white shadow-sm">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-        {/* Left Section */}
-        <div className="flex items-center gap-8">
-
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-lg font-bold text-white">
-              S
-            </div>
-
-            <div>
-              <h1 className="text-lg font-bold text-slate-800">
-                SamasyaSetu
-              </h1>
-
-              <p className="text-xs text-slate-500">
-                Government Admin Portal
-              </p>
-            </div>
+        {/* Brand */}
+        <button
+          onClick={() => setCurrentPage("dashboard")}
+          className="flex shrink-0 items-center gap-3"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0b514a] text-lg font-bold text-[#e9c985] shadow-sm">
+            S
           </div>
 
-          {/* Navigation */}
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden text-left sm:block">
+            <h1 className="whitespace-nowrap text-base font-bold leading-tight text-[#173d3a]">
+              SamasyaSetu
+            </h1>
 
-            <button
-              onClick={() =>
-                setCurrentPage("dashboard")
-              }
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                currentPage === "dashboard"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              Dashboard
-            </button>
-
-            <button
-              onClick={() =>
-                setCurrentPage("partners")
-              }
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                currentPage === "partners"
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              Partners
-            </button>
-
+            <p className="hidden whitespace-nowrap text-[11px] leading-tight text-[#71827c] xl:block">
+              Government Admin Portal
+            </p>
           </div>
+        </button>
+
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-1.5 md:flex">
+          {navItems.map((item) => (
+            <button
+              key={item.page}
+              onClick={() => setCurrentPage(item.page)}
+              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
+                currentPage === item.page
+                  ? "bg-[#0b514a] text-white shadow-sm"
+                  : "text-[#5c6f69] hover:bg-[#f7f8f5] hover:text-[#173d3a]"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-4">
+        {/* Desktop User Section */}
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
 
-          {/* Admin Information */}
-          <div className="hidden border-r border-slate-200 pr-4 sm:block">
-            <p className="text-sm font-semibold text-slate-700">
+          <NotificationBell user={user} />
+
+          <div className="hidden border-l border-[#e3e9e3] pl-3 text-left sm:block">
+            <p className="max-w-32 truncate text-sm font-semibold leading-tight text-[#315d56]">
               {user.name}
             </p>
 
-            <p className="text-xs capitalize text-slate-500">
+            <p className="text-[11px] capitalize leading-tight text-[#71827c]">
               {user.role}
             </p>
           </div>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+            className="whitespace-nowrap rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
           >
             Logout
           </button>
+        </div>
 
+        {/* Mobile Actions */}
+        <div className="flex shrink-0 items-center gap-2.5 md:hidden">
+          <NotificationBell user={user} />
+
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#e3e9e3] text-lg text-[#315d56] transition hover:bg-[#f7f8f5]"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? "✕" : "☰"}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="border-t border-[#e3e9e3] bg-white p-4 md:hidden">
+          <div className="flex flex-col gap-1.5">
+            {navItems.map((item) => (
+              <button
+                key={item.page}
+                onClick={() => setCurrentPage(item.page)}
+                className={`rounded-lg px-4 py-2.5 text-left text-sm font-semibold transition ${
+                  currentPage === item.page
+                    ? "bg-[#0b514a] text-white"
+                    : "text-[#315d56] hover:bg-[#f7f8f5]"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="my-3 border-t border-[#e3e9e3]" />
+
+          <div className="rounded-lg bg-[#f2f5f1] px-4 py-3">
+            <p className="text-sm font-semibold text-[#173d3a]">
+              {user.name}
+            </p>
+
+            <p className="mt-0.5 text-xs capitalize text-[#71827c]">
+              {user.role}
+            </p>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="mt-3 w-full rounded-lg border border-red-200 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </nav>
   );
 };

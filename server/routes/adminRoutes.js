@@ -4,18 +4,32 @@ const adminController = require(
   "../controllers/adminController"
 );
 
-const router = express.Router();
+const {
+  protect,
+  authorizeRoles,
+} = require("../middleware/authMiddleware");
 
-console.log("ADMIN CONTROLLER:", adminController);
+const router = express.Router();
 
 router.get(
   "/dashboard",
+  protect,
+  authorizeRoles("admin"),
   adminController.getDashboardStats
 );
 
 router.put(
   "/problems/:problemId/status",
+  protect,
+  authorizeRoles("admin"),
   adminController.updateProblemStatus
+);
+
+router.get(
+  "/partners/credentials",
+  protect,
+  authorizeRoles("admin"),
+  adminController.downloadPartnerCredentials
 );
 
 module.exports = router;

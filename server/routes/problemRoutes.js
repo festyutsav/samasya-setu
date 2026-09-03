@@ -25,6 +25,12 @@ const {
 
   assignPartnerToProblem,
 
+  aiReviewProblem,
+
+  reanalyzeDuplicates,
+
+  rerunRouting,
+
 
   // Partner controllers
 
@@ -207,6 +213,56 @@ router.patch(
   authorizeRoles("admin"),
 
   assignPartnerToProblem
+
+);
+
+
+// Admin AI review action for duplicate/recurring detection
+
+router.patch(
+
+  "/:id/ai-review",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  aiReviewProblem
+
+);
+
+
+// Admin re-runs AI duplicate detection for a problem.
+// Needed for problems created before duplicate detection
+// existed, and to refresh suggestions as new reports arrive.
+
+router.post(
+
+  "/:id/duplicate-analysis",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  reanalyzeDuplicates
+
+);
+
+
+// Admin re-runs AI partner routing for a problem.
+// Needed for problems created before routing existed
+// (including seeded data) and to refresh suggestions
+// after the partner registry or scoring engine changes.
+
+router.post(
+
+  "/:id/rerun-routing",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  rerunRouting
 
 );
 

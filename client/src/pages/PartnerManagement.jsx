@@ -6,6 +6,10 @@ import {
   deletePartner,
 } from "../services/partnerService";
 
+import {
+  downloadPartnerCredentials,
+} from "../services/adminService";
+
 
 const PartnerManagement = () => {
 
@@ -18,11 +22,33 @@ const PartnerManagement = () => {
 
   const [loading, setLoading] =
     useState(true);
-
   const [message, setMessage] =
     useState("");
 
+  const [messageType, setMessageType] =
+    useState("");
+
   const [submitting, setSubmitting] =
+    useState(false);
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
+  const [filterType, setFilterType] =
+    useState("all");
+
+  // One-time view of the credentials returned when a partner
+  // is created — passwords are hashed in the DB, so this panel
+  // and the credentials download are the only places the
+  // plaintext ever appears.
+
+  const [lastCredentials, setLastCredentials] =
+    useState(null);
+
+  const [revealedIds, setRevealedIds] =
+    useState({});
+
+  const [downloading, setDownloading] =
     useState(false);
 
 
@@ -48,6 +74,15 @@ const PartnerManagement = () => {
       website: "",
 
 
+      // AI routing profile
+
+      expertise: "",
+
+      capabilities: "",
+
+      districtsServed: "",
+
+
       // Partner login details
 
       userName: "",
@@ -57,6 +92,123 @@ const PartnerManagement = () => {
       password: "",
 
     });
+
+
+  // ========================================
+  // DOWNLOAD CREDENTIALS
+  // ========================================
+  // The credentials endpoint requires the admin Bearer token,
+  // so the file is fetched as a Blob and saved via a temporary
+  // anchor — window.open() would send an unauthenticated
+  // request and always fail.
+
+  const handleDownloadCredentials = async () => {
+
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+
+      setMessage("Please login as admin first.");
+
+      setMessageType("error");
+
+      return;
+
+    }
+
+
+    try {
+
+      setDownloading(true);
+
+      setMessage("");
+
+      setMessageType("");
+
+
+      const response =
+        await downloadPartnerCredentials(token);
+
+
+      const blob = new Blob([response.data], {
+
+        type: "application/json",
+
+      });
+
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+
+      link.download = "partner_credentials.json";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      URL.revokeObjectURL(url);
+
+
+      setMessage(
+
+        "Partner credentials downloaded successfully."
+
+      );
+
+      setMessageType("success");
+
+    } catch (error) {
+
+      console.error(
+
+        "Download credentials error:",
+
+        error
+
+      );
+
+
+      setMessage(
+
+        error.response?.status === 404
+
+          ? "Credentials file not found on the server. Run the seed script first."
+
+          : "Failed to download credentials."
+
+      );
+
+      setMessageType("error");
+
+    } finally {
+
+      setDownloading(false);
+
+    }
+
+  };
+
+
+  // ========================================
+  // TOGGLE PASSWORD VISIBILITY
+  // ========================================
+
+  const togglePasswordVisibility = (partnerId) => {
+
+    setRevealedIds((current) => ({
+
+      ...current,
+
+      [partnerId]: !current[partnerId],
+
+    }));
+
+  };
 
 
   // ========================================
@@ -70,6 +222,8 @@ const PartnerManagement = () => {
       setLoading(true);
 
       setMessage("");
+
+      setMessageType("");
 
 
       const token =
@@ -111,6 +265,8 @@ const PartnerManagement = () => {
 
       );
 
+      setMessageType("error");
+
     } finally {
 
       setLoading(false);
@@ -118,6 +274,23 @@ const PartnerManagement = () => {
     }
 
   };
+
+
+  // ========================================
+  // FILTER LOGIC
+  // ========================================
+
+  const filteredPartners = partners.filter((partner) => {
+    const matchesSearch =
+      partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      partner.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      partner.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesType =
+      filterType === "all" || partner.type === filterType;
+
+    return matchesSearch && matchesType;
+  });
 
 
   // ========================================
@@ -173,6 +346,8 @@ const PartnerManagement = () => {
 
       setMessage("");
 
+      setMessageType("");
+
 
       const token =
         localStorage.getItem("token");
@@ -209,6 +384,18 @@ const PartnerManagement = () => {
       );
 
 
+      // One-time plaintext credentials for this partner
+
+      if (data.credentials) {
+
+        setLastCredentials({
+          name: data.partner.name,
+          ...data.credentials,
+        });
+
+      }
+
+
       // Reset form
 
       setFormData({
@@ -228,6 +415,15 @@ const PartnerManagement = () => {
         website: "",
 
 
+        // AI routing profile
+
+        expertise: "",
+
+        capabilities: "",
+
+        districtsServed: "",
+
+
         // Login details
 
         userName: "",
@@ -242,6 +438,8 @@ const PartnerManagement = () => {
       setMessage(
         "Partner and login account created successfully."
       );
+
+      setMessageType("success");
 
     } catch (error) {
 
@@ -258,6 +456,8 @@ const PartnerManagement = () => {
         "Failed to add partner."
 
       );
+
+      setMessageType("error");
 
     } finally {
 
@@ -293,6 +493,8 @@ const PartnerManagement = () => {
 
       setMessage("");
 
+      setMessageType("");
+
 
       const token =
         localStorage.getItem("token");
@@ -324,6 +526,8 @@ const PartnerManagement = () => {
         "Partner deleted successfully."
       );
 
+      setMessageType("success");
+
     } catch (error) {
 
       console.error(
@@ -340,6 +544,8 @@ const PartnerManagement = () => {
 
       );
 
+      setMessageType("error");
+
     }
 
   };
@@ -351,7 +557,7 @@ const PartnerManagement = () => {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
 
       <div className="mx-auto max-w-7xl">
 
@@ -362,21 +568,21 @@ const PartnerManagement = () => {
 
         <div className="mb-8">
 
-          <p className="text-sm font-semibold text-blue-600">
+          <p className="text-sm font-semibold text-[#0b6b60]">
 
             GOVERNMENT ADMIN PORTAL
 
           </p>
 
 
-          <h1 className="mt-2 text-3xl font-bold text-slate-800">
+          <h1 className="mt-2 text-3xl font-bold text-[#173d3a]">
 
             Partner Management
 
           </h1>
 
 
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-[#5c6f69]">
 
             Manage universities, industry partners,
             NGOs, and government organizations
@@ -396,16 +602,92 @@ const PartnerManagement = () => {
           <div
 
             className={`mb-6 rounded-xl border p-4 text-sm ${
-              message
-                .toLowerCase()
-                .includes("success")
-                ? "border-green-200 bg-green-50 text-green-700"
+              messageType === "success"
+                ? "border-[#bcd9cf] bg-[#e9f4f0] text-[#087f70]"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
 
           >
 
             {message}
+
+          </div>
+
+        )}
+
+
+        {/* ========================================
+            ONE-TIME CREDENTIALS PANEL
+        ======================================== */}
+
+        {lastCredentials && (
+
+          <div className="mb-6 rounded-xl border border-[#bcd9cf] bg-[#e9f4f0] p-5">
+
+            <div className="flex items-start justify-between gap-4">
+
+              <div>
+
+                <h3 className="text-sm font-bold text-[#0a4f47]">
+
+                  🔑 Credentials for {lastCredentials.name}
+
+                </h3>
+
+
+                <p className="mt-1 text-xs text-[#087f70]">
+
+                  The database stores only a hashed
+                  password — this is the only time it
+                  is shown here. It is also saved to
+                  the credentials download.
+
+                </p>
+
+              </div>
+
+
+              <button
+
+                type="button"
+
+                onClick={() => setLastCredentials(null)}
+
+                className="shrink-0 rounded-lg px-3 py-1 text-sm font-semibold text-[#0a4f47] transition hover:bg-[#d8ebe4]"
+
+              >
+
+                ✕
+
+              </button>
+
+            </div>
+
+
+            <div className="mt-3 grid gap-2 text-sm text-[#315d56] sm:grid-cols-2">
+
+              <p>
+
+                <span className="font-semibold">Login email:</span>{" "}
+
+                {lastCredentials.loginEmail}
+
+              </p>
+
+
+              <p>
+
+                <span className="font-semibold">Password:</span>{" "}
+
+                <code className="rounded bg-white px-2 py-0.5 font-mono text-xs">
+
+                  {lastCredentials.password}
+
+                </code>
+
+              </p>
+
+            </div>
 
           </div>
 
@@ -419,16 +701,16 @@ const PartnerManagement = () => {
               ADD PARTNER FORM
           ======================================== */}
 
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
 
-            <h2 className="text-xl font-bold text-slate-800">
+            <h2 className="text-xl font-bold text-[#173d3a]">
 
               Add New Partner
 
             </h2>
 
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[#71827c]">
 
               Add an organization and create
               its partner login account.
@@ -449,9 +731,9 @@ const PartnerManagement = () => {
                   ORGANIZATION DETAILS
               ======================================== */}
 
-              <div className="border-b border-slate-200 pb-4">
+              <div className="border-b border-[#e3e9e3] pb-4">
 
-                <h3 className="text-sm font-bold text-slate-800">
+                <h3 className="text-sm font-bold text-[#173d3a]">
 
                   Organization Details
 
@@ -464,7 +746,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Organization Name *
 
@@ -485,7 +767,7 @@ const PartnerManagement = () => {
 
                   placeholder="Example: Tata Steel"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -496,7 +778,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Organization Type *
 
@@ -511,7 +793,7 @@ const PartnerManagement = () => {
 
                   onChange={handleChange}
 
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 >
 
@@ -551,7 +833,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Description
 
@@ -570,7 +852,7 @@ const PartnerManagement = () => {
 
                   placeholder="Briefly describe this organization..."
 
-                  className="w-full resize-none rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full resize-none rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -581,7 +863,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Location
 
@@ -600,7 +882,7 @@ const PartnerManagement = () => {
 
                   placeholder="Example: Jamshedpur, Jharkhand"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -611,7 +893,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Organization Contact Email
 
@@ -630,7 +912,7 @@ const PartnerManagement = () => {
 
                   placeholder="contact@example.com"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -641,7 +923,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Website
 
@@ -660,7 +942,121 @@ const PartnerManagement = () => {
 
                   placeholder="https://example.com"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+
+                />
+
+              </div>
+
+
+              {/* ========================================
+                  AI ROUTING PROFILE
+              ======================================== */}
+
+              <div className="border-b border-t border-[#e3e9e3] py-4">
+
+                <h3 className="text-sm font-bold text-[#173d3a]">
+
+                  AI Routing Profile
+
+                </h3>
+
+
+                <p className="mt-1 text-xs text-[#71827c]">
+
+                  These tags power the AI recommendation
+                  engine. Separate multiple values with
+                  commas.
+
+                </p>
+
+              </div>
+
+
+              {/* EXPERTISE */}
+
+              <div>
+
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
+
+                  Expertise Domains
+
+                </label>
+
+
+                <input
+
+                  type="text"
+
+                  name="expertise"
+
+                  value={formData.expertise}
+
+                  onChange={handleChange}
+
+                  placeholder="e.g. water, energy, technology"
+
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+
+                />
+
+              </div>
+
+
+              {/* CAPABILITIES */}
+
+              <div>
+
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
+
+                  Capabilities
+
+                </label>
+
+
+                <input
+
+                  type="text"
+
+                  name="capabilities"
+
+                  value={formData.capabilities}
+
+                  onChange={handleChange}
+
+                  placeholder="e.g. prototyping, funding, field_surveys"
+
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+
+                />
+
+              </div>
+
+
+              {/* DISTRICTS SERVED */}
+
+              <div>
+
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
+
+                  Districts Served
+
+                </label>
+
+
+                <input
+
+                  type="text"
+
+                  name="districtsServed"
+
+                  value={formData.districtsServed}
+
+                  onChange={handleChange}
+
+                  placeholder="e.g. Ranchi, Khunti, Ramgarh"
+
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -671,16 +1067,16 @@ const PartnerManagement = () => {
                   PARTNER LOGIN DETAILS
               ======================================== */}
 
-              <div className="border-b border-t border-slate-200 py-4">
+              <div className="border-b border-t border-[#e3e9e3] py-4">
 
-                <h3 className="text-sm font-bold text-slate-800">
+                <h3 className="text-sm font-bold text-[#173d3a]">
 
                   Partner Login Details
 
                 </h3>
 
 
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#71827c]">
 
                   These credentials will be used
                   to access the Partner Portal.
@@ -694,7 +1090,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Partner User Name *
 
@@ -715,7 +1111,7 @@ const PartnerManagement = () => {
 
                   placeholder="Example: Tata Steel Manager"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -726,7 +1122,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Partner Login Email *
 
@@ -747,7 +1143,7 @@ const PartnerManagement = () => {
 
                   placeholder="partner@example.com"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -758,7 +1154,7 @@ const PartnerManagement = () => {
 
               <div>
 
-                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                <label className="mb-1 block text-sm font-semibold text-[#315d56]">
 
                   Partner Password *
 
@@ -781,7 +1177,7 @@ const PartnerManagement = () => {
 
                   placeholder="Create a secure password"
 
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
 
                 />
 
@@ -796,7 +1192,7 @@ const PartnerManagement = () => {
 
                 disabled={submitting}
 
-                className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+                className="w-full rounded-xl bg-[#0b514a] px-4 py-3 font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
 
               >
 
@@ -820,55 +1216,144 @@ const PartnerManagement = () => {
 
           <section className="lg:col-span-2">
 
-            <div className="rounded-2xl bg-white shadow-sm">
+            <div className="rounded-2xl border border-[#e3e9e3] bg-white shadow-sm">
 
 
-              <div className="border-b border-slate-200 p-6">
+              <div className="border-b border-[#e3e9e3] p-6">
 
-                <h2 className="text-xl font-bold text-slate-800">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
-                  Available Partners
+                  <div>
 
-                </h2>
+                    <h2 className="text-xl font-bold text-[#173d3a]">
+
+                      Available Partners
+
+                    </h2>
 
 
-                <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-[#71827c]">
 
-                  {partners.length} partner
+                      {filteredPartners.length} partner
 
-                  {partners.length !== 1
-                    ? "s"
-                    : ""}
+                      {filteredPartners.length !== 1
+                        ? "s"
+                        : ""}
 
-                  {" "}available for assignment.
+                      {" "}available for assignment.
 
-                </p>
+                    </p>
+
+                  </div>
+
+
+                  <button
+
+                    type="button"
+
+                    onClick={handleDownloadCredentials}
+
+                    disabled={downloading}
+
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b514a] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
+
+                  >
+
+                    {downloading
+
+                      ? "Downloading..."
+
+                      : "📥 Download Credentials"}
+
+                  </button>
+
+                </div>
+
+
+                {/* ========================================
+                    SEARCH + FILTER
+                ======================================== */}
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+
+                  <input
+
+                    type="text"
+
+                    value={searchTerm}
+
+                    onChange={(event) =>
+                      setSearchTerm(event.target.value)
+                    }
+
+                    placeholder="Search by name, location or email..."
+
+                    className="flex-1 rounded-xl border border-[#dbe5df] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+
+                  />
+
+
+                  <select
+
+                    value={filterType}
+
+                    onChange={(event) =>
+                      setFilterType(event.target.value)
+                    }
+
+                    className="rounded-xl border border-[#dbe5df] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+
+                  >
+
+                    <option value="all">
+                      All Types
+                    </option>
+
+                    <option value="university">
+                      Universities
+                    </option>
+
+                    <option value="industry">
+                      Industries
+                    </option>
+
+                    <option value="ngo">
+                      NGOs
+                    </option>
+
+                    <option value="government">
+                      Government
+                    </option>
+
+                  </select>
+
+                </div>
 
               </div>
 
 
               {loading ? (
 
-                <div className="p-10 text-center text-slate-500">
+                <div className="p-10 text-center text-[#71827c]">
 
                   Loading partners...
 
                 </div>
 
-              ) : partners.length === 0 ? (
+              ) : filteredPartners.length === 0 ? (
 
-                <div className="p-10 text-center text-slate-500">
+                <div className="p-10 text-center text-[#71827c]">
 
-                  No partners have been added yet.
+                  No partners match your search.
 
                 </div>
 
               ) : (
 
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-[#eef2ee]">
 
 
-                  {partners.map(
+                  {filteredPartners.map(
                     (partner) => (
 
                       <div
@@ -887,14 +1372,14 @@ const PartnerManagement = () => {
 
                           <div className="flex flex-wrap items-center gap-3">
 
-                            <h3 className="text-lg font-bold text-slate-800">
+                            <h3 className="text-lg font-bold text-[#173d3a]">
 
                               {partner.name}
 
                             </h3>
 
 
-                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
+                            <span className="rounded-full bg-[#d8ebe4] px-3 py-1 text-xs font-semibold capitalize text-[#087f70]">
 
                               {partner.type}
 
@@ -907,7 +1392,7 @@ const PartnerManagement = () => {
 
                           {partner.description && (
 
-                            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
+                            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#5c6f69]">
 
                               {partner.description}
 
@@ -918,7 +1403,7 @@ const PartnerManagement = () => {
 
                           {/* DETAILS */}
 
-                          <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
+                          <div className="mt-3 flex flex-wrap gap-4 text-sm text-[#71827c]">
 
 
                             {partner.location && (
@@ -949,27 +1434,125 @@ const PartnerManagement = () => {
 
                           {partner.user && (
 
-                            <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
+                            <div className="mt-3 rounded-lg bg-[#f2f5f1] p-3 text-sm">
 
-                              <p className="font-semibold text-slate-700">
+                              <p className="font-semibold text-[#315d56]">
 
                                 Partner Login Account
 
                               </p>
 
 
-                              <p className="mt-1 text-slate-500">
+                              <p className="mt-1 text-[#71827c]">
 
                                 👤 {partner.user.name}
 
                               </p>
 
 
-                              <p className="text-slate-500">
+                              <p className="text-[#71827c]">
 
                                 ✉️ {partner.user.email}
 
                               </p>
+
+
+                              {/* PASSWORD */}
+
+                              {/* The DB stores only a bcrypt hash;
+                                  the plaintext comes from the admin
+                                  credentials vault when available. */}
+
+                              {partner.credentials?.password ? (
+
+                                <div className="mt-1 flex items-center gap-2 text-[#71827c]">
+
+                                  <span>
+
+                                    🔑{" "}
+
+                                    {revealedIds[partner._id]
+
+                                      ? partner.credentials.password
+
+                                      : "••••••••"}
+
+                                  </span>
+
+
+                                  <button
+
+                                    type="button"
+
+                                    onClick={() =>
+
+                                      togglePasswordVisibility(partner._id)
+
+                                    }
+
+                                    className="text-xs font-semibold text-[#0b6b60] hover:underline"
+
+                                  >
+
+                                    {revealedIds[partner._id]
+
+                                      ? "Hide"
+
+                                      : "Show"}
+
+                                  </button>
+
+                                </div>
+
+                              ) : (
+
+                                <p className="mt-1 text-xs italic text-[#a1aca7]">
+
+                                  🔑 Password available in the
+
+                                  credentials download.
+
+                                </p>
+
+                              )}
+
+                            </div>
+
+                          )}
+
+
+                          {/* AI ROUTING PROFILE TAGS */}
+
+                          {(partner.expertise?.length > 0 ||
+                            partner.capabilities?.length > 0) && (
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+
+                              {partner.expertise?.map((tag) => (
+
+                                <span
+                                  key={`exp-${tag}`}
+                                  className="rounded-full bg-[#d8ebe4] px-3 py-1 text-xs font-semibold text-[#087f70]"
+                                >
+
+                                  {tag.replace(/_/g, " ")}
+
+                                </span>
+
+                              ))}
+
+                              {partner.capabilities?.map((tag) => (
+
+                                <span
+                                  key={`cap-${tag}`}
+                                  className="rounded-full bg-[#31527c]/10 px-3 py-1 text-xs font-semibold text-[#31527c]"
+                                >
+
+                                  {tag.replace(/_/g, " ")}
+
+                                </span>
+
+                              ))}
 
                             </div>
 
@@ -988,7 +1571,7 @@ const PartnerManagement = () => {
 
                               rel="noreferrer"
 
-                              className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:text-blue-700"
+                              className="mt-3 inline-block text-sm font-semibold text-[#0b6b60] hover:text-[#087f70]"
 
                             >
 

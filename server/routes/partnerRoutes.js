@@ -5,6 +5,7 @@ const {
   getAllPartners,
   getPartnerById,
   deletePartner,
+  getPartnerDirectory,
 } = require("../controllers/partnerController");
 
 const {
@@ -35,6 +36,21 @@ router.get(
   protect,
   authorizeRoles("admin"),
   getAllPartners
+);
+
+
+// ========================================
+// PARTNER DIRECTORY
+// ========================================
+// Must be declared before "/:id" so "directory" is not
+// treated as an id. Universities use this to pick partners
+// when inviting collaborators onto a project.
+
+router.get(
+  "/directory",
+  protect,
+  authorizeRoles("partner"),
+  getPartnerDirectory
 );
 
 

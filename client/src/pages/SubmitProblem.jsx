@@ -202,8 +202,14 @@ const SubmitProblem = () => {
         // ========================================
         // AUTO SELECT CATEGORY
         // ========================================
+        // Only when the AI is reasonably sure. On "uncertain" the card
+        // still shows the guess, but the dropdown is left alone so the
+        // citizen makes the call — silently selecting a low-confidence
+        // category is how a wrong one ends up submitted unnoticed.
 
-        if (formCategory && !manualCategoryChange.current) {
+        const confident = result.suggestionLevel !== "uncertain";
+
+        if (formCategory && confident && !manualCategoryChange.current) {
           setFormData((currentData) => ({
             ...currentData,
 
@@ -543,16 +549,16 @@ const SubmitProblem = () => {
   const renderAISuggestion = () => {
     if (aiLoading) {
       return (
-        <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+        <div className="mt-3 rounded-xl border border-[#cfe4dc] bg-[#e9f4f0] p-4">
           <div className="flex items-center gap-3">
             <span className="animate-pulse text-xl">🤖</span>
 
             <div>
-              <p className="font-semibold text-blue-800">
+              <p className="font-semibold text-[#0a4f47]">
                 AI is analyzing your problem...
               </p>
 
-              <p className="mt-1 text-sm text-blue-600">
+              <p className="mt-1 text-sm text-[#0b6b60]">
                 Finding the most relevant category.
               </p>
             </div>
@@ -565,25 +571,55 @@ const SubmitProblem = () => {
       return null;
     }
 
+    // The service reports how much to trust the guess. On "uncertain" the
+    // dropdown was deliberately not auto-filled, so say so plainly instead
+    // of presenting the guess as if it were settled.
+    const unsure = aiSuggestionLevel === "uncertain";
+
     return (
-      <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+      <div
+        className={
+          unsure
+            ? "mt-3 rounded-xl border border-[#ecd9b8] bg-[#faf3e3] p-4"
+            : "mt-3 rounded-xl border border-[#cfe4dc] bg-[#e9f4f0] p-4"
+        }
+      >
         <div className="flex items-start gap-3">
           <span className="text-xl">🤖</span>
 
           <div className="flex-1">
-            <p className="font-semibold text-slate-800">
-              AI suggests:
-              <span className="ml-1 text-blue-600">{aiSuggestion}</span>
+            <p className="font-semibold text-[#173d3a]">
+              {unsure ? "AI is not sure — closest guess:" : "AI suggests:"}
+
+              <span
+                className={
+                  unsure ? "ml-1 text-[#a25a1b]" : "ml-1 text-[#0b6b60]"
+                }
+              >
+                {aiSuggestion}
+              </span>
             </p>
 
-            <p className="mt-1 text-sm text-slate-500">
-              This suggestion is based on your title and description.
-            </p>
+            {unsure ? (
+              <p className="mt-1 text-sm text-[#5c6f69]">
+                Please choose the category yourself, or add a little more
+                detail to the description so the AI can do better.
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-[#71827c]">
+                  This suggestion is based on your title and description.
+                  {aiSuggestionLevel === "moderate"
+                    ? " It was a close call between a few categories."
+                    : ""}
+                </p>
 
-            <p className="mt-1 text-sm text-slate-500">
-              You can change the category if you think another category is more
-              appropriate.
-            </p>
+                <p className="mt-1 text-sm text-[#71827c]">
+                  You can change the category if you think another category is
+                  more appropriate.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -595,18 +631,18 @@ const SubmitProblem = () => {
   // ========================================
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-10">
+    <div className="min-h-screen bg-[#f7f8f5] px-4 py-10">
       <div className="mx-auto max-w-2xl">
         {/* ========================================
             PAGE HEADING
         ======================================== */}
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-3xl font-bold text-[#173d3a]">
             Submit a Problem
           </h1>
 
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-[#71827c]">
             Tell us about a challenge in your community.
           </p>
         </div>
@@ -615,14 +651,14 @@ const SubmitProblem = () => {
             FORM CARD
         ======================================== */}
 
-        <div className="rounded-2xl bg-white p-8 shadow-lg">
+        <div className="rounded-2xl border border-[#e3e9e3] bg-white p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* ========================================
                 TITLE
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Problem Title
               </label>
 
@@ -633,7 +669,7 @@ const SubmitProblem = () => {
                 onChange={handleChange}
                 placeholder="Example: Flooding near village roads"
                 required
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-lg border border-[#dbe5df] px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
               />
             </div>
 
@@ -642,7 +678,7 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Description
               </label>
 
@@ -653,7 +689,7 @@ const SubmitProblem = () => {
                 placeholder="Describe the problem in detail..."
                 rows="5"
                 required
-                className="w-full resize-none rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full resize-none rounded-lg border border-[#dbe5df] px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
               />
             </div>
 
@@ -662,7 +698,7 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Category
               </label>
 
@@ -671,7 +707,7 @@ const SubmitProblem = () => {
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-lg border border-[#dbe5df] bg-white px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
               >
                 <option value="">Select a category</option>
 
@@ -710,7 +746,7 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Problem Location
               </label>
 
@@ -737,11 +773,11 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Problem Photos
               </label>
 
-              <p className="mb-3 text-sm text-slate-500">
+              <p className="mb-3 text-sm text-[#71827c]">
                 Add up to 3 photos showing the problem. Each photo must be under
                 5 MB.
               </p>
@@ -753,14 +789,14 @@ const SubmitProblem = () => {
                 multiple
                 onChange={handleImageChange}
                 disabled={loading || images.length >= 3}
-                className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full cursor-pointer rounded-lg border border-[#dbe5df] bg-white px-4 py-3 text-sm text-[#5c6f69] file:mr-4 file:rounded-md file:border-0 file:bg-[#e9f4f0] file:px-4 file:py-2 file:font-semibold file:text-[#087f70] hover:file:bg-[#d8ebe4]"
               />
 
               {/* ========================================
                   IMAGE COUNT
               ======================================== */}
 
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-[#71827c]">
                 {images.length}/3 photos selected
               </p>
 
@@ -776,7 +812,7 @@ const SubmitProblem = () => {
                     return (
                       <div
                         key={`${image.name}-${image.lastModified}-${index}`}
-                        className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                        className="relative overflow-hidden rounded-xl border border-[#e3e9e3] bg-[#f2f5f1]"
                       >
                         <img
                           src={previewUrl}
@@ -795,7 +831,7 @@ const SubmitProblem = () => {
                           ✕
                         </button>
 
-                        <p className="truncate px-2 py-2 text-xs text-slate-600">
+                        <p className="truncate px-2 py-2 text-xs text-[#5c6f69]">
                           {image.name}
                         </p>
                       </div>
@@ -810,7 +846,7 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Approx. People Affected
               </label>
 
@@ -822,10 +858,10 @@ const SubmitProblem = () => {
                 min="0"
                 placeholder="Example: 5000"
                 required
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-lg border border-[#dbe5df] px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
               />
 
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-[#71827c]">
                 This helps the government prioritize high-impact problems.
               </p>
             </div>
@@ -835,7 +871,7 @@ const SubmitProblem = () => {
             ======================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                 Problem Severity
               </label>
 
@@ -844,7 +880,7 @@ const SubmitProblem = () => {
                 value={formData.severity}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-lg border border-[#dbe5df] bg-white px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
               >
                 <option value="low">Low</option>
 
@@ -863,7 +899,7 @@ const SubmitProblem = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+              className="w-full rounded-lg bg-[#0b514a] px-4 py-3 font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
             >
               {loading ? "Submitting..." : "Submit Problem"}
             </button>
@@ -877,7 +913,7 @@ const SubmitProblem = () => {
             <div
               className={`mt-6 rounded-lg p-4 text-center font-medium ${
                 messageType === "success"
-                  ? "bg-green-50 text-green-700"
+                  ? "bg-[#e9f4f0] text-[#087f70]"
                   : "bg-red-50 text-red-700"
               }`}
             >

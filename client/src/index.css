@@ -1,1 +1,463 @@
 @import "tailwindcss";
+
+/* ============================================================
+   SamasyaSetu — global type + motion layer
+   Palette: teal #0b514a / forest #173d3a / gold #e9c985
+   ============================================================ */
+
+:root {
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* ---------- Keyframes ---------- */
+
+@keyframes ss-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ss-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ss-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ss-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(1.5deg);
+  }
+}
+
+@keyframes ss-float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(24px, -30px) scale(1.06);
+  }
+  66% {
+    transform: translate(-18px, 16px) scale(0.96);
+  }
+}
+
+@keyframes ss-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ss-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ss-dash-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@keyframes ss-pulse-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes ss-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes ss-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Reveal on scroll ---------- */
+
+.ss-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--ss-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.ss-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ---------- Hero entrance ---------- */
+
+.ss-enter {
+  opacity: 0;
+  animation: ss-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--ss-delay, 0ms);
+}
+
+/* ---------- Word-by-word headline ---------- */
+
+.ss-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.9em) rotate(2deg);
+  animation: ss-fade-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--ss-delay, 0ms);
+}
+
+/* ---------- Orbs / atmosphere ---------- */
+
+.ss-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  animation: ss-float-slow 14s ease-in-out infinite;
+}
+
+.ss-float {
+  animation: ss-float 7s ease-in-out infinite;
+  animation-delay: var(--ss-delay, 0ms);
+}
+
+/* ---------- Marquee ---------- */
+
+.ss-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: ss-marquee 32s linear infinite;
+}
+
+.ss-marquee:hover .ss-marquee-track {
+  animation-play-state: paused;
+}
+
+/* ---------- Bridge path ---------- */
+
+.ss-bridge-path {
+  stroke-dasharray: 620;
+  stroke-dashoffset: 620;
+  animation: ss-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) 1.2s forwards;
+}
+
+.ss-bridge-dash {
+  stroke-dasharray: 4 10;
+  animation: ss-dash-flow 1.6s linear infinite;
+}
+
+/* ---------- Shimmer text ---------- */
+
+.ss-shimmer {
+  background: linear-gradient(
+    110deg,
+    #e9c985 20%,
+    #fff6df 40%,
+    #e9c985 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ss-shimmer 4.5s linear infinite;
+}
+
+/* ---------- Card shine sweep ---------- */
+
+.ss-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.ss-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(233, 201, 133, 0.18) 48%,
+    rgba(255, 255, 255, 0.28) 52%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.9s ease;
+  pointer-events: none;
+}
+
+.ss-card:hover::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Grain overlay ---------- */
+
+.ss-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+}
+
+/* ---------- Timeline connector ---------- */
+
+@keyframes ss-timeline-grow {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.ss-timeline-line {
+  transform-origin: top;
+  transform: scaleY(0);
+  animation: ss-timeline-grow 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.4s forwards;
+}
+
+/* ---------- Slow spin (decorative ring) ---------- */
+
+.ss-spin-slow {
+  animation: ss-spin-slow 22s linear infinite;
+}
+
+/* ---------- Smooth anchor scroll ---------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================================
+   Dashboard design layer — shared by Citizen / Admin / Partner
+   ============================================================ */
+
+/* ---------- Page hero banner ---------- */
+
+.ss-dash-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    120deg,
+    #0b514a 0%,
+    #0d5f55 55%,
+    #173d3a 100%
+  );
+  color: #fff;
+  isolation: isolate;
+}
+
+.ss-dash-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.14) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+  mask-image: linear-gradient(
+    to bottom right,
+    rgba(0, 0, 0, 0.9),
+    transparent 65%
+  );
+}
+
+.ss-dash-hero::after {
+  content: "";
+  position: absolute;
+  top: -70px;
+  right: -40px;
+  width: 280px;
+  height: 280px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(233, 201, 133, 0.35),
+    transparent 70%
+  );
+  filter: blur(24px);
+  pointer-events: none;
+  animation: ss-float-slow 12s ease-in-out infinite;
+}
+
+.ss-hero-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 1px solid rgba(233, 201, 133, 0.25);
+  pointer-events: none;
+}
+
+/* ---------- Stat card ---------- */
+
+.ss-stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid #e3e9e3;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 61, 58, 0.05);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.25s ease;
+}
+
+.ss-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--ss-accent, linear-gradient(90deg, #0b514a, #62a99b));
+  opacity: 0.85;
+}
+
+.ss-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: #c6d8d1;
+  box-shadow: 0 12px 28px -12px rgba(23, 61, 58, 0.22);
+}
+
+.ss-stat-card.is-active {
+  border-color: #0b6b60;
+  box-shadow:
+    0 0 0 2px rgba(11, 107, 96, 0.18),
+    0 10px 24px -12px rgba(23, 61, 58, 0.25);
+}
+
+.ss-stat-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Progress track ---------- */
+
+.ss-progress-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: #eef2ee;
+  overflow: hidden;
+}
+
+.ss-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #0b514a, #0d8a7a);
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------- Skeleton loading ---------- */
+
+@keyframes ss-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.ss-skeleton {
+  border-radius: 0.75rem;
+  background: linear-gradient(
+    100deg,
+    #eef2ee 30%,
+    #f7f8f5 50%,
+    #eef2ee 70%
+  );
+  background-size: 200% 100%;
+  animation: ss-shimmer 1.6s linear infinite;
+}
+
+/* ---------- Status accent edge for list rows / cards ---------- */
+
+.ss-accent-edge {
+  position: relative;
+}
+
+.ss-accent-edge::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 4px;
+  border-radius: 9999px;
+  background: var(--ss-edge, #d8ebe4);
+  opacity: 0.9;
+  transition:
+    top 0.25s ease,
+    bottom 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.ss-accent-edge:hover::before {
+  top: 0;
+  bottom: 0;
+}

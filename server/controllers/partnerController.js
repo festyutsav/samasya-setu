@@ -1,6 +1,48 @@
 const Partner = require("../models/Partner");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const path = require("path");
+
+// ========================================
+// PARTNER CREDENTIALS VAULT
+// ========================================
+// Partner passwords are bcrypt-hashed in the database, so the
+// only place the plaintext survives is this admin-owned JSON
+// file (the same file the seed script writes). Every partner
+// created from the admin panel is appended here so the
+// "Download Credentials" export stays complete.
+
+const credentialsFilePath = () =>
+  path.join(__dirname, "..", "scripts", "partner_credentials.json");
+
+const readCredentialsFile = () => {
+  try {
+    return JSON.parse(
+      fs.readFileSync(credentialsFilePath(), "utf8"),
+    );
+  } catch {
+    return [];
+  }
+};
+
+const appendCredentialsEntry = (entry) => {
+  const credentials = readCredentialsFile();
+
+  const others = credentials.filter(
+    (item) =>
+      String(item.name || "").toLowerCase() !==
+      String(entry.name || "").toLowerCase(),
+  );
+
+  others.push(entry);
+
+  fs.writeFileSync(
+    credentialsFilePath(),
+    JSON.stringify(others, null, 2),
+    "utf8",
+  );
+};
 
 
 // ========================================
@@ -18,11 +60,30 @@ const createPartner = async (req, res) => {
       email,
       website,
 
+      // AI routing profile (arrays or comma-separated strings)
+      expertise,
+      capabilities,
+      districtsServed,
+
       // Partner login details
       userName,
       userEmail,
       password,
     } = req.body;
+
+
+    // ========================================
+    // NORMALIZE ROUTING PROFILE
+    // ========================================
+    // Accepts ["a", "b"] or "a, b" from the admin form.
+
+    const toList = (value) =>
+      Array.isArray(value)
+        ? value.map((item) => String(item).trim()).filter(Boolean)
+        : String(value || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
 
 
     // ========================================
@@ -73,6 +134,9 @@ const createPartner = async (req, res) => {
       location,
       email,
       website,
+      expertise: toList(expertise),
+      capabilities: toList(capabilities),
+      districtsServed: toList(districtsServed),
     });
 
 
@@ -109,12 +173,52 @@ const createPartner = async (req, res) => {
 
 
     // ========================================
+    // RECORD CREDENTIALS
+    // ========================================
+    // The DB only keeps the hash. Store the plaintext in the
+    // admin credentials vault so the login can actually be
+    // handed over and re-exported later.
+
+    const credentialsEntry = {
+      name: partner.name,
+      type: partner.type,
+      loginEmail: user.email,
+      password,
+      email: partner.email || "",
+      website: partner.website || "",
+      location: partner.location || "",
+      description: partner.description || "",
+      expertise: partner.expertise || [],
+      capabilities: partner.capabilities || [],
+      districtsServed: partner.districtsServed || [],
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      appendCredentialsEntry(credentialsEntry);
+    } catch (vaultError) {
+      console.error(
+        "Failed to update credentials vault:",
+        vaultError.message,
+      );
+    }
+
+    // ========================================
     // SUCCESS RESPONSE
     // ========================================
 
     return res.status(201).json({
       message:
         "Partner and partner login created successfully.",
+
+      // One-time view of the plaintext credentials — the UI
+      // shows these immediately and offers a copyable record.
+
+      credentials: {
+        loginEmail: user.email,
+
+        password,
+      },
 
       partner: {
         ...partner.toObject(),
@@ -160,9 +264,41 @@ const getAllPartners = async (req, res) => {
         createdAt: -1,
       });
 
+    // ========================================
+    // ATTACH LOGIN CREDENTIALS (ADMIN ONLY)
+    // ========================================
+    // The DB stores only bcrypt hashes, so the plaintext
+    // password is looked up from the credentials vault by
+    // organization name. Admin-only route, same exposure as
+    // the credentials download.
+
+    const vault = readCredentialsFile();
+
+    const passwordByName = new Map(
+      vault.map((entry) => [
+        String(entry.name || "").toLowerCase(),
+        entry,
+      ]),
+    );
+
+    const partnersWithCredentials = partners.map((partner) => {
+      const entry = passwordByName.get(
+        String(partner.name || "").toLowerCase(),
+      );
+
+      return {
+        ...partner.toObject(),
+
+        credentials: entry
+          ? {
+              password: entry.password || null,
+            }
+          : null,
+      };
+    });
 
     return res.status(200).json({
-      partners,
+      partners: partnersWithCredentials,
     });
 
   } catch (error) {
@@ -273,6 +409,41 @@ const deletePartner = async (req, res) => {
 
 
 // ========================================
+// PARTNER DIRECTORY (PARTNER ONLY)
+// ========================================
+// Lightweight listing used by universities when inviting
+// industry partners into a project collaboration. Returns
+// only the fields needed for the invite dropdown — no login
+// links or admin-only details.
+
+const getPartnerDirectory = async (req, res) => {
+  try {
+
+    const partners = await Partner.find()
+      .select("name type description location expertise capabilities")
+      .sort({ name: 1 });
+
+    return res.status(200).json({
+      partners,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Get partner directory error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while fetching partner directory.",
+    });
+
+  }
+};
+
+
+// ========================================
 // EXPORTS
 // ========================================
 
@@ -281,4 +452,5 @@ module.exports = {
   getAllPartners,
   getPartnerById,
   deletePartner,
+  getPartnerDirectory,
 };

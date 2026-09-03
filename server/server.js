@@ -13,6 +13,8 @@ dotenv.config();
 
 const connectDB = require("./config/db");
 const app = require("./app");
+const { initModel } = require("./services/aiCategoryService");
+const { getExtractor } = require("./services/embeddingModel");
 
 
 // ========================================
@@ -20,6 +22,20 @@ const app = require("./app");
 // ========================================
 
 connectDB();
+
+
+// ========================================
+// PRE-WARM AI MODELS
+// ========================================
+// Category classification and duplicate detection share one
+// embedding model. Loading it here means the first citizen
+// submission doesn't pay the model download cost.
+
+getExtractor()
+  .then(() => initModel())
+  .catch((err) => {
+    console.error("Failed to pre-warm AI model:", err.message);
+  });
 
 
 // ========================================
