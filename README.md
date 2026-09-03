@@ -248,15 +248,6 @@ node scripts/testRoutingSuggestions.js
 
 ---
 
-## 💼 Resume & Interview Talking Points
-
-* **Engineered Multi-Role RBAC**: Architected an enterprise portal serving Citizens, Universities, Industry Partners, and Government Admins with JWT session security and role-specific UI routing.
-* **On-Device Machine Learning**: Embedded HuggingFace NLP models directly into Node.js to deliver 89% category classification accuracy and semantic routing without recurring SaaS costs.
-* **Geospatial civic intelligence**: Utilized MongoDB 2dsphere indexing and the Haversine formula to detect duplicate complaints within a 5 km radius, preventing administrative fatigue.
-* **Full-Stack Performance**: Optimized the client bundle to build in **139ms** and hardware-accelerated animations using `translate3d` and `will-change` for zero-lag rendering.
-* **Civic Technology Impact**: Designed to bridge NEP 2020 experiential learning goals with real-world district challenges across all 24 districts of Jharkhand.
-
----
 
 ## 📄 License & Attribution
 Developed for the **Smart India Hackathon (SIH)**.  
