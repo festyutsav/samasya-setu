@@ -101,14 +101,30 @@ const projectSchema = new mongoose.Schema(
           required: true,
         },
 
-        // Invite lifecycle: the invited partner accepts or
-        // declines; the lead can withdraw an invitation or
-        // remove an active collaborator.
+        // Invite lifecycle: the lead can invite a partner
+        // ("invited") or a partner can ask to join ("requested").
+        // The receiving side accepts or declines; the lead can
+        // withdraw an invitation or remove an active collaborator.
 
         status: {
           type: String,
-          enum: ["invited", "accepted", "declined", "withdrawn"],
+          enum: [
+            "invited",
+            "requested",
+            "accepted",
+            "declined",
+            "withdrawn",
+          ],
           default: "invited",
+        },
+
+        // Note attached when a partner requests to join.
+
+        message: {
+          type: String,
+          trim: true,
+          default: "",
+          maxlength: 500,
         },
 
         contributions: [
@@ -175,8 +191,50 @@ const projectSchema = new mongoose.Schema(
           type: Boolean,
           default: false,
         },
+
+        // Target date; surfaced as "overdue" on the workspace
+        // and the government dashboard when past and incomplete.
+
+        dueDate: {
+          type: Date,
+          default: null,
+        },
       },
     ],
+
+    // ========================================
+    // INNOVATION OUTCOMES
+    // ========================================
+    // Measurable results of the project, updated by the lead
+    // university and monitored on the government analytics
+    // dashboard (PS: "innovation outcomes, patents, startups
+    // created, and community impact").
+
+    outcomes: {
+      patents: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      startups: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      publications: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      deployments: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+    },
 
     // ========================================
     // AUDIT

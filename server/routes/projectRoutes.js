@@ -3,12 +3,16 @@ const express = require("express");
 const {
   createProject,
   getMyProjects,
+  getProjectById,
   updateProjectStatus,
+  updateProjectOutcomes,
   toggleMilestone,
+  setMilestoneDueDate,
   inviteCollaborator,
   respondToInvite,
   withdrawCollaborator,
   addContribution,
+  requestCollaboration,
 } = require("../controllers/projectController");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
@@ -27,6 +31,11 @@ router.post("/", createProject);
 
 router.get("/mine", getMyProjects);
 
+// Fetch a single project (shared workspace — lead and live
+// collaborators only, enforced in the controller)
+
+router.get("/:id", getProjectById);
+
 // Update a project's status
 
 router.patch("/:id/status", updateProjectStatus);
@@ -35,6 +44,14 @@ router.patch("/:id/status", updateProjectStatus);
 
 router.patch("/:id/milestones", toggleMilestone);
 
+// Set a milestone's due date (lead university only)
+
+router.patch("/:id/milestones/due-date", setMilestoneDueDate);
+
+// Record innovation outcomes (lead university only)
+
+router.patch("/:id/outcomes", updateProjectOutcomes);
+
 // ========================================
 // INDUSTRY / PARTNER COLLABORATION
 // ========================================
@@ -42,6 +59,10 @@ router.patch("/:id/milestones", toggleMilestone);
 // Invite an industry partner into a role (lead university only)
 
 router.post("/:id/collaborators", inviteCollaborator);
+
+// Request to join a project (partner-initiated, lead responds)
+
+router.post("/:id/requests", requestCollaboration);
 
 // Accept or decline an invitation (invited partner only)
 

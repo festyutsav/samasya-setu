@@ -1,7 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL =
-  "http://127.0.0.1:5001/api/problems";
+const API_URL = `${API_BASE_URL}/api/problems`;
 
 // ================= UPDATE PROBLEM STATUS =================
 
@@ -123,6 +123,25 @@ export const rerunRouting = async (
 };
 
 
+// ================= GOVERNMENT ANALYTICS =================
+// Single aggregation endpoint powering the analytics dashboard:
+// domain-wise distribution, district coverage, partner
+// participation and completion rates.
+
+export const getAdminAnalytics = async (token) => {
+  const response = await axios.get(
+    `${API_BASE_URL}/api/admin/analytics`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+
 // ================= DOWNLOAD PARTNER CREDENTIALS =================
 // The endpoint is admin-authenticated, so a plain window.open()
 // would open an unauthorized request and fail. Fetching as a
@@ -131,7 +150,7 @@ export const rerunRouting = async (
 
 export const downloadPartnerCredentials = async (token) => {
   const response = await axios.get(
-    "http://127.0.0.1:5001/api/admin/partners/credentials",
+    `${API_BASE_URL}/api/admin/partners/credentials`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -141,4 +160,20 @@ export const downloadPartnerCredentials = async (token) => {
   );
 
   return response;
+};
+
+
+// ================= DELETE PROBLEM (ADMIN) =================
+
+export const deleteProblemByAdmin = async (problemId, token) => {
+  const response = await axios.delete(
+    `${API_URL}/${problemId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
 };

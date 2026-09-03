@@ -6,6 +6,7 @@ import {
   updateProblemStatus,
   assignPartnerToProblem,
   rerunRouting,
+  deleteProblemByAdmin,
 } from "../services/adminService";
 
 import { getAllPartners } from "../services/partnerService";
@@ -13,6 +14,14 @@ import { getAllPartners } from "../services/partnerService";
 import AIDuplicateAnalysisCard from "../components/AIDuplicateAnalysisCard";
 
 import ProposalList from "../components/ProposalList";
+
+import ProblemEvidence from "../components/ProblemEvidence";
+
+import LifecycleStepper from "../components/LifecycleStepper";
+
+import ResolutionProof from "../components/ResolutionProof";
+
+import ExportBriefButton from "../components/ExportBriefButton";
 
 const statusStyles = {
   submitted: "bg-[#f7ebd8] text-[#a25a1b]",
@@ -68,6 +77,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   const [suggestedPartners, setSuggestedPartners] = useState([]);
 
   const [routing, setRouting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // ========================================
   // FETCH DATA
@@ -272,6 +282,34 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   };
 
   // ========================================
+  // DELETE PROBLEM (ADMIN)
+  // ========================================
+
+  const handleDeleteProblem = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete this problem?\n\n"${problem?.title}"\n\nThis cannot be undone and will remove all associated projects, proposals, and records.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+      setMessage("");
+
+      const token = localStorage.getItem("token");
+      await deleteProblemByAdmin(problemId, token);
+
+      // Return to dashboard
+      setAdminPage("dashboard");
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to delete problem."
+      );
+      setDeleting(false);
+    }
+  };
+
+  // ========================================
   // LOADING
   // ========================================
 
@@ -315,14 +353,49 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   return (
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* BACK BUTTON */}
+        {/* TOP BAR */}
 
-        <button
-          onClick={() => setAdminPage("dashboard")}
-          className="mb-8 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
-        >
-          ← Back to Dashboard
-        </button>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <button
+            onClick={() => setAdminPage("dashboard")}
+            className="text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
+          >
+            ← Back to Dashboard
+          </button>
+
+          <div className="flex items-center gap-3">
+            <ExportBriefButton />
+
+            <button
+              type="button"
+              onClick={handleDeleteProblem}
+              disabled={deleting}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              title="Permanently delete this problem and associated records"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>{deleting ? "Deleting..." : "Delete Problem"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* LIFECYCLE PROGRESS STEPPER */}
+
+        <LifecycleStepper
+          status={problem.status}
+          assignedPartner={problem.assignedPartner}
+          createdAt={problem.createdAt}
+          updatedAt={problem.updatedAt}
+          className="mb-8"
+        />
 
         {/* MESSAGE */}
 
@@ -472,6 +545,12 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
               </div>
             </section>
           )}
+
+          {/* ========================================
+              VIDEO + DOCUMENT EVIDENCE
+          ======================================== */}
+
+          <ProblemEvidence problem={problem} className="mt-8" />
 
           {/* INFORMATION GRID */}
 
@@ -744,6 +823,9 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
             </div>
           </section>
         </article>
+
+        {/* RESOLUTION PROOF (SOLVED CHALLENGES) */}
+        <ResolutionProof problem={problem} className="mt-8" />
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import {
   getMyProblems,
   deleteMyProblem,
 } from "../services/myProblemService";
+import { MiniLifecycleBar } from "../components/LifecycleStepper";
 
 
 // ========================================
@@ -536,10 +537,12 @@ const MyProblems = ({
 
                   {/* CATEGORY */}
 
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                     <span className="inline-flex rounded-full bg-[#d8ebe4] px-3 py-1 text-xs font-medium text-[#087f70]">
                       {categoryNames[problem.category] || "Other"}
                     </span>
+
+                    <MiniLifecycleBar status={problem.status} />
                   </div>
 
                   {/* AI SUMMARY */}
