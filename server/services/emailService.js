@@ -14,6 +14,22 @@ const getTransporter = () => {
 
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SERVICE } = process.env;
 
+  // Dedicated direct SSL port 465 for Gmail (works reliably on cloud hosts like Render)
+  if (SMTP_USER && SMTP_PASS && (SMTP_SERVICE === "gmail" || (!SMTP_HOST && SMTP_USER.includes("@gmail")))) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+      connectionTimeout: 5000,
+      greetingTimeout: 4000,
+      socketTimeout: 5000,
+    });
+  }
+
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     return nodemailer.createTransport({
       host: SMTP_HOST,
@@ -23,16 +39,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-    });
-  }
-
-  if (SMTP_SERVICE && SMTP_USER && SMTP_PASS) {
-    return nodemailer.createTransport({
-      service: SMTP_SERVICE,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
+      connectionTimeout: 5000,
+      greetingTimeout: 4000,
+      socketTimeout: 5000,
     });
   }
 
@@ -131,7 +140,7 @@ const sendOtpEmail = async ({ to, name, otp }) => {
 
   if (transporter) {
     try {
-      await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: fromAddress,
         replyTo: `"SamasyaSetu Support" <support@samasyasetu.gov.in>`,
         to,
@@ -140,10 +149,16 @@ const sendOtpEmail = async ({ to, name, otp }) => {
         html: htmlContent,
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("SMTP handshake timeout")), 6000)
+      );
+
+      await Promise.race([sendPromise, timeoutPromise]);
+
       console.log(`[EMAIL SERVICE] OTP email sent successfully to ${to}`);
       return { sent: true, simulated: false, message: "Verification code sent to your email." };
     } catch (err) {
-      console.warn(`[EMAIL SERVICE] SMTP dispatch failed (${err.message}). Falling back to demo mode.`);
+      console.warn(`[EMAIL SERVICE] SMTP dispatch failed (${err.message}). Falling back to instant code verification.`);
     }
   }
 
