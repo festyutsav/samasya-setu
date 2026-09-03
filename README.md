@@ -1,12 +1,19 @@
 # 🏛️ SamasyaSetu — समस्या सेतु
 ### *Bridging Grassroots Societal Challenges to Academic Innovation & Industry Implementation*
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel_Active-000000.svg?style=for-the-badge&logo=vercel)](https://samasya-setu-peach.vercel.app)
+[![API Status](https://img.shields.io/badge/API_Status-Render_Live-46E3B7.svg?style=for-the-badge&logo=render)](https://samasya-setu-backend.onrender.com)
 [![Smart India Hackathon](https://img.shields.io/badge/SIH-2026-0b514a.svg?style=for-the-badge)](https://sih.gov.in)
 [![Government of Jharkhand](https://img.shields.io/badge/Govt_of-Jharkhand-c9933b.svg?style=for-the-badge)](https://jharkhand.gov.in)
 [![React](https://img.shields.io/badge/React_19-Vite_8-61dafb.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933.svg?style=for-the-badge&logo=node.js)](https://nodejs.org/)
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas_Cluster-47A248.svg?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/atlas)
 [![On-Device AI](https://img.shields.io/badge/AI_Engine-all--MiniLM--L6--v2-8A2BE2.svg?style=for-the-badge)](https://huggingface.co/Xenova/all-MiniLM-L6-v2)
+
+> 🌐 **Official Live Production Platform**:
+> * **Frontend Portal**: [https://samasya-setu-peach.vercel.app](https://samasya-setu-peach.vercel.app)
+> * **Backend API**: [https://samasya-setu-backend.onrender.com](https://samasya-setu-backend.onrender.com)
+> * **System Health**: 🟢 **100% Operational** (Connected to MongoDB Atlas & Nodemailer SMTP)
 
 ---
 
