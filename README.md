@@ -36,15 +36,21 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 
 ## 📸 Visual Interface Showcase
 
-| 🌐 Citizen Hub & Portal Gateway | 🏛️ Government Admin AI Triage |
-| :--- | :--- |
-| ![Landing Gateway](docs/screenshots/landing_page.png) | ![Admin Dashboard](docs/screenshots/admin_dashboard.png) |
-| *Bilingual, high-performance gateway connecting all 4 stakeholders* | *Real-time urgency heatmaps, duplicate triage & institutional routing* |
+<p align="center">
+  <img src="docs/screenshots/landing_page.png" width="49%" alt="Landing Page Gateway" />
+  <img src="docs/screenshots/admin_dashboard.png" width="49%" alt="Admin AI Triage Dashboard" />
+</p>
+<p align="center">
+  <em>(Left) Bilingual portal selection gateway &bull; (Right) State admin AI urgency scoring &amp; 24-district triage</em>
+</p>
 
-| 🎓 University & Industry Workspace | 📜 Problem Details & Verification |
-| :--- | :--- |
-| ![Collaboration Workspace](docs/screenshots/collaboration_workspace.png) | ![Problem Details](docs/screenshots/resolution_proof.png) |
-| *Collaborative R&D workspace with milestones, teams & CSR budgets* | *Active problem review queue, AI urgency tags & evidence inspection* |
+<p align="center">
+  <img src="docs/screenshots/collaboration_workspace.png" width="49%" alt="University R&D Workspace" />
+  <img src="docs/screenshots/resolution_proof.png" width="49%" alt="Problem Management & Verification" />
+</p>
+<p align="center">
+  <em>(Left) University multidisciplinary R&amp;D workspace &bull; (Right) Active problem review queue &amp; evidence inspection</em>
+</p>
 
 ---
 
@@ -52,12 +58,12 @@ At the same time, Jharkhand is home to premier **Higher Education Institutions (
 
 Explore the full platform across all four roles without signing up:
 
-| Portal | Role | Demo Email | Password | Capabilities |
-| :--- | :--- | :--- | :--- | :--- |
-| **🏛️ Government** | State Admin | `admin@example.com` | `admin123` | Full AI triage, 24-district heatmaps, institutional routing |
-| **🎓 University** | Academic Lead | `birla_institute_of_technology_mesra@edu.in` | `bitm@2025` | Solution proposals, multidisciplinary teams, R&D workspace |
-| **🏭 Industry** | CSR Partner | `bokaro_steel_plant@com` | `bsp@2025` | 2% CSR fund pledging, co-development, milestone sign-offs |
-| **👥 Citizen** | Grassroots User | `sunita.devi@example.com` | `citizen123` | Challenge reporting, GPS auto-detect, 5-stage live stepper |
+| Portal | Ecosystem Role | Test Credentials (Email & Pass) | Platform Capabilities |
+| :--- | :--- | :--- | :--- |
+| **🏛️ Government** | State Administrator | `admin@example.com`<br>`admin123` | Full AI triage, 24-district heatmaps, institutional routing |
+| **🎓 University** | Academic Lead / Faculty | `birla_institute_of_technology_mesra@edu.in`<br>`bitm@2025` | Solution proposals, multidisciplinary teams, R&D workspace |
+| **🏭 Industry** | CSR & Innovation Partner | `bokaro_steel_plant@com`<br>`bsp@2025` | 2% CSR fund pledging, co-development, milestone sign-offs |
+| **👥 Citizen** | Grassroots User | `sunita.devi@example.com`<br>`citizen123` | Challenge reporting, GPS auto-detect, 5-stage live stepper |
 
 ---
 
