@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react";
-
-import axios from "axios";
-
-const API_URL =
-  "http://127.0.0.1:5001/api/problems";
+import { useState } from "react";
+import { createProposal } from "../services/proposalService";
 
 // ========================================
 // PROPOSAL FORM
@@ -77,15 +73,7 @@ const ProposalForm = ({
         documents: [],
       };
 
-      const response = await axios.post(
-        `${API_URL}/${problemId}/proposals`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await createProposal(payload, token);
 
       setMessage("Proposal submitted successfully!");
       setMessageType("success");
@@ -103,7 +91,7 @@ const ProposalForm = ({
       });
 
       if (onProposalSubmitted) {
-        onProposalSubmitted(response.data.proposal);
+        onProposalSubmitted(response?.proposal || response);
       }
     } catch (error) {
       console.error("Submit proposal error:", error);

@@ -9,6 +9,7 @@ import {
   getPartnerDirectory,
   inviteCollaborator,
   withdrawCollaborator,
+  respondToCollaboration,
 } from "../services/partnerService";
 
 // ========================================
@@ -37,13 +38,16 @@ const formatStatus = (status) =>
 const formatRole = (role) =>
   (role || "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-// Collaboration invite statuses get their own badge colors,
-// distinct from project status badges.
+// Collaboration invite/request statuses get their own badge
+// colors, distinct from project status badges.
 
 const getCollaborationStyle = (status) => {
   switch (status) {
     case "invited":
       return "bg-[#f7ebd8] text-[#a25a1b]";
+
+    case "requested":
+      return "bg-[#e0d7ef] text-[#564680]";
 
     case "accepted":
       return "bg-[#d8ebe4] text-[#087f70]";
@@ -82,12 +86,30 @@ const emptyForm = {
   milestones: "",
 };
 
-const PartnerProjects = () => {
+const PartnerProjects = ({
+  user,
+  setPartnerPage,
+  setSelectedPartnerProjectId,
+}) => {
   // ========================================
   // STATE
   // ========================================
 
   const [projects, setProjects] = useState([]);
+
+  const currentOrgId = String(
+    user?.organization?.id ||
+    user?.organization?._id ||
+    user?.partner?._id ||
+    user?.partner ||
+    ""
+  );
+
+  const isLead = (project) => {
+    if (!project) return false;
+    const projectPartnerId = String(project.partner?._id || project.partner || "");
+    return projectPartnerId === currentOrgId;
+  };
 
   const [assignedProblems, setAssignedProblems] = useState([]);
 
@@ -387,6 +409,53 @@ const PartnerProjects = () => {
     }
   };
 
+  const handleRespondToRequest = async (projectId, collaboratorId, response) => {
+    try {
+      setUpdatingId(projectId);
+
+      setMessage("");
+
+      const token = localStorage.getItem("token");
+
+      const data = await respondToCollaboration(
+        projectId,
+        collaboratorId,
+        response,
+        token,
+      );
+
+      setProjects((current) =>
+        current.map((project) =>
+          project._id === projectId ? data.project : project,
+        ),
+      );
+
+      setMessage(
+        response === "accepted"
+          ? "Request accepted. The partner can now log contributions."
+          : "Request declined.",
+      );
+
+      setMessageType("success");
+    } catch (error) {
+      console.error("Respond to request error:", error);
+
+      setMessage(
+        error.response?.data?.message || "Failed to respond to the request.",
+      );
+
+      setMessageType("error");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleOpenWorkspace = (projectId) => {
+    setSelectedPartnerProjectId(projectId);
+
+    setPartnerPage("workspace");
+  };
+
   // ========================================
   // LOADING
   // ========================================
@@ -421,8 +490,9 @@ const PartnerProjects = () => {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm text-[#71827c]">
-              Form multidisciplinary teams of professors and students to work
-              on the problems assigned to your university.
+              {user?.organization?.type === "industry"
+                ? "Manage R&D initiatives, assigned challenges, and collaborative solutions with universities and ecosystem partners across Jharkhand."
+                : "Form multidisciplinary teams to work on challenges assigned to your organization, invite industry collaborators, and deploy solutions."}
             </p>
           </div>
 
@@ -448,6 +518,90 @@ const PartnerProjects = () => {
             {message}
           </div>
         )}
+
+        {/* INCOMING COLLABORATION REQUESTS */}
+
+        {(() => {
+          const incomingRequests = projects.flatMap((project) =>
+            (project.collaborators || [])
+              .filter(
+                (collaborator) =>
+                  collaborator.partner &&
+                  collaborator.status === "requested",
+              )
+              .map((collaborator) => ({ project, collaborator })),
+          );
+
+          if (incomingRequests.length === 0) return null;
+
+          return (
+            <section className="mb-10 rounded-2xl border border-[#c9b8e8] bg-white p-6 shadow-sm">
+              <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-[#564680]">
+                Incoming Collaboration Requests ({incomingRequests.length})
+              </h2>
+
+              <div className="mt-4 space-y-3">
+                {incomingRequests.map(({ project, collaborator }) => (
+                  <div
+                    key={collaborator._id}
+                    className="rounded-xl bg-[#f0ecf8] p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-[#173d3a]">
+                          {collaborator.partner.name}
+                        </p>
+
+                        <p className="text-xs font-semibold capitalize text-[#564680]">
+                          Wants to join "{project.title}" as{" "}
+                          {formatRole(collaborator.role)}
+                        </p>
+
+                        {collaborator.message && (
+                          <p className="mt-2 border-l-2 border-[#b49ade] pl-3 text-sm italic text-[#5c6f69]">
+                            "{collaborator.message}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRespondToRequest(
+                              project._id,
+                              collaborator._id,
+                              "accepted",
+                            )
+                          }
+                          disabled={updatingId === project._id}
+                          className="rounded-lg bg-[#0b514a] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
+                        >
+                          Accept
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRespondToRequest(
+                              project._id,
+                              collaborator._id,
+                              "declined",
+                            )
+                          }
+                          disabled={updatingId === project._id}
+                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* CREATE FORM */}
 
@@ -696,7 +850,13 @@ const PartnerProjects = () => {
 
                       {project.problem && (
                         <p className="mt-1 text-sm text-[#71827c]">
-                          For: {project.problem.title}
+                          <span className="font-semibold text-[#5c6f69]">Linked Problem:</span> {project.problem.title}
+                        </p>
+                      )}
+
+                      {!isLead(project) && project.partner && (
+                        <p className="mt-1 text-xs font-semibold text-[#0b6b60]">
+                          ✦ Led by: {project.partner.name}
                         </p>
                       )}
                     </div>
@@ -746,25 +906,27 @@ const PartnerProjects = () => {
                         Industry Collaboration
                       </p>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setInviteForm((current) =>
-                            current.projectId === project._id
-                              ? { projectId: null, partnerId: "", role: "mentor" }
-                              : {
-                                  projectId: project._id,
-                                  partnerId: "",
-                                  role: "mentor",
-                                },
-                          )
-                        }
-                        className="text-xs font-bold text-[#0b6b60] hover:underline"
-                      >
-                        {inviteForm.projectId === project._id
-                          ? "Cancel"
-                          : "+ Invite partner"}
-                      </button>
+                      {isLead(project) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setInviteForm((current) =>
+                              current.projectId === project._id
+                                ? { projectId: null, partnerId: "", role: "mentor" }
+                                : {
+                                    projectId: project._id,
+                                    partnerId: "",
+                                    role: "mentor",
+                                  },
+                            )
+                          }
+                          className="text-xs font-bold text-[#0b6b60] hover:underline"
+                        >
+                          {inviteForm.projectId === project._id
+                            ? "Cancel"
+                            : "+ Invite partner"}
+                        </button>
+                      )}
                     </div>
 
                     {/* LIVE COLLABORATORS */}
@@ -797,19 +959,21 @@ const PartnerProjects = () => {
                               {formatStatus(collaborator.status)}
                             </span>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleWithdrawCollaborator(
-                                  project._id,
-                                  collaborator._id,
-                                )
-                              }
-                              disabled={updatingId === project._id}
-                              className="ml-auto text-xs font-semibold text-red-500 transition hover:underline disabled:opacity-50"
-                            >
-                              Withdraw
-                            </button>
+                            {isLead(project) && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleWithdrawCollaborator(
+                                    project._id,
+                                    collaborator._id,
+                                  )
+                                }
+                                disabled={updatingId === project._id}
+                                className="ml-auto text-xs font-semibold text-red-500 transition hover:underline disabled:opacity-50"
+                              >
+                                Withdraw
+                              </button>
+                            )}
                           </div>
                         ))}
 
@@ -952,7 +1116,15 @@ const PartnerProjects = () => {
                   {/* STATUS ACTIONS */}
 
                   <div className="mt-6 flex flex-wrap gap-3 border-t border-[#eef2ee] pt-4">
-                    {project.status === "planning" && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenWorkspace(project._id)}
+                      className="rounded-xl border border-[#0b514a] px-4 py-2 text-sm font-semibold text-[#0b514a] transition hover:bg-[#e9f4f0]"
+                    >
+                      Open Workspace
+                    </button>
+
+                    {isLead(project) && project.status === "planning" && (
                       <button
                         onClick={() =>
                           handleStatusUpdate(project._id, "active")
@@ -966,7 +1138,7 @@ const PartnerProjects = () => {
                       </button>
                     )}
 
-                    {project.status === "active" && (
+                    {isLead(project) && project.status === "active" && (
                       <button
                         onClick={() =>
                           handleStatusUpdate(project._id, "completed")
@@ -978,6 +1150,12 @@ const PartnerProjects = () => {
                           ? "Updating..."
                           : "Mark completed"}
                       </button>
+                    )}
+
+                    {!isLead(project) && (
+                      <span className="rounded-xl bg-[#d8ebe4] px-4 py-2 text-sm font-semibold text-[#087f70]">
+                        ✦ Collaborating
+                      </span>
                     )}
 
                     {project.status === "completed" && (

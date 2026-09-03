@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getPartnerDashboard,
   getPartnerProblems,
+  getMyProjects,
   updatePartnerProblemStatus,
 } from "../services/partnerService";
 
@@ -57,7 +58,10 @@ const StatCard = ({ label, value, icon, accent, chipClass }) => (
   </div>
 );
 
-const PartnerDashboard = () => {
+const PartnerDashboard = ({
+  setPartnerPage,
+  setSelectedPartnerProjectId,
+}) => {
   // ========================================
   // STATE
   // ========================================
@@ -67,6 +71,8 @@ const PartnerDashboard = () => {
   const [statistics, setStatistics] = useState(null);
 
   const [problems, setProblems] = useState([]);
+
+  const [projects, setProjects] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -94,9 +100,11 @@ const PartnerDashboard = () => {
       const [
         dashboardData,
         problemsData,
+        projectsData,
       ] = await Promise.all([
         getPartnerDashboard(token),
         getPartnerProblems(token),
+        getMyProjects(token).catch(() => ({ projects: [] })),
       ]);
 
       setPartner(
@@ -109,6 +117,10 @@ const PartnerDashboard = () => {
 
       setProblems(
         problemsData.problems || []
+      );
+
+      setProjects(
+        projectsData.projects || []
       );
     } catch (error) {
       console.error(
@@ -425,6 +437,135 @@ const PartnerDashboard = () => {
             </div>
           </section>
         )}
+
+        {/* ========================================
+            ACTIVE PROJECTS & COLLABORATIONS
+        ======================================== */}
+
+        <section className="mb-10">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold text-[#173d3a]">
+                Projects & Collaborations
+              </h2>
+              <p className="mt-1 text-sm text-[#71827c]">
+                Projects your organization leads or collaborates on.
+              </p>
+            </div>
+
+            {setPartnerPage && (
+              <button
+                type="button"
+                onClick={() => setPartnerPage("projects")}
+                className="text-sm font-semibold text-[#0b6b60] hover:underline"
+              >
+                View all in Projects tab →
+              </button>
+            )}
+          </div>
+
+          {projects.length === 0 ? (
+            <div className="rounded-2xl border border-[#e3e9e3] bg-white p-8 text-center shadow-sm">
+              <p className="text-sm text-[#71827c]">
+                No active projects or collaborations linked to your organization yet.
+              </p>
+              {setPartnerPage && (
+                <button
+                  type="button"
+                  onClick={() => setPartnerPage("directory")}
+                  className="mt-3 inline-block rounded-xl bg-[#0b514a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#073f3a]"
+                >
+                  Discover Projects to Collaborate
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {projects.map((project) => {
+                const isLeadOrg = String(project.partner?._id || project.partner) === String(partner?._id);
+                const completedMilestones = (project.milestones || []).filter((m) => m.completed).length;
+                const totalMilestones = (project.milestones || []).length;
+
+                return (
+                  <article
+                    key={project._id}
+                    className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm transition hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-[#173d3a]">
+                          {project.title}
+                        </h3>
+                        {project.problem && (
+                          <p className="mt-1 text-sm text-[#71827c]">
+                            <span className="font-semibold text-[#5c6f69]">Linked Problem:</span> {project.problem.title}
+                          </p>
+                        )}
+                      </div>
+
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(project.status)}`}
+                      >
+                        {formatStatus(project.status)}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 ${
+                          isLeadOrg
+                            ? "bg-[#0b514a]/10 text-[#0b514a]"
+                            : "bg-[#31527c]/10 text-[#31527c]"
+                        }`}
+                      >
+                        {isLeadOrg
+                          ? "✦ Lead Organization"
+                          : `Lead: ${project.partner?.name || "Partner"}`}
+                      </span>
+
+                      {totalMilestones > 0 && (
+                        <span className="rounded-full bg-[#f7f8f5] px-2.5 py-0.5 text-[#5c6f69]">
+                          Milestones: {completedMilestones}/{totalMilestones}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-[#5c6f69]">
+                      {project.description}
+                    </p>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-[#eef2ee] pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (setSelectedPartnerProjectId) {
+                            setSelectedPartnerProjectId(project._id);
+                          }
+                          if (setPartnerPage) {
+                            setPartnerPage("workspace");
+                          }
+                        }}
+                        className="rounded-xl bg-[#0b514a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#073f3a]"
+                      >
+                        Open Workspace
+                      </button>
+
+                      {setPartnerPage && (
+                        <button
+                          type="button"
+                          onClick={() => setPartnerPage("projects")}
+                          className="text-xs font-semibold text-[#0b6b60] hover:underline"
+                        >
+                          Manage details →
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* ========================================
             ASSIGNED PROBLEMS

@@ -17,6 +17,7 @@ import AllProblems from "./pages/AllProblems";
 // ================= ADMIN PAGES =================
 
 import AdminDashboard from "./pages/AdminDashboard";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import PartnerManagement from "./pages/PartnerManagement";
 import AdminProblemDetails from "./pages/AdminProblemDetails";
 // ================= PARTNER PAGES =================
@@ -28,6 +29,8 @@ import PartnerProblems from "./pages/PartnerProblems";
 import PartnerProjects from "./pages/PartnerProjects";
 
 import PartnerCollaborations from "./pages/PartnerCollaborations";
+import PartnerDirectory from "./pages/PartnerDirectory";
+import ProjectWorkspace from "./pages/ProjectWorkspace";
 
 import UniversityDashboard from "./pages/UniversityDashboard";
 // ================= COMPONENTS =================
@@ -62,6 +65,9 @@ function App() {
 
   const [authPage, setAuthPage] =
     useState("login");
+
+  const [registeredEmail, setRegisteredEmail] =
+    useState("");
 
   const [
     selectedPortal,
@@ -110,6 +116,11 @@ function App() {
     setPartnerPage,
   ] = useState("dashboard");
 
+  const [
+    selectedPartnerProjectId,
+    setSelectedPartnerProjectId,
+  ] = useState(null);
+
   // ==================================================
   // BROWSER HISTORY / ROUTING RESILIENCE
   // ==================================================
@@ -128,6 +139,8 @@ function App() {
       if (user.role === "admin") {
         if (pagePart === "admin-partners") {
           setAdminPage("partners");
+        } else if (pagePart === "admin-analytics") {
+          setAdminPage("analytics");
         } else if (pagePart === "admin-problem-details" && idParam) {
           setSelectedAdminProblemId(idParam);
           setAdminPage("problem-details");
@@ -179,6 +192,8 @@ function App() {
     if (user.role === "admin") {
       if (adminPage === "partners") {
         newHash = "admin-partners";
+      } else if (adminPage === "analytics") {
+        newHash = "admin-analytics";
       } else if (adminPage === "problem-details" && selectedAdminProblemId) {
         newHash = `admin-problem-details?id=${selectedAdminProblemId}`;
       } else {
@@ -310,9 +325,10 @@ function App() {
     ) {
       return (
         <Register
-          onSwitchToLogin={() =>
-            setAuthPage("login")
-          }
+          onSwitchToLogin={(email) => {
+            if (email) setRegisteredEmail(email);
+            setAuthPage("login");
+          }}
         />
       );
     }
@@ -322,6 +338,7 @@ function App() {
     return (
       <Login
         portal={selectedPortal}
+        initialEmail={registeredEmail}
         onLogin={handleLogin}
         onSwitchToRegister={() => {
           if (
@@ -371,6 +388,12 @@ function App() {
           <PartnerManagement />
         )}
 
+        {/* ANALYTICS DASHBOARD */}
+
+        {adminPage === "analytics" && (
+          <AnalyticsDashboard />
+        )}
+
         {/* ADMIN PROBLEM DETAILS */}
 
         {adminPage === "problem-details" &&
@@ -411,10 +434,11 @@ function App() {
         ======================================== */}
 
         {partnerPage === "dashboard" && (
-  <PartnerDashboard
-    setPartnerPage={setPartnerPage}
-  />
-)}
+          <PartnerDashboard
+            setPartnerPage={setPartnerPage}
+            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+          />
+        )}
 
 
         {/* ========================================
@@ -427,21 +451,52 @@ function App() {
 
 
         {/* ========================================
-            PARTNER PROJECTS (UNIVERSITIES)
+            PARTNER PROJECTS
         ======================================== */}
 
-        {partnerPage === "projects" &&
-          user?.organization?.type === "university" && (
-            <PartnerProjects />
-          )}
+        {partnerPage === "projects" && (
+          <PartnerProjects
+            user={user}
+            setPartnerPage={setPartnerPage}
+            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+          />
+        )}
 
         {/* ========================================
             INDUSTRY COLLABORATIONS
         ======================================== */}
 
         {partnerPage === "collaborations" && (
-          <PartnerCollaborations user={user} />
+          <PartnerCollaborations
+            user={user}
+            setPartnerPage={setPartnerPage}
+            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+          />
         )}
+
+        {/* ========================================
+            PARTNER DIRECTORY (DISCOVER)
+        ======================================== */}
+
+        {partnerPage === "directory" && (
+          <PartnerDirectory user={user} />
+        )}
+
+        {/* ========================================
+            SHARED PROJECT WORKSPACE
+        ======================================== */}
+
+        {partnerPage === "workspace" &&
+          selectedPartnerProjectId && (
+            <ProjectWorkspace
+              projectId={selectedPartnerProjectId}
+              user={user}
+              setSelectedPartnerProjectId={
+                setSelectedPartnerProjectId
+              }
+              setPartnerPage={setPartnerPage}
+            />
+          )}
 
 
         {/* ========================================

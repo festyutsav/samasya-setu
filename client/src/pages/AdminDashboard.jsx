@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getAllProblems } from "../services/problemService";
+import { deleteProblemByAdmin } from "../services/adminService";
+import { MiniLifecycleBar } from "../components/LifecycleStepper";
 
 const statusStyles = {
   submitted: "bg-[#f7ebd8] text-[#a25a1b]",
@@ -119,6 +121,10 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
 
   const [sortOrder, setSortOrder] = useState("priority");
 
+  const [deletingId, setDeletingId] = useState(null);
+
+  const problemsSectionRef = useRef(null);
+
   // ========================================
   // FETCH PROBLEMS
   // ========================================
@@ -127,22 +133,22 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
     try {
       setLoading(true);
 
-      setMessage("");
-
       const token = localStorage.getItem("token");
 
       if (!token) {
-        setMessage("Please login first.");
+        setMessage("Please login to view dashboard.");
 
         return;
       }
 
-      const problemsData = await getAllProblems(token);
+      const data = await getAllProblems(token);
 
-      setProblems(problemsData.problems || []);
+      setProblems(data.problems || []);
     } catch (error) {
+      console.error("Dashboard fetch error:", error);
+
       setMessage(
-        error.response?.data?.message || "Failed to fetch dashboard data.",
+        error.response?.data?.message || "Failed to load dashboard data.",
       );
     } finally {
       setLoading(false);
@@ -164,11 +170,56 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
   };
 
   // ========================================
-  // STAT CARD FILTER
+  // DELETE PROBLEM (ADMIN)
   // ========================================
+
+  const handleDeleteProblem = async (event, problemId, problemTitle) => {
+    event.stopPropagation();
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete this problem?\n\n"${problemTitle}"\n\nThis will remove all associated projects, proposals, and records.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(problemId);
+      const token = localStorage.getItem("token");
+      await deleteProblemByAdmin(problemId, token);
+
+      // Remove from local list immediately
+      setProblems((current) => current.filter((p) => p._id !== problemId));
+    } catch (error) {
+      alert(
+        error.response?.data?.message || "Failed to delete problem."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // ========================================
+  // STAT CARD FILTER + AUTO-SCROLL
+  // ========================================
+
+  const scrollToProblems = () => {
+    requestAnimationFrame(() => {
+      if (problemsSectionRef.current) {
+        const navHeight = 75;
+        const rect = problemsSectionRef.current.getBoundingClientRect();
+        const targetY = window.pageYOffset + rect.top - navHeight;
+
+        window.scrollTo({
+          top: Math.max(0, targetY),
+          behavior: "smooth",
+        });
+      }
+    });
+  };
 
   const handleStatCardClick = (status) => {
     setStatusFilter(status);
+    scrollToProblems();
   };
 
   // ========================================
@@ -428,8 +479,8 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
             isActive={statusFilter === "all" && priorityFilter === "all"}
             onClick={() => {
               setStatusFilter("all");
-
               setPriorityFilter("all");
+              scrollToProblems();
             }}
           />
 
@@ -490,11 +541,12 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
             accent="linear-gradient(90deg, #d64545, #f0938c)"
             chipClass="bg-[#fbe9e9] text-[#c03434]"
             isActive={priorityFilter === "urgent"}
-            onClick={() =>
+            onClick={() => {
               setPriorityFilter((current) =>
                 current === "urgent" ? "all" : "urgent",
-              )
-            }
+              );
+              scrollToProblems();
+            }}
           />
 
           <StatCard
@@ -504,17 +556,22 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
             accent="linear-gradient(90deg, #b05c2d, #e9b06b)"
             chipClass="bg-[#faecdf] text-[#b05c2d]"
             isActive={priorityFilter === "elevated"}
-            onClick={() =>
+            onClick={() => {
               setPriorityFilter((current) =>
                 current === "elevated" ? "all" : "elevated",
-              )
-            }
+              );
+              scrollToProblems();
+            }}
           />
         </section>
 
         {/* Problems */}
 
-        <section className="rounded-2xl border border-[#e3e9e3] bg-white shadow-sm">
+        <section
+          ref={problemsSectionRef}
+          id="problems-section"
+          className="scroll-mt-20 rounded-2xl border border-[#e3e9e3] bg-white shadow-sm"
+        >
           {/* Section Header */}
 
           <div className="border-b border-[#e3e9e3] p-6">
@@ -785,6 +842,8 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
                       )}
                     </div>
 
+                    <MiniLifecycleBar status={problem.status} className="mt-3.5" />
+
                     {/* Assigned Partner */}
 
                     {/* Assigned Partner */}
@@ -811,9 +870,9 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
                       )}
                   </div>
 
-                  {/* View Details */}
+                  {/* Actions */}
 
-                  <div className="flex lg:min-w-40 lg:justify-end">
+                  <div className="flex flex-col gap-2 sm:flex-row lg:min-w-48 lg:items-center lg:justify-end">
                     <button
                       onClick={() => handleViewDetails(problem._id)}
                       className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0b514a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#073f3a] hover:shadow-md lg:w-auto"
@@ -823,6 +882,27 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
                       <Icon
                         path={<path d="M5 12h14m-6-6 6 6-6 6" />}
                         className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+                      />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(event) =>
+                        handleDeleteProblem(event, problem._id, problem.title)
+                      }
+                      disabled={deletingId === problem._id}
+                      className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50/70 p-3 text-red-600 transition hover:bg-red-100 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      title="Permanently delete problem"
+                    >
+                      <Icon
+                        path={
+                          <>
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          </>
+                        }
+                        className="h-4 w-4"
                       />
                     </button>
                   </div>

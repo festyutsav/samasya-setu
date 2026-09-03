@@ -86,6 +86,10 @@ const SubmitProblem = () => {
 
   const [images, setImages] = useState([]);
 
+  const [video, setVideo] = useState(null);
+
+  const [documents, setDocuments] = useState([]);
+
   // ========================================
   // MESSAGE
   // ========================================
@@ -377,6 +381,131 @@ const SubmitProblem = () => {
   };
 
   // ========================================
+  // HANDLE VIDEO SELECTION
+  // ========================================
+  // One short clip per problem, max 50 MB.
+
+  const handleVideoChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    if (!selectedFile.type.startsWith("video/")) {
+      setMessage("Only video files are allowed.");
+
+      setMessageType("error");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      setMessage("Video must be smaller than 50 MB.");
+
+      setMessageType("error");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    setVideo(selectedFile);
+
+    setMessage("");
+
+    setMessageType("");
+
+    e.target.value = "";
+  };
+
+  // ========================================
+  // REMOVE VIDEO
+  // ========================================
+
+  const removeVideo = () => {
+    setVideo(null);
+  };
+
+  // ========================================
+  // HANDLE DOCUMENT SELECTION
+  // ========================================
+  // Up to 3 supporting documents (PDF / Word / text), 10 MB each.
+
+  const DOCUMENT_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ];
+
+  const handleDocumentChange = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    if (!selectedFiles.length) {
+      return;
+    }
+
+    if (documents.length + selectedFiles.length > 3) {
+      setMessage("You can attach a maximum of 3 documents.");
+
+      setMessageType("error");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    const invalidType = selectedFiles.find(
+      (file) => !DOCUMENT_TYPES.includes(file.type),
+    );
+
+    if (invalidType) {
+      setMessage("Only PDF, Word or text documents are allowed.");
+
+      setMessageType("error");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    const invalidFile = selectedFiles.find(
+      (file) => file.size > 10 * 1024 * 1024,
+    );
+
+    if (invalidFile) {
+      setMessage("Each document must be smaller than 10 MB.");
+
+      setMessageType("error");
+
+      e.target.value = "";
+
+      return;
+    }
+
+    setDocuments((currentDocuments) => [...currentDocuments, ...selectedFiles]);
+
+    setMessage("");
+
+    setMessageType("");
+
+    e.target.value = "";
+  };
+
+  // ========================================
+  // REMOVE DOCUMENT
+  // ========================================
+
+  const removeDocument = (index) => {
+    setDocuments((currentDocuments) =>
+      currentDocuments.filter((_, documentIndex) => documentIndex !== index),
+    );
+  };
+
+  // ========================================
   // SUBMIT PROBLEM
   // ========================================
 
@@ -478,6 +607,22 @@ const SubmitProblem = () => {
       });
 
       // ========================================
+      // ADD VIDEO
+      // ========================================
+
+      if (video) {
+        data.append("videos", video);
+      }
+
+      // ========================================
+      // ADD DOCUMENTS
+      // ========================================
+
+      documents.forEach((document) => {
+        data.append("documents", document);
+      });
+
+      // ========================================
       // SEND TO BACKEND
       // ========================================
 
@@ -531,6 +676,14 @@ const SubmitProblem = () => {
       // ========================================
 
       setImages([]);
+
+      // ========================================
+      // CLEAR VIDEO + DOCUMENTS
+      // ========================================
+
+      setVideo(null);
+
+      setDocuments([]);
     } catch (error) {
       console.error("Submit problem error:", error);
 
@@ -837,6 +990,98 @@ const SubmitProblem = () => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            {/* ========================================
+                PROBLEM VIDEO
+            ======================================== */}
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
+                Problem Video (optional)
+              </label>
+
+              <p className="mb-3 text-sm text-[#71827c]">
+                Attach one short clip showing the problem. Max 50 MB.
+              </p>
+
+              {!video ? (
+                <input
+                  type="file"
+                  accept="video/*"
+                  capture="environment"
+                  onChange={handleVideoChange}
+                  disabled={loading}
+                  className="block w-full cursor-pointer rounded-lg border border-[#dbe5df] bg-white px-4 py-3 text-sm text-[#5c6f69] file:mr-4 file:rounded-md file:border-0 file:bg-[#e9f4f0] file:px-4 file:py-2 file:font-semibold file:text-[#087f70] hover:file:bg-[#d8ebe4]"
+                />
+              ) : (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#e3e9e3] bg-[#f7f8f5] px-4 py-3">
+                  <p className="truncate text-sm text-[#315d56]">
+                    🎥 {video.name}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={removeVideo}
+                    disabled={loading}
+                    className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ========================================
+                SUPPORTING DOCUMENTS
+            ======================================== */}
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#315d56]">
+                Supporting Documents (optional)
+              </label>
+
+              <p className="mb-3 text-sm text-[#71827c]">
+                Attach up to 3 documents (PDF, Word or text). Each must be
+                under 10 MB.
+              </p>
+
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                multiple
+                onChange={handleDocumentChange}
+                disabled={loading || documents.length >= 3}
+                className="block w-full cursor-pointer rounded-lg border border-[#dbe5df] bg-white px-4 py-3 text-sm text-[#5c6f69] file:mr-4 file:rounded-md file:border-0 file:bg-[#e9f4f0] file:px-4 file:py-2 file:font-semibold file:text-[#087f70] hover:file:bg-[#d8ebe4]"
+              />
+
+              <p className="mt-2 text-xs text-[#71827c]">
+                {documents.length}/3 documents selected
+              </p>
+
+              {documents.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {documents.map((document, index) => (
+                    <div
+                      key={`${document.name}-${document.lastModified}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-[#e3e9e3] bg-[#f7f8f5] px-4 py-2.5"
+                    >
+                      <p className="truncate text-sm text-[#315d56]">
+                        📄 {document.name}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => removeDocument(index)}
+                        disabled={loading}
+                        className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

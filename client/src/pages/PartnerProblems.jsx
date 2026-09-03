@@ -5,6 +5,8 @@ import {
   updatePartnerProblemStatus,
 } from "../services/partnerService";
 
+import ProblemEvidence from "../components/ProblemEvidence";
+
 const PartnerProblems = () => {
   // ========================================
   // STATE
@@ -403,6 +405,16 @@ const PartnerProblems = () => {
                     )}
 
                   </div>
+
+                  {/* ========================================
+                      EVIDENCE (PHOTOS / VIDEO / DOCUMENTS)
+                  ======================================== */}
+
+                  <ProblemEvidence
+                    problem={problem}
+                    showPhotos
+                    className="mt-6 border-t border-[#eef2ee] pt-5"
+                  />
 
                   {/* ========================================
                       STATUS ACTIONS

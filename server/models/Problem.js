@@ -83,6 +83,58 @@ const problemSchema = new mongoose.Schema(
     ],
 
     // ========================================
+    // VIDEO EVIDENCE
+    // ========================================
+    // Optional short clip of the problem, uploaded to
+    // Cloudinary with resource_type "video". One video per
+    // problem keeps submissions light.
+
+    videos: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+
+        publicId: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+
+    // ========================================
+    // SUPPORTING DOCUMENTS
+    // ========================================
+    // PDF / DOC / TXT evidence (FIR copies, survey reports,
+    // government letters). Stored on Cloudinary as "raw"
+    // resources; originalName keeps the citizen's filename.
+
+    documents: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+
+        publicId: {
+          type: String,
+          required: true,
+        },
+
+        originalName: {
+          type: String,
+          default: "",
+        },
+
+        fileType: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
+
+    // ========================================
     // IMPACT INFORMATION
     // ========================================
 
@@ -385,13 +437,25 @@ const problemSchema = new mongoose.Schema(
     },
 
     // ========================================
-    // USER
+    // USER & SUBMITTER TYPE
     // ========================================
 
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    submitterType: {
+      type: String,
+      enum: [
+        "individual",
+        "community_group",
+        "panchayati_raj",
+        "urban_local_body",
+        "government_agency",
+      ],
+      default: "individual",
     },
 
     // ========================================

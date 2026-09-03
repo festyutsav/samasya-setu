@@ -1,4 +1,4 @@
-const upload = require("../middleware/uploadMiddleware");
+const { uploadProblemMedia } = require("../middleware/uploadMiddleware");
 const express = require("express");
 
 const {
@@ -39,8 +39,9 @@ const {
   getPartnerProblems,
 
   updatePartnerProblemStatus,
-
 } = require("../controllers/problemController");
+
+const { deleteProblemByAdmin } = require("../controllers/adminController");
 
 
 const {
@@ -66,7 +67,7 @@ router.post(
   "/",
   protect,
   authorizeRoles("citizen"),
-  upload.array("images", 3),
+  uploadProblemMedia,
   createProblem
 );
 
@@ -278,14 +279,17 @@ router.post(
 // such as "/partner/dashboard".
 
 router.get(
-
   "/:id",
-
   protect,
-
   getProblemById
-
 );
 
+// Admin deletes any problem
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin"),
+  deleteProblemByAdmin
+);
 
 module.exports = router;
