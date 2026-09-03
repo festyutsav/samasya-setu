@@ -1,4 +1,5 @@
 import { useState } from "react";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = ({
   user,
@@ -6,90 +7,61 @@ const Navbar = ({
   setCurrentPage,
   handleLogout,
 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Check user role
   const isAdmin = user.role === "admin";
 
-  // Navigation items based on user role
   const navItems = isAdmin
     ? [
-        {
-          label: "Dashboard",
-          page: "admin-dashboard",
-        },
-        {
-          label: "Explore",
-          page: "all-problems",
-        },
+        { label: "Dashboard", page: "admin-dashboard" },
+        { label: "Explore", page: "all-problems" },
       ]
     : [
-        {
-          label: "Home",
-          page: "home",
-        },
-        {
-          label: "Explore",
-          page: "all-problems",
-        },
-        {
-          label: "Submit",
-          page: "submit",
-        },
-        {
-          label: "My Problems",
-          page: "my-problems",
-        },
+        { label: "Home", page: "home" },
+        { label: "Explore", page: "all-problems" },
+        { label: "Submit", page: "submit" },
+        { label: "My Problems", page: "my-problems" },
       ];
 
   const handleNavigation = (page) => {
     setCurrentPage(page);
-
-    // Close mobile menu after navigation
     setMobileMenuOpen(false);
   };
 
   return (
-    <nav className="relative border-b border-slate-200 bg-white shadow-sm">
-      <div className="mx-auto flex h-20 w-full items-center px-4 lg:px-8">
+    <nav className="sticky top-0 z-40 border-b border-[#e3e9e3] bg-white shadow-sm">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-        {/* Logo */}
+        {/* Brand */}
         <button
-          onClick={() =>
-            handleNavigation(
-              isAdmin ? "admin-dashboard" : "home"
-            )
-          }
+          onClick={() => handleNavigation(isAdmin ? "admin-dashboard" : "home")}
           className="flex shrink-0 items-center gap-3"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0b514a] text-lg font-bold text-[#e9c985] shadow-sm">
             S
           </div>
 
           <div className="hidden text-left sm:block">
-            <h1 className="whitespace-nowrap text-xl font-bold text-slate-800">
+            <h1 className="whitespace-nowrap text-base font-bold leading-tight text-[#173d3a]">
               SamasyaSetu
             </h1>
 
-            <p className="hidden whitespace-nowrap text-xs text-slate-500 2xl:block">
+            <p className="hidden whitespace-nowrap text-[11px] leading-tight text-[#71827c] xl:block">
               Connecting challenges with solutions
             </p>
           </div>
         </button>
 
         {/* Desktop Navigation */}
-        <div className="hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-14">
+        <div className="hidden items-center gap-1.5 md:flex">
           {navItems.map((item) => (
             <button
               key={item.page}
-              onClick={() =>
-                handleNavigation(item.page)
-              }
-              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold transition xl:px-4 ${
+              onClick={() => handleNavigation(item.page)}
+              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
                 currentPage === item.page
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                  ? "bg-[#0b514a] text-white shadow-sm"
+                  : "text-[#5c6f69] hover:bg-[#f7f8f5] hover:text-[#173d3a]"
               }`}
             >
               {item.label}
@@ -98,81 +70,76 @@ const Navbar = ({
         </div>
 
         {/* Desktop User Section */}
-        <div className="hidden shrink-0 items-center gap-3 border-l border-slate-200 pl-4 lg:flex">
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
 
-          {/* User Info */}
-          <div className="hidden xl:block">
-            <p className="max-w-28 truncate whitespace-nowrap text-sm font-semibold text-slate-700">
+          <NotificationBell user={user} />
+
+          <div className="hidden border-l border-[#e3e9e3] pl-3 text-left xl:block">
+            <p className="max-w-32 truncate text-sm font-semibold leading-tight text-[#315d56]">
               {user.name}
             </p>
 
-            <p className="whitespace-nowrap text-xs capitalize text-slate-500">
+            <p className="text-[11px] capitalize leading-tight text-[#71827c]">
               {user.role}
             </p>
           </div>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="shrink-0 whitespace-nowrap rounded-lg border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 xl:px-4"
+            className="whitespace-nowrap rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
           >
             Logout
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() =>
-            setMobileMenuOpen(!mobileMenuOpen)
-          }
-          className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-xl text-slate-700 lg:hidden"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? "✕" : "☰"}
-        </button>
+        {/* Mobile Actions */}
+        <div className="flex shrink-0 items-center gap-2.5 md:hidden">
+          <NotificationBell user={user} />
+
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#e3e9e3] text-lg text-[#315d56] transition hover:bg-[#f7f8f5]"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-slate-200 bg-white p-4 lg:hidden">
-          <div className="flex flex-col gap-2">
-
+        <div className="border-t border-[#e3e9e3] bg-white p-4 md:hidden">
+          <div className="flex flex-col gap-1.5">
             {navItems.map((item) => (
               <button
                 key={item.page}
-                onClick={() =>
-                  handleNavigation(item.page)
-                }
-                className={`rounded-lg px-4 py-3 text-left font-semibold transition ${
+                onClick={() => handleNavigation(item.page)}
+                className={`rounded-lg px-4 py-2.5 text-left text-sm font-semibold transition ${
                   currentPage === item.page
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-700 hover:bg-slate-100"
+                    ? "bg-[#0b514a] text-white"
+                    : "text-[#315d56] hover:bg-[#f7f8f5]"
                 }`}
               >
                 {item.label}
               </button>
             ))}
-
           </div>
 
-          {/* Divider */}
-          <div className="my-4 border-t border-slate-200" />
+          <div className="my-3 border-t border-[#e3e9e3]" />
 
-          {/* User Information */}
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="font-semibold text-slate-800">
+          <div className="rounded-lg bg-[#f2f5f1] px-4 py-3">
+            <p className="text-sm font-semibold text-[#173d3a]">
               {user.name}
             </p>
 
-            <p className="mt-1 text-sm capitalize text-slate-500">
+            <p className="mt-0.5 text-xs capitalize text-[#71827c]">
               {user.role}
             </p>
           </div>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="mt-4 w-full rounded-lg border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
+            className="mt-3 w-full rounded-lg border border-red-200 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
           >
             Logout
           </button>

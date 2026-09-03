@@ -1,4 +1,8 @@
 const Problem = require("../models/Problem");
+const Partner = require("../models/Partner");
+const User = require("../models/User");
+const path = require("path");
+const fs = require("fs");
 
 
 // ========================================
@@ -289,6 +293,130 @@ const updateProblemStatus = async (
 
 
 // ========================================
+// DOWNLOAD PARTNER CREDENTIALS
+// ========================================
+// Streams the admin credentials vault (plaintext passwords)
+// and enriches each entry with the partner's full routing
+// profile from the DB, so the export doubles as a complete
+// partner registry: profile, expertise, districts, login.
+
+const downloadPartnerCredentials = async (
+  req,
+  res
+) => {
+  try {
+    const credentialsPath = path.join(
+      __dirname,
+      "..",
+      "scripts",
+      "partner_credentials.json"
+    );
+
+    if (!fs.existsSync(credentialsPath)) {
+      return res.status(404).json({
+        message:
+          "Credentials file not found. Run the seed script first.",
+      });
+    }
+
+    let credentials;
+
+    try {
+      credentials = JSON.parse(
+        fs.readFileSync(credentialsPath, "utf8")
+      );
+    } catch (parseError) {
+      console.error(
+        "Credentials parse error:",
+        parseError.message
+      );
+
+      return res.status(500).json({
+        message: "Credentials file is corrupted.",
+      });
+    }
+
+    // ========================================
+    // ENRICH FROM DATABASE
+    // ========================================
+    // Seed-era entries only carry name/type/login. Fill in
+    // the partner's live profile so the file is a complete
+    // registry, not just a password list.
+
+    const Partner = require("../models/Partner");
+
+    const partners = await Partner.find({}).populate(
+      "user",
+      "email"
+    );
+
+    const partnerByName = new Map(
+      partners.map((partner) => [
+        String(partner.name || "").toLowerCase(),
+        partner,
+      ])
+    );
+
+    const enriched = credentials.map((entry) => {
+      const partner = partnerByName.get(
+        String(entry.name || "").toLowerCase()
+      );
+
+      if (!partner) {
+        return entry;
+      }
+
+      return {
+        ...entry,
+
+        loginEmail: entry.loginEmail || partner.user?.email || "",
+
+        location: entry.location || partner.location || "",
+
+        description: entry.description || partner.description || "",
+
+        expertise: partner.expertise?.length
+          ? partner.expertise
+          : entry.expertise || [],
+
+        capabilities: partner.capabilities?.length
+          ? partner.capabilities
+          : entry.capabilities || [],
+
+        districtsServed: partner.districtsServed?.length
+          ? partner.districtsServed
+          : entry.districtsServed || [],
+      };
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/json"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=partner_credentials.json"
+    );
+
+    return res.send(
+      JSON.stringify(enriched, null, 2)
+    );
+  } catch (error) {
+    console.error(
+      "Download credentials error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while downloading credentials",
+    });
+  }
+};
+
+
+// ========================================
 // EXPORTS
 // ========================================
 
@@ -297,5 +425,7 @@ module.exports = {
   getDashboardStats,
 
   updateProblemStatus,
+
+  downloadPartnerCredentials,
 
 };

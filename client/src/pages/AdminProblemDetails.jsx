@@ -5,16 +5,21 @@ import { getProblemById } from "../services/problemService";
 import {
   updateProblemStatus,
   assignPartnerToProblem,
+  rerunRouting,
 } from "../services/adminService";
 
 import { getAllPartners } from "../services/partnerService";
 
+import AIDuplicateAnalysisCard from "../components/AIDuplicateAnalysisCard";
+
+import ProposalList from "../components/ProposalList";
+
 const statusStyles = {
-  submitted: "bg-yellow-100 text-yellow-700",
-  under_review: "bg-blue-100 text-blue-700",
-  assigned: "bg-purple-100 text-purple-700",
-  in_progress: "bg-orange-100 text-orange-700",
-  solved: "bg-green-100 text-green-700",
+  submitted: "bg-[#f7ebd8] text-[#a25a1b]",
+  under_review: "bg-[#d8ebe4] text-[#087f70]",
+  assigned: "bg-[#e5dcf2] text-[#564680]",
+  in_progress: "bg-[#fbe5d8] text-[#b05c2d]",
+  solved: "bg-[#e1f1ed] text-[#087f70]",
 };
 
 const statusLabels = {
@@ -58,13 +63,24 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
   const [assigningPartner, setAssigningPartner] = useState(false);
 
+  const [candidateMatches, setCandidateMatches] = useState([]);
+
+  const [suggestedPartners, setSuggestedPartners] = useState([]);
+
+  const [routing, setRouting] = useState(false);
+
   // ========================================
   // FETCH DATA
   // ========================================
+  // `silent` refetches without flipping the page back to the
+  // loading screen, so the AI review card stays mounted and
+  // keeps its success/error message after an action.
 
-  const fetchData = async () => {
+  const fetchData = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       setMessage("");
 
@@ -85,12 +101,18 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
       setProblem(problemData.problem);
 
       setPartners(partnersData.partners || []);
+
+      setCandidateMatches(problemData.problem.candidateMatches || []);
+
+      setSuggestedPartners(problemData.problem.suggestedPartners || []);
     } catch (error) {
       setMessage(
         error.response?.data?.message || "Failed to fetch problem details.",
       );
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -129,6 +151,10 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
           : data.problem.assignedPartner,
       });
 
+      // The response now carries the populated AI review data, so keep
+      // the card in sync. Skipping this left it rendering stale matches.
+      setCandidateMatches(data.problem.candidateMatches || []);
+
       if (shouldRemovePartner) {
         setSelectedPartner("");
       }
@@ -165,10 +191,10 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
         token,
       );
 
-      // Update problem with backend response
       setProblem(data.problem);
 
-      // Clear dropdown after assignment
+      setCandidateMatches(data.problem.candidateMatches || []);
+
       setSelectedPartner("");
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to assign partner.");
@@ -178,13 +204,81 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   };
 
   // ========================================
+  // QUICK ASSIGN FROM AI SUGGESTION
+  // ========================================
+
+  const handleQuickAssign = async (partnerId) => {
+    try {
+      setAssigningPartner(true);
+
+      setMessage("");
+
+      const token = localStorage.getItem("token");
+
+      const data = await assignPartnerToProblem(
+        problemId,
+        partnerId,
+        token,
+      );
+
+      setProblem(data.problem);
+
+      setCandidateMatches(data.problem.candidateMatches || []);
+
+      setSelectedPartner("");
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Failed to assign partner.");
+    } finally {
+      setAssigningPartner(false);
+    }
+  };
+
+  // ========================================
+  // RUN / RE-RUN AI ROUTING
+  // ========================================
+  // Computes or refreshes the partner suggestions for this
+  // problem using the current partner registry and scoring
+  // engine. The response carries the fully populated problem,
+  // so the UI updates in place without a page refetch.
+
+  const handleRerunRouting = async () => {
+    try {
+      setRouting(true);
+
+      setMessage("");
+
+      const token = localStorage.getItem("token");
+
+      const data = await rerunRouting(problemId, token);
+
+      if (data.problem) {
+        setProblem(data.problem);
+
+        setCandidateMatches(data.problem.candidateMatches || []);
+
+        setSuggestedPartners(data.problem.suggestedPartners || []);
+
+        setMessage(data.message);
+      } else {
+        setMessage(data.message);
+      }
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to run AI routing.",
+      );
+    } finally {
+      setRouting(false);
+    }
+  };
+
+  // ========================================
   // LOADING
   // ========================================
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100">
-        <p className="text-lg font-medium text-slate-600">
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f8f5]">
+        <p className="text-lg font-medium text-[#5c6f69]">
           Loading problem details...
         </p>
       </main>
@@ -197,11 +291,11 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
   if (!problem) {
     return (
-      <main className="min-h-screen bg-slate-100 px-4 py-10">
+      <main className="min-h-screen bg-[#f7f8f5] px-4 py-10">
         <div className="mx-auto max-w-5xl">
           <button
             onClick={() => setAdminPage("dashboard")}
-            className="mb-6 text-sm font-semibold text-blue-600 hover:text-blue-700"
+            className="mb-6 text-sm font-semibold text-[#0b6b60] hover:text-[#087f70]"
           >
             ← Back to Dashboard
           </button>
@@ -219,13 +313,13 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   // ========================================
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         {/* BACK BUTTON */}
 
         <button
           onClick={() => setAdminPage("dashboard")}
-          className="mb-8 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+          className="mb-8 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
         >
           ← Back to Dashboard
         </button>
@@ -240,16 +334,16 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
         {/* MAIN CARD */}
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+        <article className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm sm:p-10">
           {/* HEADER */}
 
-          <div className="flex flex-col gap-4 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-[#e3e9e3] pb-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+              <span className="inline-flex rounded-full bg-[#d8ebe4] px-3 py-1 text-sm font-semibold text-[#087f70]">
                 {categoryNames[problem.category?.toLowerCase()] || "Other"}
               </span>
 
-              <h1 className="mt-4 text-3xl font-bold text-slate-800">
+              <h1 className="mt-4 text-3xl font-bold text-[#173d3a]">
                 {problem.title}
               </h1>
             </div>
@@ -258,21 +352,81 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
             <span
               className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-                statusStyles[problem.status] || "bg-slate-100 text-slate-700"
+                statusStyles[problem.status] || "bg-[#f7f8f5] text-[#315d56]"
               }`}
             >
               {statusLabels[problem.status] || problem.status}
             </span>
           </div>
 
+          {/* ========================================
+              AI INSIGHTS
+          ======================================== */}
+          {/* Priority, summary and cluster signals so the
+              admin can triage before reading the full report. */}
+
+          {(problem.aiSummary || problem.aiPriorityScore > 0) && (
+            <section className="mt-8 rounded-2xl border border-[#cfe4dc] bg-[#e9f4f0]/50 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-[#173d3a]">
+                  AI Insights
+                </h2>
+
+                {problem.aiPriorityScore > 0 && (
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm font-bold ${
+                      problem.aiPriorityBand === "urgent"
+                        ? "bg-[#fbe5d8] text-[#b05c2d]"
+                        : problem.aiPriorityBand === "elevated"
+                          ? "bg-[#f7ebd8] text-[#a25a1b]"
+                          : "bg-[#f2f5f1] text-[#5c6f69]"
+                    }`}
+                  >
+                    {problem.aiPriorityBand === "urgent"
+                      ? "Urgent"
+                      : problem.aiPriorityBand === "elevated"
+                        ? "Elevated"
+                        : "Standard"}{" "}
+                    · {problem.aiPriorityScore}/100
+                  </span>
+                )}
+              </div>
+
+              {problem.aiPriorityBreakdown && (
+                <p className="mt-2 text-sm text-[#5c6f69]">
+                  Why: {problem.aiPriorityBreakdown}
+                </p>
+              )}
+
+              {problem.aiSummary && (
+                <div className="mt-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#899892]">
+                    AI summary
+                  </p>
+
+                  <p className="mt-2 leading-relaxed text-[#315d56]">
+                    {problem.aiSummary}
+                  </p>
+                </div>
+              )}
+
+              {(problem.clusterSize || 0) > 1 && (
+                <p className="mt-4 text-sm font-semibold text-[#564680]">
+                  ⚡ {problem.clusterSize} citizens reported this issue in this
+                  area
+                </p>
+              )}
+            </section>
+          )}
+
           {/* DESCRIPTION */}
 
           <section className="mt-8">
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-lg font-bold text-[#173d3a]">
               Problem Description
             </h2>
 
-            <p className="mt-3 leading-relaxed text-slate-600">
+            <p className="mt-3 leading-relaxed text-[#5c6f69]">
               {problem.description}
             </p>
           </section>
@@ -283,7 +437,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
           {problem.images && problem.images.length > 0 && (
             <section className="mt-8">
-              <h2 className="text-lg font-bold text-slate-800">
+              <h2 className="text-lg font-bold text-[#173d3a]">
                 Problem Photos
               </h2>
 
@@ -291,7 +445,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
                 {problem.images.map((image, index) => (
                   <div
                     key={image.publicId || `${problem._id}-${index}`}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+                    className="overflow-hidden rounded-xl border border-[#e3e9e3] bg-[#f7f8f5]"
                   >
                     <img
                       src={image.url}
@@ -307,12 +461,12 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
           {(!problem.images || problem.images.length === 0) && (
             <section className="mt-8">
-              <h2 className="text-lg font-bold text-slate-800">
+              <h2 className="text-lg font-bold text-[#173d3a]">
                 Problem Photos
               </h2>
 
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-5 text-center">
-                <p className="text-sm text-slate-500">
+              <div className="mt-4 rounded-xl border border-[#e3e9e3] bg-[#f2f5f1] p-5 text-center">
+                <p className="text-sm text-[#71827c]">
                   📷 No photos uploaded for this problem.
                 </p>
               </div>
@@ -350,53 +504,188 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
           {/* ASSIGNED PARTNER */}
 
           <section className="mt-8">
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-lg font-bold text-[#173d3a]">
               Assigned Partner
             </h2>
 
             {problem.assignedPartner ? (
-              <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-5">
-                <p className="text-lg font-bold text-purple-900">
+              <div className="mt-4 rounded-xl border border-[#d5c9ea] bg-[#f0ecf8] p-5">
+                <p className="text-lg font-bold text-[#3d2f63]">
                   🏢 {problem.assignedPartner.name}
                 </p>
 
-                <p className="mt-1 text-sm text-purple-700">
+                <p className="mt-1 text-sm text-[#564680]">
                   {problem.assignedPartner.type}
                 </p>
 
                 {problem.assignedPartner.location && (
-                  <p className="mt-2 text-sm text-purple-700">
+                  <p className="mt-2 text-sm text-[#564680]">
                     📍 {problem.assignedPartner.location}
                   </p>
                 )}
               </div>
             ) : (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-5 text-slate-500">
+              <div className="mt-4 rounded-xl border border-[#e3e9e3] bg-[#f2f5f1] p-5 text-[#71827c]">
                 No partner has been assigned yet.
               </div>
             )}
           </section>
 
+          {/* ========================================
+              PROPOSALS
+          ======================================== */}
+
+          <section className="mt-10">
+            <ProposalList
+              isAdmin={true}
+              problemId={problemId}
+            />
+          </section>
+
+          {/* ========================================
+              AI DUPLICATE ANALYSIS
+          ======================================== */}
+
+          {/* ========================================
+              AI PARTNER SUGGESTIONS
+          ======================================== */}
+
+          <section className="mt-10">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-[#173d3a]">
+                  AI Partner Suggestions
+                </h2>
+
+                <p className="mt-1 text-sm text-[#71827c]">
+                  Top universities and industries matched to this problem by the AI routing engine.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRerunRouting}
+                disabled={routing}
+                className="rounded-lg border border-[#0b514a] px-4 py-2 text-sm font-semibold text-[#0b514a] transition hover:bg-[#e9f4f0] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {routing
+                  ? "Running AI routing..."
+                  : suggestedPartners.length > 0
+                    ? "↻ Re-run"
+                    : "✨ Run AI Routing"}
+              </button>
+            </div>
+
+            {suggestedPartners.length === 0 ? (
+              <div className="mt-5 rounded-xl border border-dashed border-[#c7d5cd] bg-white p-8 text-center">
+                <p className="text-sm font-semibold text-[#315d56]">
+                  No partner suggestions yet
+                </p>
+
+                <p className="mt-1 text-sm text-[#71827c]">
+                  Run the AI routing engine to match this problem against the
+                  partner registry — expertise, geography, work phase and
+                  capabilities.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-5 grid gap-4">
+                {suggestedPartners.map((suggestion, index) => (
+                  <div
+                    key={suggestion.partner._id}
+                    className="rounded-xl border border-[#e3e9e3] bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0b514a] text-sm font-bold text-[#e9c985]">
+                          {index + 1}
+                        </span>
+
+                        <div>
+                          <p className="font-semibold text-[#173d3a]">
+                            {suggestion.partner.name}
+                          </p>
+
+                          <p className="text-xs text-[#71827c]">
+                            {suggestion.reason}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                            suggestion.partner.type === "university"
+                              ? "bg-[#d8ebe4] text-[#087f70]"
+                              : suggestion.partner.type === "industry"
+                                ? "bg-[#f7ebd8] text-[#a25a1b]"
+                                : "bg-[#e2e9f4] text-[#31527c]"
+                          }`}
+                        >
+                          {suggestion.partner.type}
+                        </span>
+
+                        <span className="rounded-full bg-[#e2e9f4] px-3 py-1 text-xs font-bold text-[#31527c]">
+                          {Math.round(suggestion.matchScore * 100)}% match
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickAssign(suggestion.partner._id)}
+                        disabled={assigningPartner || problem.assignedPartner?._id === suggestion.partner._id}
+                        className="rounded-lg bg-[#564680] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#463872] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {problem.assignedPartner?._id === suggestion.partner._id
+                          ? "Already Assigned"
+                          : assigningPartner
+                            ? "Assigning..."
+                            : "Assign This Partner"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ========================================
+              AI DUPLICATE ANALYSIS
+          ======================================== */}
+
+          <section className="mt-10">
+            <AIDuplicateAnalysisCard
+              candidateMatches={candidateMatches}
+              problemId={problemId}
+              aiReviewStatus={problem.aiReviewStatus}
+              parentProblem={problem.parentProblem}
+              analyzedAt={problem.aiDuplicateAnalyzedAt}
+              onReviewComplete={() => fetchData({ silent: true })}
+            />
+          </section>
+
           {/* MANAGEMENT */}
 
-          <section className="mt-10 border-t border-slate-200 pt-8">
-            <h2 className="text-xl font-bold text-slate-800">Manage Problem</h2>
+          <section className="mt-10 border-t border-[#e3e9e3] pt-8">
+            <h2 className="text-xl font-bold text-[#173d3a]">Manage Problem</h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[#71827c]">
               Update the problem status or assign a partner organization.
             </p>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               {/* STATUS MANAGEMENT */}
 
-              <div className="rounded-xl border border-slate-200 p-5">
-                <h3 className="font-semibold text-slate-800">Update Status</h3>
+              <div className="rounded-xl border border-[#e3e9e3] p-5">
+                <h3 className="font-semibold text-[#173d3a]">Update Status</h3>
 
                 <select
                   value={problem.status}
                   disabled={updatingStatus}
                   onChange={(event) => handleStatusChange(event.target.value)}
-                  className="mt-4 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-500"
+                  className="mt-4 w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-3 text-sm text-[#315d56] outline-none focus:border-[#62a99b]"
                 >
                   <option value="submitted">Submitted</option>
 
@@ -410,7 +699,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
                 </select>
 
                 {updatingStatus && (
-                  <p className="mt-3 text-sm text-blue-600">
+                  <p className="mt-3 text-sm text-[#0b6b60]">
                     Updating status...
                   </p>
                 )}
@@ -418,8 +707,8 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
               {/* PARTNER MANAGEMENT */}
 
-              <div className="rounded-xl border border-slate-200 p-5">
-                <h3 className="font-semibold text-slate-800">
+              <div className="rounded-xl border border-[#e3e9e3] p-5">
+                <h3 className="font-semibold text-[#173d3a]">
                   {problem.assignedPartner
                     ? "Change Partner"
                     : "Assign Partner"}
@@ -429,7 +718,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
                   value={selectedPartner}
                   disabled={assigningPartner}
                   onChange={(event) => setSelectedPartner(event.target.value)}
-                  className="mt-4 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-purple-500"
+                  className="mt-4 w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-3 text-sm text-[#315d56] outline-none focus:border-[#8a76b8]"
                 >
                   <option value="">Select Partner</option>
 
@@ -443,7 +732,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
                 <button
                   onClick={handleAssignPartner}
                   disabled={assigningPartner || !selectedPartner}
-                  className="mt-4 w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-4 w-full rounded-xl bg-[#564680] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#463872] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {assigningPartner
                     ? "Assigning..."
@@ -466,12 +755,12 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
 const InfoCard = ({ label, value, secondary }) => {
   return (
-    <div className="rounded-xl bg-slate-50 p-5">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+    <div className="rounded-xl bg-[#f2f5f1] p-5">
+      <p className="text-sm font-medium text-[#71827c]">{label}</p>
 
-      <p className="mt-2 font-semibold text-slate-800">{value}</p>
+      <p className="mt-2 font-semibold text-[#173d3a]">{value}</p>
 
-      {secondary && <p className="mt-1 text-sm text-slate-500">{secondary}</p>}
+      {secondary && <p className="mt-1 text-sm text-[#71827c]">{secondary}</p>}
     </div>
   );
 };

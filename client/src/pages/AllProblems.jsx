@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { getAllProblems } from "../services/problemService";
 
 const statusStyles = {
-  submitted: "bg-yellow-100 text-yellow-700",
-  under_review: "bg-blue-100 text-blue-700",
-  assigned: "bg-purple-100 text-purple-700",
-  in_progress: "bg-orange-100 text-orange-700",
-  solved: "bg-green-100 text-green-700",
+  submitted: "bg-[#f7ebd8] text-[#a25a1b]",
+  under_review: "bg-[#d8ebe4] text-[#087f70]",
+  assigned: "bg-[#e5dcf2] text-[#564680]",
+  in_progress: "bg-[#fbe5d8] text-[#b05c2d]",
+  solved: "bg-[#e1f1ed] text-[#087f70]",
 };
 
 const AllProblems = ({
@@ -114,8 +114,8 @@ const AllProblems = ({
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100">
-        <p className="text-lg font-medium text-slate-600">
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f8f5]">
+        <p className="text-lg font-medium text-[#5c6f69]">
           Loading problems...
         </p>
       </main>
@@ -123,16 +123,16 @@ const AllProblems = ({
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f8f5] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-800">
+          <h1 className="text-4xl font-bold tracking-tight text-[#173d3a]">
             Explore Problems
           </h1>
 
-          <p className="mt-3 text-lg text-slate-600">
+          <p className="mt-3 text-lg text-[#5c6f69]">
             Discover challenges submitted by communities.
           </p>
         </div>
@@ -146,13 +146,13 @@ const AllProblems = ({
 
         {/* Filters */}
         {!message && problems.length > 0 && (
-          <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-8 rounded-2xl border border-[#e3e9e3] bg-white p-5 shadow-sm">
 
             <div className="mb-5 flex flex-col gap-4 md:flex-row">
 
               {/* Search */}
               <div className="flex-1">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                   Search Problems
                 </label>
 
@@ -163,13 +163,13 @@ const AllProblems = ({
                     setSearchTerm(e.target.value)
                   }
                   placeholder="Search by title or description..."
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-3 text-[#315d56] outline-none transition placeholder:text-[#a1aca7] focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
                 />
               </div>
 
               {/* Location */}
               <div className="flex-1">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                   Location
                 </label>
 
@@ -180,7 +180,7 @@ const AllProblems = ({
                     setLocationSearch(e.target.value)
                   }
                   placeholder="Search location..."
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] px-4 py-3 text-[#315d56] outline-none transition placeholder:text-[#a1aca7] focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
                 />
               </div>
 
@@ -190,7 +190,7 @@ const AllProblems = ({
 
               {/* Category Filter */}
               <div className="flex-1">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                   Category
                 </label>
 
@@ -199,7 +199,7 @@ const AllProblems = ({
                   onChange={(e) =>
                     setSelectedCategory(e.target.value)
                   }
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-3 text-[#315d56] outline-none transition focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
                 >
                   <option value="all">
                     All Categories
@@ -218,7 +218,7 @@ const AllProblems = ({
 
               {/* Status Filter */}
               <div className="flex-1">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label className="mb-2 block text-sm font-semibold text-[#315d56]">
                   Status
                 </label>
 
@@ -227,7 +227,7 @@ const AllProblems = ({
                   onChange={(e) =>
                     setSelectedStatus(e.target.value)
                   }
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-3 text-[#315d56] outline-none transition focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
                 >
                   <option value="all">
                     All Statuses
@@ -237,7 +237,7 @@ const AllProblems = ({
                     Submitted
                   </option>
 
-                  <option value="under review">
+                  <option value="under_review">
                     Under Review
                   </option>
 
@@ -245,11 +245,11 @@ const AllProblems = ({
                     Assigned
                   </option>
 
-                  <option value="in progress">
+                  <option value="in_progress">
                     In Progress
                   </option>
 
-                  <option value="resolved">
+                  <option value="solved">
                     Resolved
                   </option>
                 </select>
@@ -258,7 +258,7 @@ const AllProblems = ({
               {/* Clear Filters */}
               <button
                 onClick={handleClearFilters}
-                className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-600 transition hover:bg-slate-100"
+                className="rounded-xl border border-[#dbe5df] px-5 py-3 font-semibold text-[#5c6f69] transition hover:bg-[#f7f8f5]"
               >
                 Clear Filters
               </button>
@@ -271,9 +271,9 @@ const AllProblems = ({
         {/* Results Count */}
         {!message && problems.length > 0 && (
           <div className="mb-6 flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm font-medium text-[#71827c]">
               Showing{" "}
-              <span className="font-bold text-slate-700">
+              <span className="font-bold text-[#315d56]">
                 {filteredProblems.length}
               </span>{" "}
               of {problems.length} problems
@@ -283,38 +283,38 @@ const AllProblems = ({
 
         {/* Empty Database State */}
         {!message && problems.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
             <div className="mb-4 text-5xl">
               🌍
             </div>
 
-            <h2 className="text-2xl font-semibold text-slate-800">
+            <h2 className="text-2xl font-semibold text-[#173d3a]">
               No problems available yet
             </h2>
 
-            <p className="mt-3 text-slate-500">
+            <p className="mt-3 text-[#71827c]">
               Be the first person to submit a community challenge.
             </p>
           </div>
         ) : filteredProblems.length === 0 && !message ? (
 
           /* No Search Results */
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
             <div className="mb-4 text-5xl">
               🔎
             </div>
 
-            <h2 className="text-2xl font-semibold text-slate-800">
+            <h2 className="text-2xl font-semibold text-[#173d3a]">
               No matching problems found
             </h2>
 
-            <p className="mt-3 text-slate-500">
+            <p className="mt-3 text-[#71827c]">
               Try changing your search or filters.
             </p>
 
             <button
               onClick={handleClearFilters}
-              className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+              className="mt-6 rounded-xl bg-[#0b514a] px-5 py-3 font-semibold text-white transition hover:bg-[#073f3a]"
             >
               Clear All Filters
             </button>
@@ -331,34 +331,34 @@ const AllProblems = ({
               return (
                 <article
                   key={problem._id}
-                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl"
+                  className="flex flex-col rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
                   {/* Title */}
-                  <h2 className="text-2xl font-bold text-slate-800">
+                  <h2 className="text-2xl font-bold text-[#173d3a]">
                     {problem.title}
                   </h2>
 
                   {/* Description */}
-                  <p className="mt-4 leading-relaxed text-slate-600">
+                  <p className="mt-4 leading-relaxed text-[#5c6f69]">
                     {problem.description}
                   </p>
 
                   {/* Category */}
                   <div className="mt-6">
-                    <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+                    <span className="inline-flex rounded-full bg-[#d8ebe4] px-3 py-1 text-sm font-medium text-[#087f70]">
                       {problem.category}
                     </span>
                   </div>
 
                   {/* Problem Information */}
-                  <div className="mt-6 space-y-4 border-t border-slate-100 pt-5">
+                  <div className="mt-6 space-y-4 border-t border-[#eef2ee] pt-5">
 
                     {/* Location */}
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-center gap-2 text-[#5c6f69]">
                       <span>📍</span>
 
                       <p>
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-[#315d56]">
                           Location:
                         </span>{" "}
                         {problem.location}
@@ -367,14 +367,14 @@ const AllProblems = ({
 
                     {/* Status */}
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-700">
+                      <span className="font-semibold text-[#315d56]">
                         Status:
                       </span>
 
                       <span
                         className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${
                           statusStyles[normalizedStatus] ||
-                          "bg-slate-100 text-slate-700"
+                          "bg-[#f7f8f5] text-[#315d56]"
                         }`}
                       >
                         {problem.status?.replace("_", " ")}
@@ -383,9 +383,9 @@ const AllProblems = ({
 
                     {/* Submitted By */}
                     {problem.submittedBy && (
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-[#71827c]">
                         Submitted by{" "}
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-[#315d56]">
                           {problem.submittedBy.name}
                         </span>
                       </div>
@@ -396,7 +396,7 @@ const AllProblems = ({
                       onClick={() =>
                         handleViewDetails(problem._id)
                       }
-                      className="mt-2 w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 font-semibold text-blue-700 transition hover:bg-blue-100"
+                      className="mt-2 w-full rounded-xl border border-[#bcd9cf] bg-[#e9f4f0] px-4 py-2.5 font-semibold text-[#087f70] transition hover:bg-[#d8ebe4]"
                     >
                       View Details
                     </button>

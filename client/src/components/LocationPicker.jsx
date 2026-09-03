@@ -404,7 +404,7 @@ const LocationPicker = ({
 
       <div>
 
-        <label className="mb-2 block text-sm font-semibold text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-[#315d56]">
 
           Search Location
 
@@ -435,7 +435,7 @@ const LocationPicker = ({
 
             }}
             placeholder="Example: Harmu Road, Ranchi"
-            className="flex-1 rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="flex-1 rounded-lg border border-[#dbe5df] px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
           />
 
 
@@ -443,7 +443,7 @@ const LocationPicker = ({
             type="button"
             onClick={handleSearch}
             disabled={loading}
-            className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+            className="rounded-lg bg-[#0b514a] px-5 py-3 font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
           >
 
             Search
@@ -463,7 +463,7 @@ const LocationPicker = ({
         type="button"
         onClick={handleCurrentLocation}
         disabled={loading}
-        className="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed"
+        className="w-full rounded-lg border border-[#bcd9cf] bg-[#e9f4f0] px-4 py-3 font-semibold text-[#087f70] transition hover:bg-[#d8ebe4] disabled:cursor-not-allowed"
       >
 
         📍 Use My Current Location
@@ -475,7 +475,7 @@ const LocationPicker = ({
           MAP
       ======================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-slate-300">
+      <div className="overflow-hidden rounded-xl border border-[#dbe5df]">
 
         <MapContainer
           center={mapPosition}
@@ -518,7 +518,7 @@ const LocationPicker = ({
           INSTRUCTION
       ======================================== */}
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-[#71827c]">
 
         Search for a location, use your current
         location, or click directly on the map.
@@ -532,16 +532,16 @@ const LocationPicker = ({
 
       {value?.address && (
 
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+        <div className="rounded-xl border border-[#bcd9cf] bg-[#e9f4f0] p-4">
 
-          <p className="text-sm font-semibold text-green-800">
+          <p className="text-sm font-semibold text-[#0a4f47]">
 
             📍 Selected Location
 
           </p>
 
 
-          <p className="mt-1 text-sm text-green-700">
+          <p className="mt-1 text-sm text-[#087f70]">
 
             {value.address}
 
@@ -550,7 +550,7 @@ const LocationPicker = ({
 
           {value.district && (
 
-            <p className="mt-1 text-xs text-green-600">
+            <p className="mt-1 text-xs text-[#087f70]">
 
               District: {value.district}
 
@@ -559,7 +559,7 @@ const LocationPicker = ({
           )}
 
 
-          <p className="mt-1 text-xs text-green-600">
+          <p className="mt-1 text-xs text-[#087f70]">
 
             Coordinates:{" "}
 

@@ -72,9 +72,9 @@ const ProblemDetails = ({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-100 px-4 py-10">
+      <main className="min-h-screen bg-[#f7f8f5] px-4 py-10">
         <div className="mx-auto max-w-4xl">
-          <p className="text-lg font-medium text-slate-600">
+          <p className="text-lg font-medium text-[#5c6f69]">
             Loading problem details...
           </p>
         </div>
@@ -88,7 +88,7 @@ const ProblemDetails = ({
 
   if (message) {
     return (
-      <main className="min-h-screen bg-slate-100 px-4 py-10">
+      <main className="min-h-screen bg-[#f7f8f5] px-4 py-10">
         <div className="mx-auto max-w-4xl">
 
           <button
@@ -96,7 +96,7 @@ const ProblemDetails = ({
             onClick={() =>
               setCurrentPage(backPage)
             }
-            className="mb-6 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+            className="mb-6 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
           >
             {backButtonText}
           </button>
@@ -119,7 +119,7 @@ const ProblemDetails = ({
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f8f5] px-4 py-10 sm:px-6 lg:px-8">
 
       <div className="mx-auto max-w-4xl">
 
@@ -132,23 +132,46 @@ const ProblemDetails = ({
           onClick={() =>
             setCurrentPage(backPage)
           }
-          className="mb-8 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+          className="mb-8 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
         >
           {backButtonText}
         </button>
 
 
         {/* ========================================
+            DUPLICATE MERGE BANNER
+        ======================================== */}
+
+        {problem.aiReviewStatus === "confirmed_duplicate" && problem.parentProblem && (
+          <div className="mb-6 rounded-2xl border border-[#bcd9cf] bg-[#e9f4f0] p-5">
+            <p className="text-sm font-semibold text-[#0a4f47]">
+              Your report has been merged with an active problem to prioritize its resolution.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = `problem-details?id=${problem.parentProblem._id}`;
+              }}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#0b514a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#073f3a]"
+            >
+              View Merged Problem
+            </button>
+          </div>
+        )}
+
+
+        {/* ========================================
             PROBLEM DETAILS CARD
         ======================================== */}
 
-        <article className="rounded-2xl bg-white p-6 shadow-sm sm:p-10">
+        <article className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm sm:p-10">
 
           {/* ========================================
               CATEGORY
           ======================================== */}
 
-          <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+          <span className="inline-block rounded-full bg-[#d8ebe4] px-3 py-1 text-sm font-medium text-[#087f70]">
             {problem.category}
           </span>
 
@@ -157,7 +180,7 @@ const ProblemDetails = ({
               TITLE
           ======================================== */}
 
-          <h1 className="mt-5 text-3xl font-bold text-slate-800">
+          <h1 className="mt-5 text-3xl font-bold text-[#173d3a]">
             {problem.title}
           </h1>
 
@@ -168,11 +191,11 @@ const ProblemDetails = ({
 
           <section className="mt-8">
 
-            <h2 className="text-lg font-semibold text-slate-800">
+            <h2 className="text-lg font-semibold text-[#173d3a]">
               Description
             </h2>
 
-            <p className="mt-3 leading-relaxed text-slate-600">
+            <p className="mt-3 leading-relaxed text-[#5c6f69]">
               {problem.description}
             </p>
 
@@ -190,11 +213,11 @@ const ProblemDetails = ({
 
               <div className="mb-4 flex items-center justify-between">
 
-                <h2 className="text-lg font-semibold text-slate-800">
+                <h2 className="text-lg font-semibold text-[#173d3a]">
                   Problem Photos
                 </h2>
 
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-[#71827c]">
                   {problem.images.length}{" "}
                   {problem.images.length === 1
                     ? "photo"
@@ -230,7 +253,7 @@ const ProblemDetails = ({
                     onClick={() =>
                       setSelectedImage(image.url)
                     }
-                    className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 text-left"
+                    className="group relative overflow-hidden rounded-2xl border border-[#e3e9e3] bg-[#f7f8f5] text-left"
                   >
 
                     <img
@@ -277,9 +300,9 @@ const ProblemDetails = ({
 
             <section className="mt-8">
 
-              <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <div className="rounded-xl bg-[#f2f5f1] p-4 text-center">
 
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[#71827c]">
                   📷 No photos were uploaded for this problem.
                 </p>
 
@@ -298,13 +321,13 @@ const ProblemDetails = ({
 
             {/* LOCATION */}
 
-            <div className="rounded-xl bg-slate-50 p-5">
+            <div className="rounded-xl bg-[#f2f5f1] p-5">
 
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-sm font-medium text-[#71827c]">
                 Location
               </p>
 
-              <p className="mt-2 font-semibold text-slate-800">
+              <p className="mt-2 font-semibold text-[#173d3a]">
                 📍 {problem.location}
               </p>
 
@@ -313,13 +336,13 @@ const ProblemDetails = ({
 
             {/* STATUS */}
 
-            <div className="rounded-xl bg-slate-50 p-5">
+            <div className="rounded-xl bg-[#f2f5f1] p-5">
 
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-sm font-medium text-[#71827c]">
                 Status
               </p>
 
-              <p className="mt-2 font-semibold capitalize text-slate-800">
+              <p className="mt-2 font-semibold capitalize text-[#173d3a]">
                 {problem.status?.replace(
                   "_",
                   " ",
@@ -341,13 +364,13 @@ const ProblemDetails = ({
 
               {/* DISTRICT */}
 
-              <div className="rounded-xl bg-slate-50 p-5">
+              <div className="rounded-xl bg-[#f2f5f1] p-5">
 
-                <p className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-[#71827c]">
                   District
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-800">
+                <p className="mt-2 font-semibold text-[#173d3a]">
                   {problem.locationDetails.district ||
                     "Not available"}
                 </p>
@@ -357,13 +380,13 @@ const ProblemDetails = ({
 
               {/* STATE */}
 
-              <div className="rounded-xl bg-slate-50 p-5">
+              <div className="rounded-xl bg-[#f2f5f1] p-5">
 
-                <p className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-[#71827c]">
                   State
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-800">
+                <p className="mt-2 font-semibold text-[#173d3a]">
                   {problem.locationDetails.state ||
                     "Not available"}
                 </p>
@@ -373,13 +396,13 @@ const ProblemDetails = ({
 
               {/* PINCODE */}
 
-              <div className="rounded-xl bg-slate-50 p-5">
+              <div className="rounded-xl bg-[#f2f5f1] p-5">
 
-                <p className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-[#71827c]">
                   Pincode
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-800">
+                <p className="mt-2 font-semibold text-[#173d3a]">
                   {problem.locationDetails.pincode ||
                     "Not available"}
                 </p>
@@ -397,14 +420,14 @@ const ProblemDetails = ({
 
           {problem.assignedPartner && (
 
-            <section className="mt-8 rounded-2xl border border-purple-200 bg-purple-50 p-6">
+            <section className="mt-8 rounded-2xl border border-[#d5c9ea] bg-[#f0ecf8] p-6">
 
-              <h2 className="text-lg font-bold text-purple-900">
+              <h2 className="text-lg font-bold text-[#3d2f63]">
                 Assigned Organization
               </h2>
 
 
-              <p className="mt-3 text-xl font-bold text-slate-800">
+              <p className="mt-3 text-xl font-bold text-[#173d3a]">
                 🏛️{" "}
                 {problem.assignedPartner.name}
               </p>
@@ -412,7 +435,7 @@ const ProblemDetails = ({
 
               {problem.assignedPartner.type && (
 
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 text-[#5c6f69]">
 
                   <span className="font-semibold">
                     Type:
@@ -427,7 +450,7 @@ const ProblemDetails = ({
 
               {problem.assignedPartner.description && (
 
-                <p className="mt-3 leading-relaxed text-slate-600">
+                <p className="mt-3 leading-relaxed text-[#5c6f69]">
                   {problem.assignedPartner.description}
                 </p>
 
@@ -436,7 +459,7 @@ const ProblemDetails = ({
 
               {problem.assignedPartner.location && (
 
-                <p className="mt-3 text-slate-600">
+                <p className="mt-3 text-[#5c6f69]">
                   📍{" "}
                   {problem.assignedPartner.location}
                 </p>
@@ -446,7 +469,7 @@ const ProblemDetails = ({
 
               {problem.assignedPartner.email && (
 
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 text-[#5c6f69]">
                   📧{" "}
                   {problem.assignedPartner.email}
                 </p>
@@ -462,7 +485,7 @@ const ProblemDetails = ({
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block font-semibold text-blue-600 hover:text-blue-700"
+                  className="mt-3 inline-block font-semibold text-[#0b6b60] hover:text-[#087f70]"
                 >
                   Visit Organization Website →
                 </a>
@@ -478,9 +501,9 @@ const ProblemDetails = ({
               SUBMISSION DATE
           ======================================== */}
 
-          <section className="mt-8 border-t border-slate-200 pt-6">
+          <section className="mt-8 border-t border-[#e3e9e3] pt-6">
 
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[#71827c]">
 
               Submitted on{" "}
 
@@ -519,7 +542,7 @@ const ProblemDetails = ({
             onClick={() =>
               setSelectedImage(null)
             }
-            className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-xl font-bold text-slate-800 shadow-lg transition hover:bg-slate-100"
+            className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-xl font-bold text-[#173d3a] shadow-lg transition hover:bg-[#f7f8f5]"
           >
             ✕
           </button>

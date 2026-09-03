@@ -195,16 +195,16 @@ const PartnerProblems = () => {
   const getStatusStyle = (status) => {
     switch (status) {
       case "assigned":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-[#f7ebd8] text-[#a25a1b]";
 
       case "in_progress":
-        return "bg-blue-100 text-blue-700";
+        return "bg-[#d8ebe4] text-[#087f70]";
 
       case "solved":
-        return "bg-green-100 text-green-700";
+        return "bg-[#e1f1ed] text-[#087f70]";
 
       default:
-        return "bg-slate-100 text-slate-700";
+        return "bg-[#f7f8f5] text-[#315d56]";
     }
   };
 
@@ -218,9 +218,9 @@ const PartnerProblems = () => {
 
         <div className="mx-auto max-w-7xl">
 
-          <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
 
-            <p className="text-slate-500">
+            <p className="text-[#71827c]">
               Loading assigned problems...
             </p>
 
@@ -249,15 +249,15 @@ const PartnerProblems = () => {
 
           <div>
 
-            <p className="text-sm font-semibold text-blue-600">
+            <p className="text-sm font-semibold text-[#0b6b60]">
               PARTNER PORTAL
             </p>
 
-            <h1 className="mt-2 text-3xl font-bold text-slate-800">
+            <h1 className="mt-2 text-3xl font-bold text-[#173d3a]">
               Assigned Problems
             </h1>
 
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 text-[#5c6f69]">
               Manage and track the progress of
               problems assigned to your organization.
             </p>
@@ -269,7 +269,7 @@ const PartnerProblems = () => {
           <button
             onClick={() => fetchProblems(true)}
             disabled={refreshing}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-[#dbe5df] bg-white px-4 py-2 text-sm font-semibold text-[#315d56] transition hover:bg-[#f2f5f1] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {refreshing
               ? "Refreshing..."
@@ -286,7 +286,7 @@ const PartnerProblems = () => {
           <div
             className={`mb-6 rounded-xl border p-4 text-sm ${
               messageType === "success"
-                ? "border-green-200 bg-green-50 text-green-700"
+                ? "border-[#bcd9cf] bg-[#e9f4f0] text-[#087f70]"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
           >
@@ -299,13 +299,13 @@ const PartnerProblems = () => {
         ======================================== */}
 
         {problems.length === 0 ? (
-          <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
 
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-lg font-bold text-[#173d3a]">
               No Assigned Problems
             </h2>
 
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-[#71827c]">
               Your organization has not been
               assigned any problems yet.
             </p>
@@ -323,7 +323,7 @@ const PartnerProblems = () => {
 
                 <article
                   key={problem._id}
-                  className="rounded-2xl bg-white p-6 shadow-sm"
+                  className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm"
                 >
 
                   {/* TITLE */}
@@ -332,7 +332,7 @@ const PartnerProblems = () => {
 
                     <div>
 
-                      <h2 className="text-xl font-bold text-slate-800">
+                      <h2 className="text-xl font-bold text-[#173d3a]">
                         {problem.title}
                       </h2>
 
@@ -353,7 +353,7 @@ const PartnerProblems = () => {
                         {/* CATEGORY */}
 
                         {problem.category && (
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-600">
+                          <span className="rounded-full bg-[#f7f8f5] px-3 py-1 text-xs font-semibold capitalize text-[#5c6f69]">
 
                             {problem.category}
 
@@ -368,17 +368,17 @@ const PartnerProblems = () => {
 
                   {/* DESCRIPTION */}
 
-                  <p className="mt-5 leading-relaxed text-slate-600">
+                  <p className="mt-5 leading-relaxed text-[#5c6f69]">
                     {problem.description}
                   </p>
 
                   {/* DETAILS */}
 
-                  <div className="mt-6 grid gap-3 border-t border-slate-100 pt-5 text-sm text-slate-600 sm:grid-cols-2">
+                  <div className="mt-6 grid gap-3 border-t border-[#eef2ee] pt-5 text-sm text-[#5c6f69] sm:grid-cols-2">
 
                     <div>
 
-                      <span className="font-semibold text-slate-700">
+                      <span className="font-semibold text-[#315d56]">
                         📍 Location:
                       </span>
 
@@ -391,7 +391,7 @@ const PartnerProblems = () => {
                     {problem.submittedBy && (
                       <div>
 
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-[#315d56]">
                           👤 Submitted by:
                         </span>
 
@@ -408,9 +408,9 @@ const PartnerProblems = () => {
                       STATUS ACTIONS
                   ======================================== */}
 
-                  <div className="mt-6 border-t border-slate-100 pt-5">
+                  <div className="mt-6 border-t border-[#eef2ee] pt-5">
 
-                    <p className="mb-3 text-sm font-semibold text-slate-700">
+                    <p className="mb-3 text-sm font-semibold text-[#315d56]">
                       Update Problem Status
                     </p>
 
@@ -432,7 +432,7 @@ const PartnerProblems = () => {
                             updatingId ===
                             problem._id
                           }
-                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+                          className="rounded-lg bg-[#0b514a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#b3ccc6]"
                         >
                           {updatingId ===
                           problem._id
@@ -458,7 +458,7 @@ const PartnerProblems = () => {
                             updatingId ===
                             problem._id
                           }
-                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+                          className="rounded-lg bg-[#087f70] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#a5ccc5]"
                         >
                           {updatingId ===
                           problem._id
@@ -473,7 +473,7 @@ const PartnerProblems = () => {
                       {problem.status ===
                         "solved" && (
 
-                        <span className="rounded-lg bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
+                        <span className="rounded-lg bg-[#e9f4f0] px-4 py-2 text-sm font-semibold text-[#087f70]">
 
                           ✓ This problem has been solved.
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ================= AUTH PAGES =================
 
@@ -19,16 +19,22 @@ import AllProblems from "./pages/AllProblems";
 import AdminDashboard from "./pages/AdminDashboard";
 import PartnerManagement from "./pages/PartnerManagement";
 import AdminProblemDetails from "./pages/AdminProblemDetails";
-
 // ================= PARTNER PAGES =================
 
 import PartnerDashboard from "./pages/PartnerDashboard";
+
 import PartnerProblems from "./pages/PartnerProblems";
 
+import PartnerProjects from "./pages/PartnerProjects";
+
+import PartnerCollaborations from "./pages/PartnerCollaborations";
+
+import UniversityDashboard from "./pages/UniversityDashboard";
 // ================= COMPONENTS =================
 
 import Navbar from "./components/Navbar";
 import AdminNavbar from "./components/AdminNavbar";
+import PartnerNavbar from "./components/PartnerNavbar";
 
 function App() {
   // ==================================================
@@ -36,11 +42,18 @@ function App() {
   // ==================================================
 
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
+    try {
+      const savedUser = localStorage.getItem("user");
 
-    return savedUser
-      ? JSON.parse(savedUser)
-      : null;
+      return savedUser
+        ? JSON.parse(savedUser)
+        : null;
+    } catch (error) {
+      console.error("Failed to parse stored user data:", error);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      return null;
+    }
   });
 
   // ==================================================
@@ -96,6 +109,107 @@ function App() {
     partnerPage,
     setPartnerPage,
   ] = useState("dashboard");
+
+  // ==================================================
+  // BROWSER HISTORY / ROUTING RESILIENCE
+  // ==================================================
+
+  useEffect(() => {
+    if (!user) return;
+
+    const handleHashChange = () => {
+      const hash = window.location.hash || "";
+      if (!hash) return;
+
+      const [pagePart, queryPart] = hash.slice(1).split("?");
+      const params = new URLSearchParams(queryPart || "");
+      const idParam = params.get("id");
+
+      if (user.role === "admin") {
+        if (pagePart === "admin-partners") {
+          setAdminPage("partners");
+        } else if (pagePart === "admin-problem-details" && idParam) {
+          setSelectedAdminProblemId(idParam);
+          setAdminPage("problem-details");
+        } else {
+          setAdminPage("dashboard");
+        }
+      } else if (user.role === "partner") {
+        if (pagePart === "partner-problems") {
+          setPartnerPage("problems");
+        } else if (pagePart === "university") {
+          setPartnerPage("university");
+        } else {
+          setPartnerPage("dashboard");
+        }
+      } else {
+        // Citizen pages
+        if (pagePart === "all-problems") {
+          setCurrentPage("all-problems");
+        } else if (pagePart === "submit") {
+          setCurrentPage("submit");
+        } else if (pagePart === "my-problems") {
+          setCurrentPage("my-problems");
+        } else if (pagePart === "problem-details" && idParam) {
+          setSelectedProblemId(idParam);
+          setCurrentPage("problem-details");
+        } else {
+          setCurrentPage("home");
+        }
+      }
+    };
+
+    // Load initial hash on component mount / login
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [user]);
+
+  // Update hash when active page/state changes
+  useEffect(() => {
+    if (!user) {
+      if (window.location.hash) {
+        window.history.replaceState(null, "", " ");
+      }
+      return;
+    }
+
+    let newHash;
+    if (user.role === "admin") {
+      if (adminPage === "partners") {
+        newHash = "admin-partners";
+      } else if (adminPage === "problem-details" && selectedAdminProblemId) {
+        newHash = `admin-problem-details?id=${selectedAdminProblemId}`;
+      } else {
+        newHash = "admin-dashboard";
+      }
+    } else if (user.role === "partner") {
+      if (partnerPage === "problems") {
+        newHash = "partner-problems";
+      } else if (partnerPage === "university") {
+        newHash = "university";
+      } else {
+        newHash = "partner-dashboard";
+      }
+    } else {
+      if (currentPage === "all-problems") {
+        newHash = "all-problems";
+      } else if (currentPage === "submit") {
+        newHash = "submit";
+      } else if (currentPage === "my-problems") {
+        newHash = "my-problems";
+      } else if (currentPage === "problem-details" && selectedProblemId) {
+        newHash = `problem-details?id=${selectedProblemId}`;
+      } else {
+        newHash = "home";
+      }
+    }
+
+    if (window.location.hash !== `#${newHash}`) {
+      window.history.pushState(null, "", `#${newHash}`);
+    }
+  }, [user, currentPage, selectedProblemId, adminPage, selectedAdminProblemId, partnerPage]);
 
   // ==================================================
   // LOGIN
@@ -231,7 +345,7 @@ function App() {
 
   if (user.role === "admin") {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-[#f7f8f5]">
 
         <AdminNavbar
           user={user}
@@ -279,92 +393,18 @@ function App() {
 
   if (user.role === "partner") {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-[#f7f8f5]">
 
         {/* ========================================
             PARTNER NAVBAR
         ======================================== */}
 
-        <header className="border-b bg-white shadow-sm">
-
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-
-            {/* PARTNER INFORMATION */}
-
-            <div>
-
-              <h1 className="text-xl font-bold text-slate-800">
-
-                Partner Portal
-
-              </h1>
-
-              <p className="text-sm text-slate-500">
-
-                {user.name}
-
-              </p>
-
-            </div>
-
-
-            {/* NAVIGATION */}
-
-            <div className="flex items-center gap-4">
-
-              {/* DASHBOARD */}
-
-              <button
-                onClick={() =>
-                  setPartnerPage("dashboard")
-                }
-                className={`text-sm font-semibold transition ${
-                  partnerPage === "dashboard"
-                    ? "text-blue-600"
-                    : "text-slate-600 hover:text-blue-600"
-                }`}
-              >
-
-                Dashboard
-
-              </button>
-
-
-              {/* ASSIGNED PROBLEMS */}
-
-              <button
-                onClick={() =>
-                  setPartnerPage("problems")
-                }
-                className={`text-sm font-semibold transition ${
-                  partnerPage === "problems"
-                    ? "text-blue-600"
-                    : "text-slate-600 hover:text-blue-600"
-                }`}
-              >
-
-                Assigned Problems
-
-              </button>
-
-
-              {/* LOGOUT */}
-
-              <button
-                onClick={handleLogout}
-                className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-              >
-
-                Logout
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </header>
-
+        <PartnerNavbar
+          user={user}
+          currentPage={partnerPage}
+          setCurrentPage={setPartnerPage}
+          handleLogout={handleLogout}
+        />
 
         {/* ========================================
             PARTNER DASHBOARD
@@ -385,6 +425,35 @@ function App() {
           <PartnerProblems />
         )}
 
+
+        {/* ========================================
+            PARTNER PROJECTS (UNIVERSITIES)
+        ======================================== */}
+
+        {partnerPage === "projects" &&
+          user?.organization?.type === "university" && (
+            <PartnerProjects />
+          )}
+
+        {/* ========================================
+            INDUSTRY COLLABORATIONS
+        ======================================== */}
+
+        {partnerPage === "collaborations" && (
+          <PartnerCollaborations user={user} />
+        )}
+
+
+        {/* ========================================
+            UNIVERSITY DASHBOARD
+        ======================================== */}
+
+        {partnerPage === "university" && (
+          <UniversityDashboard
+            setCurrentPage={setPartnerPage}
+          />
+        )}
+
       </div>
     );
   }
@@ -394,7 +463,7 @@ function App() {
   // ==================================================
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#f7f8f5]">
 
       {/* NAVBAR */}
 

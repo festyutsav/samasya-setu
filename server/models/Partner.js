@@ -56,6 +56,35 @@ const partnerSchema = new mongoose.Schema(
 
 
     // ========================================
+    // AI ROUTING PROFILE
+    // ========================================
+    // These fields power the AI routing engine. When a citizen
+    // submits a problem, the engine scores every partner against
+    // it and recommends the top 3. `expertise` uses the same
+    // canonical category keys as CATEGORY_KEYS in
+    // services/aiCategoryService.js so tag matching works.
+
+    expertise: {
+      type: [String],
+      default: [],
+    },
+
+    capabilities: {
+      type: [String],
+      default: [],
+    },
+
+    // Districts where the partner can realistically work on
+    // the ground. Empty means "open to problems anywhere in
+    // Jharkhand" — no geo penalty either way.
+
+    districtsServed: {
+      type: [String],
+      default: [],
+    },
+
+
+    // ========================================
     // LOGIN ACCOUNT
     // ========================================
 

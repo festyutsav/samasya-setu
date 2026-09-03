@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "backfill": "node scripts/backfillDuplicateData.js",
+    "test:duplicates": "node scripts/testDuplicateDetection.js",
+    "test:categories": "node scripts/testCategoryPrediction.js"
   },
   "keywords": [],
   "author": "",

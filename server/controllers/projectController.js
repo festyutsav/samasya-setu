@@ -1,0 +1,803 @@
+const Project = require("../models/Project");
+const Problem = require("../models/Problem");
+const Partner = require("../models/Partner");
+const {
+  notifyAdmins,
+  createNotification,
+  notifyPartnerUser,
+} = require("../services/notificationService");
+
+// ========================================
+// CREATE A PROJECT (UNIVERSITY PARTNER)
+// ========================================
+// A university spins up a professor + student team around a
+// problem assigned to it. Guardrails:
+//   - only university partners can create projects
+//   - the problem must actually be assigned to them
+
+const createProject = async (req, res) => {
+  try {
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const partner = await Partner.findById(req.user.partner);
+
+    if (!partner) {
+      return res.status(404).json({
+        message: "Partner organization not found.",
+      });
+    }
+
+    if (partner.type !== "university") {
+      return res.status(403).json({
+        message:
+          "Only university partners can create projects. Industries can mentor, fund or field-test instead.",
+      });
+    }
+
+    const { title, description, problem: problemId, team, milestones } =
+      req.body;
+
+    if (!title || !description || !problemId) {
+      return res.status(400).json({
+        message: "Please provide a title, description and linked problem.",
+      });
+    }
+
+    // The problem must be assigned to this university.
+
+    const problem = await Problem.findOne({
+      _id: problemId,
+
+      assignedPartner: partner._id,
+    });
+
+    if (!problem) {
+      return res.status(400).json({
+        message:
+          "This problem is not assigned to your organization, so a project cannot be created for it.",
+      });
+    }
+
+    // Basic shape-check on the incoming team so a malformed
+    // payload becomes a clear 400 instead of a silent skip.
+
+    const normalizedTeam = Array.isArray(team)
+      ? team
+          .filter((member) => member && member.name && member.role)
+          .map((member) => ({
+            name: String(member.name).trim(),
+
+            role: member.role === "professor" ? "professor" : "student",
+
+            department: String(member.department || "").trim(),
+
+            email: String(member.email || "").trim().toLowerCase(),
+          }))
+      : [];
+
+    const normalizedMilestones = Array.isArray(milestones)
+      ? milestones
+          .filter((milestone) => milestone && String(milestone.title).trim())
+          .map((milestone) => ({
+            title: String(milestone.title).trim(),
+
+            completed: Boolean(milestone.completed),
+          }))
+      : [];
+
+    try {
+      const project = await Project.create({
+        title: title.trim(),
+
+        description: description.trim(),
+
+        problem: problem._id,
+
+        partner: partner._id,
+
+        team: normalizedTeam,
+
+        milestones: normalizedMilestones,
+
+        createdBy: req.user._id,
+      });
+
+      const populated = await Project.findById(project._id)
+        .populate("problem", "title status category location")
+        .populate("partner", "name type location");
+
+      // ========================================
+      // NOTIFY ADMINS + CITIZEN
+      // ========================================
+      // Government tracks university participation; the
+      // citizen sees work starting on their problem.
+
+      await notifyAdmins({
+        type: "project_created",
+
+        title: "New solution project",
+
+        message: `${partner.name} started the project "${populated.title}" for "${problem.title}".`,
+
+        problemId: problem._id,
+      });
+
+      await createNotification({
+        recipientId: problem.submittedBy,
+
+        type: "project_created",
+
+        title: "Work has started",
+
+        message: `${partner.name} started the project "${populated.title}" on your problem "${problem.title}".`,
+
+        problemId: problem._id,
+      });
+
+      return res.status(201).json({
+        message: "Project created successfully.",
+
+        project: populated,
+      });
+    } catch (createError) {
+      // Duplicate key = a project already exists for this
+      // problem + partner pair.
+
+      if (createError.code === 11000) {
+        return res.status(409).json({
+          message:
+            "A project already exists for this problem. Open it from your projects list instead.",
+        });
+      }
+
+      throw createError;
+    }
+  } catch (error) {
+    console.error("Create project error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while creating project.",
+    });
+  }
+};
+
+// ========================================
+// GET MY PROJECTS
+// ========================================
+// Universities see projects they lead; industry and other
+// partners also see projects they are collaborating on.
+
+const getMyProjects = async (req, res) => {
+  try {
+    if (!req.user.partner) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const projects = await Project.find({
+      $or: [
+        { partner: req.user.partner },
+
+        { "collaborators.partner": req.user.partner },
+      ],
+    })
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: projects.length,
+
+      projects,
+    });
+  } catch (error) {
+    console.error("Get projects error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while fetching projects.",
+    });
+  }
+};
+
+// ========================================
+// INVITE A COLLABORATOR (LEAD UNIVERSITY)
+// ========================================
+// The university leading a project invites an industry
+// partner, startup, MSME or CSR organization into a defined
+// role: mentor, funder, co-developer or adopter.
+
+const inviteCollaborator = async (req, res) => {
+  try {
+    const { partnerId, role } = req.body;
+
+    const allowedRoles = ["mentor", "funder", "co-developer", "adopter"];
+
+    if (!partnerId || !allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message:
+          "Please provide a partner and a valid role (mentor, funder, co-developer or adopter).",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message:
+          "Project not found or you do not lead this project.",
+      });
+    }
+
+    const collaboratorPartner = await Partner.findById(partnerId);
+
+    if (!collaboratorPartner) {
+      return res.status(404).json({
+        message: "Partner organization not found.",
+      });
+    }
+
+    if (collaboratorPartner._id.equals(project.partner)) {
+      return res.status(400).json({
+        message: "Your organization already leads this project.",
+      });
+    }
+
+    // One live engagement per partner per project — an already
+    // invited or accepted partner cannot be invited again.
+
+    const liveCollaborator = project.collaborators.find(
+      (collaborator) =>
+        collaborator.partner.equals(collaboratorPartner._id) &&
+        ["invited", "accepted"].includes(collaborator.status),
+    );
+
+    if (liveCollaborator) {
+      return res.status(409).json({
+        message:
+          liveCollaborator.status === "invited"
+            ? "This partner already has a pending invitation."
+            : "This partner is already collaborating on the project.",
+      });
+    }
+
+    const collaborator = {
+      partner: collaboratorPartner._id,
+
+      role,
+
+      status: "invited",
+
+      contributions: [],
+
+      invitedBy: req.user._id,
+
+      respondedAt: null,
+    };
+
+    project.collaborators.push(collaborator);
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    // ========================================
+    // NOTIFY INVITED PARTNER + ADMINS
+    // ========================================
+
+    await notifyPartnerUser({
+      partnerId: collaboratorPartner._id,
+
+      type: "collaboration_invited",
+
+      title: "Collaboration invitation",
+
+      message: `${populated.partner.name} invited you to join "${populated.title}" as a ${role.replace("-", " ")} on the problem "${populated.problem.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    await notifyAdmins({
+      type: "collaboration_invited",
+
+      title: "Industry collaboration invite sent",
+
+      message: `${populated.partner.name} invited ${collaboratorPartner.name} as a ${role.replace("-", " ")} on "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    return res.status(201).json({
+      message: `Invitation sent to ${collaboratorPartner.name}.`,
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Invite collaborator error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while sending invitation.",
+    });
+  }
+};
+
+// ========================================
+// RESPOND TO AN INVITATION (COLLABORATOR)
+// ========================================
+// The invited partner accepts or declines. Accepting makes
+// them an active collaborator; both outcomes notify the lead
+// university and admins.
+
+const respondToInvite = async (req, res) => {
+  try {
+    const { response } = req.body;
+
+    if (!["accepted", "declined"].includes(response)) {
+      return res.status(400).json({
+        message: "Response must be either accepted or declined.",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      "collaborators.partner": req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or you have not been invited to it.",
+      });
+    }
+
+    const collaborator = project.collaborators.find((entry) =>
+      entry.partner.equals(req.user.partner),
+    );
+
+    if (collaborator.status !== "invited") {
+      return res.status(400).json({
+        message:
+          collaborator.status === "accepted"
+            ? "You have already accepted this invitation."
+            : "This invitation is no longer pending.",
+      });
+    }
+
+    collaborator.status = response;
+
+    collaborator.respondedAt = new Date();
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    const collaboratorPartner = populated.collaborators.find((entry) =>
+      entry.partner._id.equals(req.user.partner),
+    ).partner;
+
+    // ========================================
+    // NOTIFY LEAD UNIVERSITY + ADMINS
+    // ========================================
+
+    const responseLabel =
+      response === "accepted" ? "accepted" : "declined";
+
+    await notifyPartnerUser({
+      partnerId: project.partner,
+
+      type: "collaboration_responded",
+
+      title: `Invitation ${responseLabel}`,
+
+      message: `${collaboratorPartner.name} ${responseLabel} your invitation to collaborate on "${populated.title}" as a ${collaborator.role.replace("-", " ")}.`,
+
+      problemId: populated.problem._id,
+    });
+
+    await notifyAdmins({
+      type: "collaboration_responded",
+
+      title: `Collaboration invitation ${responseLabel}`,
+
+      message: `${collaboratorPartner.name} ${responseLabel} the invitation from ${populated.partner.name} to collaborate on "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    return res.status(200).json({
+      message: `Invitation ${responseLabel}.`,
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Respond to invite error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while responding to invitation.",
+    });
+  }
+};
+
+// ========================================
+// WITHDRAW A COLLABORATOR (LEAD UNIVERSITY)
+// ========================================
+// The lead can cancel a pending invitation or remove an
+// active collaborator. Records are kept (status becomes
+// "withdrawn") so the collaboration history stays auditable.
+
+const withdrawCollaborator = async (req, res) => {
+  try {
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message:
+          "Project not found or you do not lead this project.",
+      });
+    }
+
+    const collaborator = project.collaborators.id(req.params.collaboratorId);
+
+    if (!collaborator) {
+      return res.status(404).json({
+        message: "Collaboration record not found.",
+      });
+    }
+
+    if (!["invited", "accepted"].includes(collaborator.status)) {
+      return res.status(400).json({
+        message: "Only pending or active collaborations can be withdrawn.",
+      });
+    }
+
+    const wasAccepted = collaborator.status === "accepted";
+
+    const collaboratorPartnerId = collaborator.partner;
+
+    collaborator.status = "withdrawn";
+
+    collaborator.respondedAt = new Date();
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    // ========================================
+    // NOTIFY COLLABORATOR + ADMINS
+    // ========================================
+
+    const actionLabel = wasAccepted
+      ? "removed from"
+      : "withdrew the invitation for";
+
+    await notifyPartnerUser({
+      partnerId: collaboratorPartnerId,
+
+      type: "collaboration_responded",
+
+      title: wasAccepted ? "Removed from project" : "Invitation withdrawn",
+
+      message: `${populated.partner.name} ${actionLabel} the project "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    await notifyAdmins({
+      type: "collaboration_responded",
+
+      title: wasAccepted ? "Collaborator removed" : "Invitation withdrawn",
+
+      message: `${populated.partner.name} ${actionLabel} a collaboration on "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    return res.status(200).json({
+      message: "Collaboration withdrawn successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Withdraw collaborator error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while withdrawing collaboration.",
+    });
+  }
+};
+
+// ========================================
+// ADD A CONTRIBUTION (ACTIVE COLLABORATOR)
+// ========================================
+// Collaborating partners log what they brought to the
+// project — mentorship sessions, funding, prototypes,
+// pilot deployments. Visible to the lead, admins and the
+// citizen through project updates.
+
+const addContribution = async (req, res) => {
+  try {
+    const { title, detail } = req.body;
+
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({
+        message: "Please provide a contribution title.",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      "collaborators.partner": req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message:
+          "Project not found or your organization is not collaborating on it.",
+      });
+    }
+
+    const collaborator = project.collaborators.find((entry) =>
+      entry.partner.equals(req.user.partner),
+    );
+
+    if (collaborator.status !== "accepted") {
+      return res.status(403).json({
+        message: "Only accepted collaborators can log contributions.",
+      });
+    }
+
+    collaborator.contributions.push({
+      title: String(title).trim(),
+
+      detail: String(detail || "").trim(),
+    });
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    const collaboratorPartner = populated.collaborators.find((entry) =>
+      entry.partner._id.equals(req.user.partner),
+    ).partner;
+
+    // ========================================
+    // NOTIFY LEAD UNIVERSITY + ADMINS
+    // ========================================
+
+    await notifyPartnerUser({
+      partnerId: project.partner,
+
+      type: "collaboration_contribution",
+
+      title: "New collaboration contribution",
+
+      message: `${collaboratorPartner.name} logged "${String(title).trim()}" on the project "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    await notifyAdmins({
+      type: "collaboration_contribution",
+
+      title: "New collaboration contribution",
+
+      message: `${collaboratorPartner.name} logged "${String(title).trim()}" on "${populated.title}" as a ${collaborator.role.replace("-", " ")}.`,
+
+      problemId: populated.problem._id,
+    });
+
+    return res.status(201).json({
+      message: "Contribution logged successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Add contribution error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while logging contribution.",
+    });
+  }
+};
+
+// ========================================
+// UPDATE PROJECT STATUS
+// ========================================
+
+const updateProjectStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const allowedStatuses = ["planning", "active", "completed"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid project status.",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or you do not have permission to update it.",
+      });
+    }
+
+    project.status = status;
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location submittedBy")
+      .populate("partner", "name type location");
+
+    // ========================================
+    // NOTIFY ADMINS + CITIZEN
+    // ========================================
+
+    await notifyAdmins({
+      type: "project_updated",
+
+      title: "Project status updated",
+
+      message: `${populated.partner.name} moved "${populated.title}" to ${status}.`,
+
+      problemId: populated.problem._id,
+    });
+
+    if (populated.problem.submittedBy) {
+      await createNotification({
+        recipientId: populated.problem.submittedBy,
+
+        type: "project_updated",
+
+        title: "Solution progress update",
+
+        message: `The project "${populated.title}" on your problem is now ${status}.`,
+
+        problemId: populated.problem._id,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Project status updated successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Update project status error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating project status.",
+    });
+  }
+};
+
+// ========================================
+// TOGGLE A MILESTONE
+// ========================================
+
+const toggleMilestone = async (req, res) => {
+  try {
+    const { milestoneIndex } = req.body;
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+
+      partner: req.user.partner,
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or you do not have permission to update it.",
+      });
+    }
+
+    const index = Number(milestoneIndex);
+
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= project.milestones.length
+    ) {
+      return res.status(400).json({
+        message: "Invalid milestone.",
+      });
+    }
+
+    project.milestones[index].completed =
+      !project.milestones[index].completed;
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location submittedBy")
+      .populate("partner", "name type location");
+
+    const milestone = populated.milestones[index];
+
+    // ========================================
+    // NOTIFY ADMINS + CITIZEN
+    // ========================================
+
+    await notifyAdmins({
+      type: "project_updated",
+
+      title: milestone.completed ? "Milestone completed" : "Milestone reopened",
+
+      message: `${populated.partner.name} ${milestone.completed ? "completed" : "reopened"} the milestone "${milestone.title}" on "${populated.title}".`,
+
+      problemId: populated.problem._id,
+    });
+
+    if (populated.problem.submittedBy) {
+      await createNotification({
+        recipientId: populated.problem.submittedBy,
+
+        type: "project_updated",
+
+        title: milestone.completed
+          ? "Milestone completed"
+          : "Milestone reopened",
+
+        message: `Milestone "${milestone.title}" on the project "${populated.title}" for your problem was ${milestone.completed ? "completed" : "reopened"}.`,
+
+        problemId: populated.problem._id,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Milestone updated successfully.",
+
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Toggle milestone error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating milestone.",
+    });
+  }
+};
+
+module.exports = {
+  createProject,
+  getMyProjects,
+  updateProjectStatus,
+  toggleMilestone,
+  inviteCollaborator,
+  respondToInvite,
+  withdrawCollaborator,
+  addContribution,
+};
