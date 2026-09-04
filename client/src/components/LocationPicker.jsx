@@ -411,8 +411,7 @@ const LocationPicker = ({
         </label>
 
 
-        <div className="flex gap-2">
-
+        <div className="flex w-full items-stretch gap-2">
           <input
             type="text"
             value={search}
@@ -422,34 +421,25 @@ const LocationPicker = ({
               )
             }
             onKeyDown={(event) => {
-
               if (
                 event.key === "Enter"
               ) {
-
                 event.preventDefault();
-
                 handleSearch();
-
               }
-
             }}
-            placeholder="Example: Harmu Road, Ranchi"
-            className="flex-1 rounded-lg border border-[#dbe5df] px-4 py-3 outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
+            placeholder="Search location (e.g. Harmu Road, Ranchi)..."
+            className="min-w-0 flex-1 rounded-xl border border-[#dbe5df] bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb] sm:px-4 sm:py-3"
           />
-
 
           <button
             type="button"
             onClick={handleSearch}
             disabled={loading}
-            className="rounded-lg bg-[#0b514a] px-5 py-3 font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
+            className="shrink-0 rounded-xl bg-[#0b514a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad] sm:px-5 sm:py-3"
           >
-
-            Search
-
+            {loading ? "Searching..." : "🔍 Search"}
           </button>
-
         </div>
 
       </div>
