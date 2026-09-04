@@ -54,6 +54,9 @@ const PartnerManagement = () => {
   const [showPassword, setShowPassword] =
     useState(false);
 
+  const [showAddForm, setShowAddForm] =
+    useState(false);
+
 
   // ========================================
   // FORM DATA
@@ -443,6 +446,7 @@ const PartnerManagement = () => {
       );
 
       setMessageType("success");
+      setShowAddForm(false);
 
     } catch (error) {
 
@@ -697,14 +701,39 @@ const PartnerManagement = () => {
         )}
 
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        {/* ========================================
+            MOBILE VIEW TOGGLE
+        ======================================== */}
 
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-[#e3e9e3] bg-white p-3.5 shadow-sm lg:hidden">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0b6b60]">
+              Partner Network
+            </p>
+            <p className="text-sm font-semibold text-[#173d3a]">
+              {filteredPartners.length} Organization{filteredPartners.length !== 1 ? "s" : ""}
+            </p>
+          </div>
 
+          <button
+            type="button"
+            onClick={() => setShowAddForm((prev) => !prev)}
+            className="flex items-center gap-1.5 rounded-xl bg-[#0b514a] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#073f3a]"
+          >
+            <span>{showAddForm ? "✕ Close Form" : "➕ Add Partner"}</span>
+          </button>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
           {/* ========================================
-              ADD PARTNER FORM
+              ADD PARTNER FORM (Visible on desktop, toggleable on mobile)
           ======================================== */}
 
-          <section className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
+          <section
+            className={`rounded-2xl border border-[#e3e9e3] bg-white p-5 shadow-sm sm:p-6 lg:block ${
+              showAddForm ? "block" : "hidden"
+            }`}
+          >
 
             <h2 className="text-xl font-bold text-[#173d3a]">
 
@@ -1370,34 +1399,28 @@ const PartnerManagement = () => {
                     (partner) => (
 
                       <div
-
                         key={partner._id}
-
-                        className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start sm:justify-between"
-
+                        className="p-5 sm:p-6"
                       >
-
-
                         <div>
+                          {/* NAME + TYPE + DELETE HEADER */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <h3 className="text-base font-bold text-[#173d3a] sm:text-lg">
+                                {partner.name}
+                              </h3>
 
+                              <span className="rounded-full bg-[#d8ebe4] px-2.5 py-0.5 text-xs font-semibold capitalize text-[#087f70]">
+                                {partner.type}
+                              </span>
+                            </div>
 
-                          {/* NAME + TYPE */}
-
-                          <div className="flex flex-wrap items-center gap-3">
-
-                            <h3 className="text-lg font-bold text-[#173d3a]">
-
-                              {partner.name}
-
-                            </h3>
-
-
-                            <span className="rounded-full bg-[#d8ebe4] px-3 py-1 text-xs font-semibold capitalize text-[#087f70]">
-
-                              {partner.type}
-
-                            </span>
-
+                            <button
+                              onClick={() => handleDelete(partner._id)}
+                              className="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
                           </div>
 
 
@@ -1594,28 +1617,7 @@ const PartnerManagement = () => {
 
                           )}
 
-
                         </div>
-
-
-                        {/* DELETE */}
-
-                        <button
-
-                          onClick={() =>
-                            handleDelete(
-                              partner._id
-                            )
-                          }
-
-                          className="shrink-0 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-
-                        >
-
-                          Delete
-
-                        </button>
-
 
                       </div>
 

@@ -415,25 +415,25 @@ const AnalyticsDashboard = () => {
       <div className="mx-auto max-w-7xl">
         {/* Hero Header */}
 
-        <section className="ss-dash-hero ss-enter mb-8 p-8 shadow-lg sm:p-10">
+        <section className="ss-dash-hero ss-enter mb-8 p-5 shadow-lg sm:p-10">
           <div className="ss-hero-ring right-24 top-6 h-40 w-40" />
 
           <div className="relative z-10">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#e9c985]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e9c985] sm:text-xs">
               Government Admin Portal
             </p>
 
-            <h1 className="font-display mt-2 text-3xl font-bold text-white sm:text-4xl">
+            <h1 className="font-display mt-2 text-2xl font-bold text-white sm:text-4xl">
               Analytics Dashboard
             </h1>
 
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/70">
+            <p className="mt-2 max-w-xl text-xs leading-5 text-white/70 sm:mt-3 sm:text-sm sm:leading-6">
               Domain-wise distribution, district coverage, partner
               participation and completion rates — the full picture of the
               problem pipeline at a glance.
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-5 sm:gap-3">
               <button
                 onClick={() => setLive((prev) => !prev)}
                 title={
@@ -441,7 +441,7 @@ const AnalyticsDashboard = () => {
                     ? "Auto-refreshing every 20s — click to pause"
                     : "Auto-refresh paused — click to resume"
                 }
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm ${
                   live
                     ? "bg-[#0d8a7a]/40 text-white ring-1 ring-[#7fd6c7]/60"
                     : "bg-white/10 text-white/70 ring-1 ring-white/20"
@@ -454,7 +454,7 @@ const AnalyticsDashboard = () => {
                 />
                 {live ? "Live" : "Paused"}
                 {live && lastUpdated && (
-                  <span className="text-xs font-normal text-white/70">
+                  <span className="hidden text-xs font-normal text-white/70 sm:inline">
                     · updated{" "}
                     {lastUpdated.toLocaleTimeString("en-IN", {
                       hour: "2-digit",
@@ -467,17 +467,17 @@ const AnalyticsDashboard = () => {
 
               <button
                 onClick={() => fetchAnalytics(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm"
               >
-                <Icon path={icons.refresh} className="h-4 w-4" />
-                Refresh data
+                <Icon path={icons.refresh} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Refresh
               </button>
 
               <button
                 onClick={exportCsv}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm"
               >
-                <Icon path={icons.download} className="h-4 w-4" />
+                <Icon path={icons.download} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Export CSV
               </button>
             </div>
@@ -492,10 +492,10 @@ const AnalyticsDashboard = () => {
           </div>
         )}
 
-        {/* KPI CARDS */}
+        {/* KPI CARDS (SYMMETRIC 2-COL ON MOBILE, 4-COL ON DESKTOP) */}
 
         <section
-          className="ss-enter mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="ss-enter mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-4"
           style={{ "--ss-delay": "120ms" }}
         >
           <KpiCard
@@ -519,32 +519,32 @@ const AnalyticsDashboard = () => {
           <KpiCard
             label="Districts Covered"
             value={summary.districtsCovered ?? 0}
-            sub="districts with reported problems"
+            sub="districts with reports"
             icon={icons.map}
             accent="linear-gradient(90deg, #d99a2b, #f3ce7a)"
             chipClass="bg-[#f9f0dd] text-[#a2731b]"
           />
 
           <KpiCard
-            label="Partner Participation"
+            label="Partner Reach"
             value={`${summary.activePartners ?? 0}/${summary.totalPartners ?? 0}`}
-            sub="partners handling problems"
+            sub="handling problems"
             icon={icons.partners}
             accent="linear-gradient(90deg, #7c5cbf, #b49ade)"
             chipClass="bg-[#efeaf8] text-[#564680]"
           />
         </section>
 
-        {/* PROJECT & IMPACT KPI CARDS */}
+        {/* PROJECT & IMPACT KPI CARDS (SYMMETRIC 2-COL ON MOBILE, 4-COL ON DESKTOP) */}
 
         <section
-          className="ss-enter mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="ss-enter mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
           style={{ "--ss-delay": "200ms" }}
         >
           <KpiCard
             label="Research Projects"
-            value={`${summary.activeProjects ?? 0} active / ${summary.totalProjects ?? 0}`}
-            sub={`${summary.completedProjects ?? 0} completed so far`}
+            value={`${summary.activeProjects ?? 0}/${summary.totalProjects ?? 0}`}
+            sub={`${summary.completedProjects ?? 0} completed`}
             icon={icons.projects}
             accent="linear-gradient(90deg, #0d8a7a, #7fc8b2)"
             chipClass="bg-[#e4f2ee] text-[#087f70]"
@@ -553,16 +553,16 @@ const AnalyticsDashboard = () => {
           <KpiCard
             label="Project Completion"
             value={`${summary.projectCompletionRate ?? 0}%`}
-            sub={`${summary.milestoneProgress ?? 0}% milestones done`}
+            sub={`${summary.milestoneProgress ?? 0}% milestones`}
             icon={icons.milestone}
             accent="linear-gradient(90deg, #0b6b60, #62a99b)"
             chipClass="bg-[#e9f4f0] text-[#0b6b60]"
           />
 
           <KpiCard
-            label="Industry Engagements"
+            label="Industry Collabs"
             value={summary.industryEngagements ?? 0}
-            sub="active industry collaborations"
+            sub="active CSR partners"
             icon={icons.handshake}
             accent="linear-gradient(90deg, #c96a2d, #e9a06b)"
             chipClass="bg-[#faecdf] text-[#b05c2d]"
@@ -571,7 +571,7 @@ const AnalyticsDashboard = () => {
           <KpiCard
             label="People Impacted"
             value={(summary.peopleAffected ?? 0).toLocaleString("en-IN")}
-            sub="citizens affected by reported problems"
+            sub="citizens reached"
             icon={icons.heart}
             accent="linear-gradient(90deg, #b05c2d, #e9b06b)"
             chipClass="bg-[#faecdf] text-[#b05c2d]"
@@ -1061,23 +1061,25 @@ const AnalyticsDashboard = () => {
 const KpiCard = ({ label, value, sub, icon, accent, chipClass }) => (
   <div
     style={{ "--ss-accent": accent }}
-    className="ss-stat-card p-5"
+    className="ss-stat-card flex flex-col justify-between p-3.5 sm:p-5"
   >
-    <div className="flex items-start justify-between gap-3">
-      <p className="text-sm font-medium text-[#71827c]">{label}</p>
+    <div className="flex items-start justify-between gap-2">
+      <p className="text-xs font-semibold text-[#71827c] line-clamp-1 sm:text-sm">{label}</p>
 
       <span
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${chipClass}`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${chipClass}`}
       >
-        <Icon path={icon} />
+        <Icon path={icon} className="h-4 w-4 sm:h-5 sm:w-5" />
       </span>
     </div>
 
-    <p className="ss-stat-value mt-2 text-3xl font-bold text-[#173d3a]">
-      {value}
-    </p>
+    <div>
+      <p className="ss-stat-value mt-2 text-xl font-bold text-[#173d3a] sm:text-3xl">
+        {value}
+      </p>
 
-    <p className="mt-1 text-xs text-[#899892]">{sub}</p>
+      <p className="mt-1 text-[11px] text-[#899892] line-clamp-1 sm:text-xs">{sub}</p>
+    </div>
   </div>
 );
 
@@ -1086,11 +1088,11 @@ const KpiCard = ({ label, value, sub, icon, accent, chipClass }) => (
 // ========================================
 
 const ChartCard = ({ title, subtitle, children }) => (
-  <div className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
+  <div className="overflow-hidden rounded-2xl border border-[#e3e9e3] bg-white p-4 shadow-sm sm:p-6">
     <div className="mb-4">
-      <h2 className="text-lg font-bold text-[#173d3a]">{title}</h2>
+      <h2 className="text-base font-bold text-[#173d3a] sm:text-lg">{title}</h2>
 
-      <p className="mt-0.5 text-sm text-[#71827c]">{subtitle}</p>
+      <p className="mt-0.5 text-xs text-[#71827c] sm:text-sm">{subtitle}</p>
     </div>
 
     {children}
