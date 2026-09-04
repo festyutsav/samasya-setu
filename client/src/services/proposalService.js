@@ -18,6 +18,21 @@ export const createProposal = async (data, token) => {
 };
 
 // ========================================
+// GET ALL PROPOSALS (ADMIN)
+// ========================================
+
+export const getAllProposals = async (token, status = "") => {
+  const url = status ? `${API_URL}?status=${status}` : API_URL;
+  const response = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
+// ========================================
 // GET PROPOSALS FOR PROBLEM (ADMIN)
 // ========================================
 

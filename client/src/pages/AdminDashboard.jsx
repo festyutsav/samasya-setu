@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getAllProblems } from "../services/problemService";
 import { deleteProblemByAdmin } from "../services/adminService";
+import { getAllProposals } from "../services/proposalService";
 import { MiniLifecycleBar } from "../components/LifecycleStepper";
 
 const statusStyles = {
@@ -96,6 +97,7 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
   // ========================================
 
   const [problems, setProblems] = useState([]);
+  const [proposals, setProposals] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -126,7 +128,7 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
   const problemsSectionRef = useRef(null);
 
   // ========================================
-  // FETCH PROBLEMS
+  // FETCH PROBLEMS & PROPOSALS
   // ========================================
 
   const fetchDashboardData = async () => {
@@ -141,9 +143,13 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
         return;
       }
 
-      const data = await getAllProblems(token);
+      const [problemsData, proposalsData] = await Promise.all([
+        getAllProblems(token),
+        getAllProposals(token).catch(() => ({ proposals: [] })),
+      ]);
 
-      setProblems(data.problems || []);
+      setProblems(problemsData.problems || []);
+      setProposals(proposalsData?.proposals || []);
     } catch (error) {
       console.error("Dashboard fetch error:", error);
 
@@ -239,6 +245,34 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
   }, [problems]);
 
   // ========================================
+  // PENDING PROPOSALS LOOKUP
+  // ========================================
+
+  const pendingProposalsByProblem = useMemo(() => {
+    const map = {};
+    (proposals || []).forEach((proposal) => {
+      if (proposal.status === "submitted") {
+        const pid =
+          typeof proposal.problem === "object"
+            ? proposal.problem?._id
+            : proposal.problem;
+        if (pid) {
+          if (!map[pid]) map[pid] = [];
+          map[pid].push(proposal);
+        }
+      }
+    });
+    return map;
+  }, [proposals]);
+
+  const totalPendingProposalsCount = useMemo(() => {
+    return Object.values(pendingProposalsByProblem).reduce(
+      (sum, list) => sum + list.length,
+      0
+    );
+  }, [pendingProposalsByProblem]);
+
+  // ========================================
   // FILTERED PROBLEMS
   // ========================================
 
@@ -274,7 +308,10 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
       // STATUS FILTER
 
       const matchesStatus =
-        statusFilter === "all" || problem.status === statusFilter;
+        statusFilter === "all" ||
+        (statusFilter === "proposals_pending"
+          ? Boolean(pendingProposalsByProblem[problem._id]?.length)
+          : problem.status === statusFilter);
 
       // CATEGORY FILTER
 
@@ -341,6 +378,8 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
     priorityFilter,
 
     sortOrder,
+
+    pendingProposalsByProblem,
   ]);
 
   // ========================================
@@ -458,6 +497,36 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
             </div>
           </div>
         </section>
+
+        {/* PENDING PROPOSALS ALERT BANNER */}
+        {totalPendingProposalsCount > 0 && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-[#a25a1b] bg-gradient-to-r from-[#fefcf8] via-white to-[#fbf4ea] p-5 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#a25a1b] text-xl font-bold text-white shadow-xs">
+                📑
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#173d3a]">
+                  {totalPendingProposalsCount} Solution Proposal{totalPendingProposalsCount > 1 ? "s" : ""} Submitted — Action Required
+                </p>
+                <p className="text-xs text-[#5c6f69]">
+                  Universities have submitted formal technical proposals for assigned problems awaiting government review.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("proposals_pending");
+                scrollToProblems();
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#a25a1b] px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#854511]"
+            >
+              Filter Problems with Proposals ({totalPendingProposalsCount})
+            </button>
+          </div>
+        )}
 
         {/* Error */}
 
@@ -804,6 +873,18 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
                           title="Citizens reported this same issue multiple times in this area"
                         >
                           ⚡ {problem.clusterSize} reports in this area
+                        </span>
+                      )}
+
+                      {/* PENDING SOLUTION PROPOSAL BADGE */}
+
+                      {pendingProposalsByProblem[problem._id]?.length > 0 && (
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 shadow-2xs"
+                          title="University partner submitted a solution proposal awaiting admin review"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-amber-500" />
+                          📑 Solution Proposal Received ({pendingProposalsByProblem[problem._id][0]?.university?.name || "University Partner"})
                         </span>
                       )}
 

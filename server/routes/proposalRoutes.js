@@ -48,6 +48,13 @@ router.delete(
 // ========================================
 
 router.get(
+  "/",
+  protect,
+  authorizeRoles("admin"),
+  proposalController.getAllProposals
+);
+
+router.get(
   "/problem/:problemId",
   protect,
   authorizeRoles("admin"),

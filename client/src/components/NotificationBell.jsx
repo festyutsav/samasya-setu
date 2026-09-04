@@ -77,15 +77,28 @@ const hashFor = (user, notification) => {
         : "#home";
   }
 
+  const problemId =
+    typeof notification.problem === "object"
+      ? notification.problem?._id
+      : notification.problem;
+
+  if (!problemId) {
+    return user.role === "admin"
+      ? "#admin-dashboard"
+      : user.role === "partner"
+        ? "#partner-problems"
+        : "#home";
+  }
+
   if (user.role === "admin") {
-    return `#admin-problem-details?id=${notification.problem._id}`;
+    return `#admin-problem-details?id=${problemId}`;
   }
 
   if (user.role === "partner") {
     return "#partner-problems";
   }
 
-  return `#problem-details?id=${notification.problem._id}`;
+  return `#problem-details?id=${problemId}`;
 };
 
 const NotificationBell = ({ user }) => {

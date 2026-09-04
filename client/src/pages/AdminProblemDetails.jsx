@@ -15,6 +15,11 @@ import AIDuplicateAnalysisCard from "../components/AIDuplicateAnalysisCard";
 
 import ProposalList from "../components/ProposalList";
 
+import {
+  getProposalsForProblem,
+  reviewProposal,
+} from "../services/proposalService";
+
 import ProblemEvidence from "../components/ProblemEvidence";
 
 import LifecycleStepper from "../components/LifecycleStepper";
@@ -76,6 +81,9 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
   const [suggestedPartners, setSuggestedPartners] = useState([]);
 
+  const [proposals, setProposals] = useState([]);
+  const [reviewingProposalId, setReviewingProposalId] = useState(null);
+
   const [routing, setRouting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -102,10 +110,10 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
         return;
       }
 
-      const [problemData, partnersData] = await Promise.all([
+      const [problemData, partnersData, proposalsData] = await Promise.all([
         getProblemById(problemId, token),
-
         getAllPartners(token),
+        getProposalsForProblem(problemId, token).catch(() => ({ proposals: [] })),
       ]);
 
       setProblem(problemData.problem);
@@ -115,6 +123,8 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
       setCandidateMatches(problemData.problem.candidateMatches || []);
 
       setSuggestedPartners(problemData.problem.suggestedPartners || []);
+
+      setProposals(proposalsData?.proposals || []);
     } catch (error) {
       setMessage(
         error.response?.data?.message || "Failed to fetch problem details.",
@@ -123,6 +133,29 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
       if (!silent) {
         setLoading(false);
       }
+    }
+  };
+
+  const handleReviewProposalDirect = async (proposalId, status) => {
+    try {
+      setReviewingProposalId(proposalId);
+      setMessage("");
+      const token = localStorage.getItem("token");
+
+      const reviewNotes = prompt(
+        status === "approved"
+          ? "Enter approval notes (optional):"
+          : "Enter rejection reason (optional):"
+      );
+
+      await reviewProposal(proposalId, status, reviewNotes || "", token);
+      await fetchData({ silent: true });
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to review proposal."
+      );
+    } finally {
+      setReviewingProposalId(null);
     }
   };
 
@@ -350,6 +383,10 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   // UI
   // ========================================
 
+  const pendingProposals = (proposals || []).filter(
+    (p) => p.status === "submitted"
+  );
+
   return (
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
@@ -403,6 +440,90 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
             {message}
           </div>
+        )}
+
+        {/* PROPOSAL AWAITING REVIEW BANNER */}
+        {pendingProposals.length > 0 && (
+          <section className="mb-8 overflow-hidden rounded-2xl border-2 border-[#a25a1b] bg-gradient-to-br from-[#fefcf8] via-white to-[#fbf4ea] p-6 shadow-md sm:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#a25a1b] text-white shadow-sm sm:h-14 sm:w-14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#a25a1b] px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
+                      Action Required
+                    </span>
+                    <span className="text-xs font-semibold text-[#a25a1b]">
+                      Solution Proposal Awaiting Approval
+                    </span>
+                  </div>
+
+                  <h2 className="mt-2 text-xl font-bold text-[#173d3a] sm:text-2xl">
+                    {pendingProposals[0].university?.name || "Assigned University"} Submitted a Solution Proposal
+                  </h2>
+
+                  <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-[#4b5e58]">
+                    <strong className="text-[#173d3a]">
+                      "{pendingProposals[0].title}"
+                    </strong>
+                    {pendingProposals[0].submittedBy?.name && (
+                      <> submitted by <strong className="text-[#173d3a]">{pendingProposals[0].submittedBy.name}</strong></>
+                    )}
+                    . Review the proposed technical approach below and approve to authorize work.
+                  </p>
+
+                  <div className="mt-3 rounded-xl border border-[#ecd9c6] bg-white/85 p-3.5 text-xs text-[#5c6f69] sm:text-sm">
+                    <p className="font-semibold text-[#173d3a]">Proposed Methodology & Approach:</p>
+                    <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-[#5c6f69] sm:text-sm">
+                      {pendingProposals[0].approach}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 lg:flex-col lg:items-end">
+                <button
+                  type="button"
+                  onClick={() => handleReviewProposalDirect(pendingProposals[0]._id, "approved")}
+                  disabled={reviewingProposalId === pendingProposals[0]._id}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0b6b60] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#087f70] disabled:opacity-50"
+                >
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {reviewingProposalId === pendingProposals[0]._id ? "Approving..." : "Approve Proposal"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleReviewProposalDirect(pendingProposals[0]._id, "rejected")}
+                  disabled={reviewingProposalId === pendingProposals[0]._id}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-2xs transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                >
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  {reviewingProposalId === pendingProposals[0]._id ? "Rejecting..." : "Reject Proposal"}
+                </button>
+
+                <a
+                  href="#proposals-section"
+                  className="text-xs font-semibold text-[#a25a1b] underline hover:text-[#804615]"
+                >
+                  View full technical details ↓
+                </a>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* RESOLUTION APPROVAL REVIEW BANNER */}
@@ -680,10 +801,11 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
               PROPOSALS
           ======================================== */}
 
-          <section className="mt-10">
+          <section id="proposals-section" className="mt-10">
             <ProposalList
               isAdmin={true}
               problemId={problemId}
+              onProposalReviewed={() => fetchData({ silent: true })}
             />
           </section>
 
