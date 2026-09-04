@@ -435,3 +435,39 @@ export const addCollaborationContribution = async (
 
   return response.data;
 };
+
+
+// ========================================
+// POST PROJECT MESSAGE (COLLABORATION DISCUSSION)
+// ========================================
+
+export const postProjectMessage = async (
+  projectId,
+  message,
+  token,
+) => {
+  const response = await axios.post(
+    `${PROJECT_API_URL}/${projectId}/messages`,
+    { message },
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
+// GET PROJECT MESSAGES
+// ========================================
+
+export const getProjectMessages = async (
+  projectId,
+  token,
+) => {
+  const response = await axios.get(
+    `${PROJECT_API_URL}/${projectId}/messages`,
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};

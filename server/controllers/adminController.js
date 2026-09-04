@@ -4,6 +4,10 @@ const User = require("../models/User");
 const Project = require("../models/Project");
 const SolutionProposal = require("../models/SolutionProposal");
 const Notification = require("../models/Notification");
+const {
+  createNotification,
+  notifyPartnerUser,
+} = require("../services/notificationService");
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
 const fs = require("fs");
@@ -638,91 +642,89 @@ const updateProblemStatus = async (
       status === "submitted" ||
       status === "under_review"
     ) {
-
-      updateData.assignedPartner =
-        null;
-
+      updateData.assignedPartner = null;
     }
 
+    if (status === "solved") {
+      updateData.resolutionApprovedAt = new Date();
+    }
 
     // ========================================
     // UPDATE PROBLEM
     // ========================================
 
-    const problem =
-      await Problem.findByIdAndUpdate(
-
-        problemId,
-
-        {
-
-          $set: updateData,
-
-        },
-
-        {
-
-          new: true,
-
-          runValidators: true,
-
-        }
-
-      );
-
+    const problem = await Problem.findByIdAndUpdate(
+      problemId,
+      {
+        $set: updateData,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     // ========================================
     // CHECK PROBLEM
     // ========================================
 
     if (!problem) {
-
       return res.status(404).json({
-
-        message:
-          "Problem not found",
-
+        message: "Problem not found",
       });
-
     }
-
 
     // ========================================
     // POPULATE UPDATED DATA
     // ========================================
 
     await problem.populate([
-
       {
-
         path: "submittedBy",
-
         select: "name email",
-
       },
-
       {
-
         path: "assignedPartner",
-
         select: "name type location",
-
       },
-
     ]);
 
+    // ========================================
+    // NOTIFY CITIZEN + PARTNER
+    // ========================================
+
+    if (problem.submittedBy) {
+      const citizenMessage =
+        status === "solved"
+          ? `Great news! Your problem "${problem.title}" has been verified and marked SOLVED by the Government Admin. Official Resolution Certificate is now available.`
+          : `Your problem "${problem.title}" status is now ${status.replace("_", " ")}.`;
+
+      await createNotification({
+        recipientId: problem.submittedBy._id || problem.submittedBy,
+        type: "problem_status",
+        title: status === "solved" ? "Problem Solved! 🎉" : "Status Updated",
+        message: citizenMessage,
+        problemId: problem._id,
+      }).catch(() => {});
+    }
+
+    if (problem.assignedPartner) {
+      await notifyPartnerUser({
+        partnerId: problem.assignedPartner._id || problem.assignedPartner,
+        type: "problem_status",
+        title: status === "solved" ? "Resolution Approved" : "Status Updated",
+        message: `Admin marked "${problem.title}" as ${status.replace("_", " ")}.`,
+        problemId: problem._id,
+      }).catch(() => {});
+    }
 
     // ========================================
     // SUCCESS RESPONSE
     // ========================================
 
     return res.status(200).json({
-
-      message:
-        "Problem status updated successfully",
-
+      message: "Problem status updated successfully",
       problem,
-
     });
 
 

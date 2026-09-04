@@ -1,11 +1,69 @@
+const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const Problem = require("../models/Problem");
 const Partner = require("../models/Partner");
+const User = require("../models/User");
 const {
   notifyAdmins,
   createNotification,
   notifyPartnerUser,
 } = require("../services/notificationService");
+
+// ========================================
+// RESOLVE PARTNER FOR USER (SELF-HEALING)
+// ========================================
+const resolvePartnerForUser = async (user) => {
+  if (!user) return { partner: null, partnerIds: [] };
+
+  let partner = null;
+
+  if (user.partner) {
+    partner = await Partner.findById(user.partner);
+  }
+
+  if (!partner && user._id) {
+    partner = await Partner.findOne({ user: user._id });
+  }
+
+  if (!partner && user.email) {
+    partner = await Partner.findOne({ email: user.email.toLowerCase() });
+    if (!partner) {
+      const emailPrefix = user.email.split("@")[0].replace(/[._-]/g, " ").trim();
+      partner = await Partner.findOne({
+        name: new RegExp(`^${emailPrefix}$`, "i"),
+      });
+      if (!partner) {
+        partner = await Partner.findOne({
+          name: new RegExp(emailPrefix.split(" ")[0], "i"),
+        });
+      }
+    }
+  }
+
+  if (!partner) {
+    return { partner: null, partnerIds: [] };
+  }
+
+  if (String(user.partner || "") !== String(partner._id)) {
+    user.partner = partner._id;
+    await User.findByIdAndUpdate(user._id, { partner: partner._id }).catch(() => {});
+  }
+
+  const escapedName = partner.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const relatedPartners = await Partner.find({
+    $or: [
+      { _id: partner._id },
+      { name: new RegExp(`^${escapedName}$`, "i") },
+      { user: user._id },
+    ],
+  }).select("_id");
+
+  const partnerIds = Array.from(
+    new Set(relatedPartners.map((p) => p._id.toString()))
+  ).map((id) => new mongoose.Types.ObjectId(id));
+
+  return { partner, partnerIds };
+};
 
 // ========================================
 // CREATE A PROJECT (UNIVERSITY PARTNER)
@@ -17,17 +75,11 @@ const {
 
 const createProject = async (req, res) => {
   try {
-    if (!req.user.partner) {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
       return res.status(403).json({
         message: "You are not linked to a partner organization.",
-      });
-    }
-
-    const partner = await Partner.findById(req.user.partner);
-
-    if (!partner) {
-      return res.status(404).json({
-        message: "Partner organization not found.",
       });
     }
 
@@ -44,8 +96,7 @@ const createProject = async (req, res) => {
 
     const problem = await Problem.findOne({
       _id: problemId,
-
-      assignedPartner: partner._id,
+      assignedPartner: { $in: partnerIds },
     });
 
     if (!problem) {
@@ -168,7 +219,9 @@ const createProject = async (req, res) => {
 
 const getMyProjects = async (req, res) => {
   try {
-    if (!req.user.partner) {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
       return res.status(403).json({
         message: "You are not linked to a partner organization.",
       });
@@ -176,9 +229,8 @@ const getMyProjects = async (req, res) => {
 
     const projects = await Project.find({
       $or: [
-        { partner: req.user.partner },
-
-        { "collaborators.partner": req.user.partner },
+        { partner: { $in: partnerIds } },
+        { "collaborators.partner": { $in: partnerIds } },
       ],
     })
       .populate("problem", "title status category location")
@@ -352,6 +404,13 @@ const respondToInvite = async (req, res) => {
       });
     }
 
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -361,7 +420,7 @@ const respondToInvite = async (req, res) => {
     }
 
     let collaborator = project.collaborators.find((entry) =>
-      entry.partner.equals(req.user.partner),
+      entry.partner && partnerIds.some((id) => String(id) === String(entry.partner))
     );
 
     let actingAs = "collaborator";
@@ -370,7 +429,9 @@ const respondToInvite = async (req, res) => {
       // Not an invited partner responding — must be the lead
       // university answering a collaboration request.
 
-      if (!project.partner.equals(req.user.partner)) {
+      const isLead = partnerIds.some((id) => String(id) === String(project.partner));
+
+      if (!isLead) {
         return res.status(403).json({
           message:
             "Only the lead university can respond to this collaboration request.",
@@ -604,10 +665,16 @@ const addContribution = async (req, res) => {
       });
     }
 
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
     const project = await Project.findOne({
       _id: req.params.id,
-
-      "collaborators.partner": req.user.partner,
+      "collaborators.partner": { $in: partnerIds },
     });
 
     if (!project) {
@@ -618,10 +685,10 @@ const addContribution = async (req, res) => {
     }
 
     const collaborator = project.collaborators.find((entry) =>
-      entry.partner.equals(req.user.partner),
+      entry.partner && partnerIds.some((id) => String(id) === String(entry.partner))
     );
 
-    if (collaborator.status !== "accepted") {
+    if (!collaborator || collaborator.status !== "accepted") {
       return res.status(403).json({
         message: "Only accepted collaborators can log contributions.",
       });
@@ -705,10 +772,17 @@ const updateProjectStatus = async (req, res) => {
       });
     }
 
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
     const project = await Project.findOne({
       _id: req.params.id,
-
-      partner: req.user.partner,
+      partner: { $in: partnerIds },
     });
 
     if (!project) {
@@ -723,31 +797,62 @@ const updateProjectStatus = async (req, res) => {
 
     const populated = await Project.findById(project._id)
       .populate("problem", "title status category location submittedBy")
-      .populate("partner", "name type location");
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location");
 
     // ========================================
-    // NOTIFY ADMINS + CITIZEN
+    // NOTIFY ADMINS + CITIZEN & SYNC TO PROBLEM
     // ========================================
 
-    await notifyAdmins({
-      type: "project_updated",
+    if (status === "completed") {
+      const problem = await Problem.findById(project.problem);
+      if (problem) {
+        problem.resolutionSubmitted = true;
+        problem.resolutionDetails = {
+          projectId: project._id,
+          projectTitle: project.title,
+          leadPartner: populated.partner?.name,
+          collaborators: (populated.collaborators || [])
+            .filter((c) => c.status === "accepted")
+            .map((c) => c.partner?.name)
+            .filter(Boolean),
+          outcomes: populated.outcomes,
+          submittedAt: new Date(),
+          summary: populated.description,
+        };
+        if (problem.status === "assigned" || problem.status === "submitted" || problem.status === "under_review") {
+          problem.status = "in_progress";
+        }
+        await problem.save();
+      }
 
-      title: "Project status updated",
+      await notifyAdmins({
+        type: "project_updated",
+        title: "Action Required: Project Completed & Resolution Submitted",
+        message: `${populated.partner.name} completed project "${populated.title}" with industry collaboration. Please review and approve resolution in Government Portal.`,
+        problemId: populated.problem._id,
+      });
+    } else {
+      await notifyAdmins({
+        type: "project_updated",
+        title: "Project status updated",
+        message: `${populated.partner.name} moved "${populated.title}" to ${status}.`,
+        problemId: populated.problem._id,
+      });
+    }
 
-      message: `${populated.partner.name} moved "${populated.title}" to ${status}.`,
-
-      problemId: populated.problem._id,
-    });
-
-    if (populated.problem.submittedBy) {
+    if (populated.problem && populated.problem.submittedBy) {
       await createNotification({
         recipientId: populated.problem.submittedBy,
 
         type: "project_updated",
 
-        title: "Solution progress update",
+        title: status === "completed" ? "Solution Ready for Government Review" : "Solution progress update",
 
-        message: `The project "${populated.title}" on your problem is now ${status}.`,
+        message:
+          status === "completed"
+            ? `The university team and industry partners completed their solution project "${populated.title}" for your problem. It is currently under government review for final resolution!`
+            : `The project "${populated.title}" on your problem is now ${status}.`,
 
         problemId: populated.problem._id,
       });
@@ -1154,7 +1259,9 @@ const requestCollaboration = async (req, res) => {
 
 const getProjectById = async (req, res) => {
   try {
-    if (!req.user.partner) {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
       return res.status(403).json({
         message: "You are not linked to a partner organization.",
       });
@@ -1168,10 +1275,13 @@ const getProjectById = async (req, res) => {
       });
     }
 
-    const isLead = project.partner.equals(req.user.partner);
+    const isLead = partnerIds.some(
+      (id) => String(id) === String(project.partner)
+    );
 
-    const myCollaborator = project.collaborators.find((entry) =>
-      entry.partner.equals(req.user.partner),
+    const myCollaborator = (project.collaborators || []).find((entry) =>
+      entry.partner &&
+      partnerIds.some((id) => String(id) === String(entry.partner))
     );
 
     const isCollaborator =
@@ -1214,6 +1324,134 @@ const getProjectById = async (req, res) => {
   }
 };
 
+// ========================================
+// POST PROJECT MESSAGE (COLLABORATION DISCUSSION)
+// ========================================
+const postProjectMessage = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        message: "Please provide a message.",
+      });
+    }
+
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const project = await Project.findById(req.params.id)
+      .populate("partner", "name type")
+      .populate("collaborators.partner", "name type");
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found.",
+      });
+    }
+
+    const isLead = partnerIds.some(
+      (id) => String(id) === String(project.partner?._id || project.partner)
+    );
+
+    const isCollaborator = (project.collaborators || []).some(
+      (c) =>
+        c.partner &&
+        partnerIds.some((id) => String(id) === String(c.partner._id || c.partner)) &&
+        ["invited", "accepted"].includes(c.status)
+    );
+
+    if (!isLead && !isCollaborator) {
+      return res.status(403).json({
+        message: "You are not a participant in this project collaboration.",
+      });
+    }
+
+    const senderRole = isLead ? "lead" : "collaborator";
+    const newMessage = {
+      sender: req.user._id,
+      senderPartner: partner._id,
+      senderName: `${partner.name} (${isLead ? "Lead University" : "Industry Partner"})`,
+      senderRole,
+      message: message.trim(),
+      createdAt: new Date(),
+    };
+
+    project.messages.push(newMessage);
+    await project.save();
+
+    // Notify the counterpart organization
+    if (isCollaborator) {
+      await notifyPartnerUser({
+        partnerId: project.partner._id || project.partner,
+        type: "project_updated",
+        title: `New message from ${partner.name}`,
+        message: `${partner.name} posted in "${project.title}": "${message.trim().slice(0, 100)}${message.trim().length > 100 ? "..." : ""}"`,
+        problemId: project.problem,
+      }).catch(() => {});
+    } else {
+      for (const col of project.collaborators || []) {
+        if (col.partner && ["invited", "accepted"].includes(col.status)) {
+          await notifyPartnerUser({
+            partnerId: col.partner._id || col.partner,
+            type: "project_updated",
+            title: `New update from ${project.partner.name}`,
+            message: `${project.partner.name} posted in "${project.title}": "${message.trim().slice(0, 100)}${message.trim().length > 100 ? "..." : ""}"`,
+            problemId: project.problem,
+          }).catch(() => {});
+        }
+      }
+    }
+
+    return res.status(201).json({
+      message: "Message sent successfully.",
+      messages: project.messages,
+    });
+  } catch (error) {
+    console.error("Post project message error:", error.message);
+    return res.status(500).json({
+      message: "Server error while posting message.",
+    });
+  }
+};
+
+// ========================================
+// GET PROJECT MESSAGES
+// ========================================
+const getProjectMessages = async (req, res) => {
+  try {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found.",
+      });
+    }
+
+    return res.status(200).json({
+      messages: project.messages || [],
+    });
+  } catch (error) {
+    console.error("Get project messages error:", error.message);
+    return res.status(500).json({
+      message: "Server error while fetching project messages.",
+    });
+  }
+};
+
 module.exports = {
   createProject,
   getMyProjects,
@@ -1228,4 +1466,6 @@ module.exports = {
   addContribution,
   requestCollaboration,
   getProjectById,
+  postProjectMessage,
+  getProjectMessages,
 };

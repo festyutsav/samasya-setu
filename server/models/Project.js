@@ -237,6 +237,42 @@ const projectSchema = new mongoose.Schema(
     },
 
     // ========================================
+    // COLLABORATION DISCUSSION / MESSAGES
+    // ========================================
+    messages: [
+      {
+        sender: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        senderPartner: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Partner",
+        },
+        senderName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        senderRole: {
+          type: String,
+          enum: ["lead", "collaborator", "admin"],
+          default: "lead",
+        },
+        message: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 2000,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // ========================================
     // AUDIT
     // ========================================
 

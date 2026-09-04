@@ -1,5 +1,8 @@
+const mongoose = require("mongoose");
 const Problem = require("../models/Problem");
 const Partner = require("../models/Partner");
+const User = require("../models/User");
+const Project = require("../models/Project");
 const cloudinary = require("../config/cloudinary");
 
 const { predictCategory } = require("../services/aiCategoryService");
@@ -948,24 +951,29 @@ const updateProblemStatus = async (req, res) => {
 
     problem.status = status;
 
+    if (status === "solved") {
+      problem.resolutionApprovedAt = new Date();
+    }
+
     await problem.save();
 
     // ========================================
     // NOTIFY CITIZEN + PARTNER
     // ========================================
-    // The submitter always wants to know their problem moved.
-    // If a partner is attached, its linked user is told too.
-    // Awaiting the promise keeps test runs deterministic —
-    // these are cheap single-document writes.
+
+    const citizenMessage =
+      status === "solved"
+        ? `Great news! Your problem "${problem.title}" has been successfully SOLVED by the assigned team. Official resolution certificate is now ready.`
+        : `Your problem "${problem.title}" is now ${status.replace("_", " ")}.`;
 
     await createNotification({
       recipientId: problem.submittedBy,
 
       type: "problem_status",
 
-      title: "Problem status updated",
+      title: status === "solved" ? "Problem Solved! 🎉" : "Problem status updated",
 
-      message: `Your problem "${problem.title}" is now ${status.replace("_", " ")}.`,
+      message: citizenMessage,
 
       problemId: problem._id,
     });
@@ -1079,60 +1087,120 @@ const assignPartnerToProblem = async (req, res) => {
 };
 
 // ========================================
+// RESOLVE PARTNER FOR USER (SELF-HEALING)
+// ========================================
+// Resolves canonical partner document and all related partner IDs
+// (handling multi-seed duplicates and auto-linking req.user.partner).
+const resolvePartnerForUser = async (user) => {
+  if (!user) return { partner: null, partnerIds: [] };
+
+  let partner = null;
+
+  if (user.partner) {
+    partner = await Partner.findById(user.partner);
+  }
+
+  if (!partner && user._id) {
+    partner = await Partner.findOne({ user: user._id });
+  }
+
+  if (!partner && user.email) {
+    partner = await Partner.findOne({ email: user.email.toLowerCase() });
+    if (!partner) {
+      const emailPrefix = user.email.split("@")[0].replace(/[._-]/g, " ").trim();
+      partner = await Partner.findOne({
+        name: new RegExp(`^${emailPrefix}$`, "i"),
+      });
+      if (!partner) {
+        partner = await Partner.findOne({
+          name: new RegExp(emailPrefix.split(" ")[0], "i"),
+        });
+      }
+    }
+  }
+
+  if (!partner) {
+    return { partner: null, partnerIds: [] };
+  }
+
+  // Auto-heal user.partner reference if missing or pointing to outdated id
+  if (String(user.partner || "") !== String(partner._id)) {
+    user.partner = partner._id;
+    await User.findByIdAndUpdate(user._id, { partner: partner._id }).catch(() => {});
+  }
+
+  // Find all partner documents that match this organization name
+  const escapedName = partner.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const relatedPartners = await Partner.find({
+    $or: [
+      { _id: partner._id },
+      { name: new RegExp(`^${escapedName}$`, "i") },
+      { user: user._id },
+    ],
+  }).select("_id");
+
+  const partnerIds = Array.from(
+    new Set(relatedPartners.map((p) => p._id.toString()))
+  ).map((id) => new mongoose.Types.ObjectId(id));
+
+  return { partner, partnerIds };
+};
+
+// ========================================
 // GET PARTNER DASHBOARD
 // ========================================
 
 const getPartnerDashboard = async (req, res) => {
   try {
-    if (!req.user.partner) {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
       return res.status(400).json({
         message: "This partner user is not linked to any partner organization.",
       });
     }
 
-    const partnerId = req.user.partner;
-
-    const partner = await Partner.findById(partnerId);
-
-    if (!partner) {
-      return res.status(404).json({
-        message: "Partner organization not found.",
-      });
-    }
-
     const totalProblems = await Problem.countDocuments({
-      assignedPartner: partnerId,
+      assignedPartner: { $in: partnerIds },
     });
 
     const assignedProblems = await Problem.countDocuments({
-      assignedPartner: partnerId,
-
+      assignedPartner: { $in: partnerIds },
       status: "assigned",
     });
 
     const inProgressProblems = await Problem.countDocuments({
-      assignedPartner: partnerId,
-
+      assignedPartner: { $in: partnerIds },
       status: "in_progress",
     });
 
     const solvedProblems = await Problem.countDocuments({
-      assignedPartner: partnerId,
-
+      assignedPartner: { $in: partnerIds },
       status: "solved",
+    });
+
+    // Also count collaborative projects where this organization participates
+    const collaborativeProjectsCount = await Project.countDocuments({
+      $or: [
+        { partner: { $in: partnerIds } },
+        { "collaborators.partner": { $in: partnerIds } },
+      ],
+    });
+
+    const activeCollaborationsCount = await Project.countDocuments({
+      "collaborators.partner": { $in: partnerIds },
+      "collaborators.status": "accepted",
     });
 
     return res.status(200).json({
       partner,
-
       statistics: {
         totalProblems,
-
         assignedProblems,
-
         inProgressProblems,
-
         solvedProblems,
+        collaborativeProjectsCount,
+        activeCollaborationsCount,
       },
     });
   } catch (error) {
@@ -1150,27 +1218,25 @@ const getPartnerDashboard = async (req, res) => {
 
 const getPartnerProblems = async (req, res) => {
   try {
-    if (!req.user.partner) {
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
       return res.status(400).json({
         message: "This partner user is not linked to any partner organization.",
       });
     }
 
     const problems = await Problem.find({
-      assignedPartner: req.user.partner,
+      assignedPartner: { $in: partnerIds },
     })
-
       .populate("submittedBy", "name email")
-
       .populate("assignedPartner", "name type location")
-
       .sort({
         createdAt: -1,
       });
 
     return res.status(200).json({
       count: problems.length,
-
       problems,
     });
   } catch (error) {
@@ -1189,8 +1255,9 @@ const getPartnerProblems = async (req, res) => {
 const updatePartnerProblemStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
 
-    if (!req.user.partner) {
+    if (!partner || partnerIds.length === 0) {
       return res.status(403).json({
         message: "You are not linked to a partner organization.",
       });
@@ -1206,8 +1273,7 @@ const updatePartnerProblemStatus = async (req, res) => {
 
     const problem = await Problem.findOne({
       _id: req.params.id,
-
-      assignedPartner: req.user.partner,
+      assignedPartner: { $in: partnerIds },
     });
 
     if (!problem) {

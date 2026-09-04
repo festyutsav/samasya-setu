@@ -10,6 +10,7 @@ export default function ResolutionProof({
 
   const universityName =
     project?.partner?.name ||
+    problem.resolutionDetails?.leadPartner ||
     (typeof problem.assignedPartner === "object"
       ? problem.assignedPartner?.name
       : problem.assignedPartner) ||
@@ -24,7 +25,9 @@ export default function ResolutionProof({
   const industryName =
     industryCollaborators.length > 0
       ? industryCollaborators.join(", ")
-      : "Industry & CSR Partner";
+      : problem.resolutionDetails?.collaborators?.length > 0
+        ? problem.resolutionDetails.collaborators.join(", ")
+        : "Industry & CSR Partner";
 
   return (
     <section
