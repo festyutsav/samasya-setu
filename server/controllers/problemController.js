@@ -181,6 +181,95 @@ const buildProblemResponse = async (problemId) => {
 };
 
 // ========================================
+// BACKGROUND AI ENRICHMENT (FOR ADMIN PORTAL)
+// ========================================
+// Computes dense vectors, duplicate matches, partner
+// routing suggestions, extractive summary, urgency priority score,
+// and notifies administrators asynchronously.
+// Runs non-blockingly via setImmediate after the citizen's HTTP 201 response.
+
+const runBackgroundAIEnrichment = async (problemId, user) => {
+  try {
+    const problem = await Problem.findById(problemId);
+    if (!problem) return;
+
+    console.log(`[Async AI] Starting background enrichment for problem "${problem.title}" (${problem._id})...`);
+
+    // 1. Generate Problem Embedding
+    let embedding = [];
+    try {
+      embedding = await generateProblemEmbedding(problem.title, problem.description);
+      if (embedding && embedding.length > 0) {
+        await Problem.findByIdAndUpdate(problemId, { $set: { embedding } });
+        problem.embedding = embedding;
+      }
+    } catch (err) {
+      console.error("[Async AI] Embedding generation failed:", err.message);
+    }
+
+    // 2. Duplicate Detection & Cluster Size
+    let clusterSize = 0;
+    try {
+      const candidates = await detectDuplicates(problem, { embedding });
+      await saveDuplicateAnalysis(problemId, candidates);
+      clusterSize = await getClusterSize(problem);
+      console.log(`[Async AI] Duplicates analyzed: ${candidates.length} candidates, cluster size ${clusterSize}.`);
+    } catch (err) {
+      console.error("[Async AI] Duplicate detection failed:", err.message);
+    }
+
+    // 3. AI Partner Routing Recommendations
+    try {
+      const { suggestions, message } = await recommendPartners(problem);
+      if (suggestions && suggestions.length > 0) {
+        await saveRoutingAnalysis(problemId, suggestions);
+        console.log(`[Async AI] Partner routing completed: ${suggestions.length} partners suggested.`);
+      } else if (message) {
+        console.log(`[Async AI] Partner routing: ${message}`);
+      }
+    } catch (err) {
+      console.error("[Async AI] Partner routing failed:", err.message);
+    }
+
+    // 4. AI Extractive Summary
+    try {
+      const summary = summarizeProblem(problem);
+      if (summary) {
+        await saveSummary(problemId, summary);
+        console.log("[Async AI] Summary generated successfully.");
+      }
+    } catch (err) {
+      console.error("[Async AI] Summary generation failed:", err.message);
+    }
+
+    // 5. AI Urgency Priority Score
+    try {
+      const priority = await analyzeAndSavePriority(problem, { clusterSize });
+      console.log(`[Async AI] Priority scored: ${priority?.score} (${priority?.level}).`);
+    } catch (err) {
+      console.error("[Async AI] Priority scoring failed:", err.message);
+    }
+
+    // 6. Notify Government Admins
+    try {
+      await notifyAdmins({
+        type: "problem_submitted",
+        title: "New problem submitted",
+        message: `"${problem.title}" was reported in ${problem.location} by ${user?.name || "Citizen"}.`,
+        problemId: problem._id,
+      });
+      console.log("[Async AI] Government admins notified.");
+    } catch (err) {
+      console.error("[Async AI] Admin notification failed:", err.message);
+    }
+
+    console.log(`[Async AI] All background enrichment completed for problem "${problem.title}"!`);
+  } catch (globalErr) {
+    console.error("[Async AI] Critical background enrichment error:", globalErr.message);
+  }
+};
+
+// ========================================
 // CREATE A NEW PROBLEM
 // ========================================
 
@@ -247,7 +336,6 @@ const createProblem = async (req, res) => {
     // ========================================
 
     const latitude = Number(locationDetails.latitude);
-
     const longitude = Number(locationDetails.longitude);
 
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
@@ -257,182 +345,131 @@ const createProblem = async (req, res) => {
     }
 
     // ========================================
-    // UPLOAD IMAGES TO CLOUDINARY
+    // UPLOAD MEDIA TO CLOUDINARY IN PARALLEL
     // ========================================
-    // With the fields-based media uploader req.files is an
-    // object keyed by field name (images / videos / documents).
 
     const uploadedImages = [];
+    const uploadedVideos = [];
+    const uploadedDocuments = [];
+    const uploadTasks = [];
 
-    if (req.files && req.files.images && req.files.images.length > 0) {
-      console.log(`Uploading ${req.files.images.length} image(s) to Cloudinary in parallel...`);
+    // Images
+    if (req.files?.images?.length > 0) {
+      console.log(`Streaming ${req.files.images.length} image(s) to Cloudinary concurrently...`);
+      req.files.images.forEach((file) => {
+        uploadTasks.push(
+          new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              {
+                folder: "samasyasetu/problems",
+                resource_type: "image",
+                transformation: [{ width: 1400, crop: "limit", quality: "auto" }],
+              },
+              (error, result) => {
+                if (error) {
+                  console.error("Cloudinary image upload error:", error);
+                  reject(error);
+                } else {
+                  uploadedImages.push({
+                    url: result.secure_url,
+                    publicId: result.public_id,
+                  });
+                  resolve();
+                }
+              }
+            );
+            stream.end(file.buffer);
+          })
+        );
+      });
+    }
 
-      const uploadPromises = req.files.images.map((file) => {
-        return new Promise((resolve, reject) => {
+    // Video
+    if (req.files?.videos?.length > 0) {
+      const videoFile = req.files.videos[0];
+      console.log("Streaming video to Cloudinary:", videoFile.originalname);
+      uploadTasks.push(
+        new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             {
-              folder: "samasyasetu/problems",
-              resource_type: "image",
-              transformation: [{ width: 1400, crop: "limit", quality: "auto" }],
+              folder: "samasyasetu/problems/videos",
+              resource_type: "video",
             },
             (error, result) => {
               if (error) {
-                console.error("Cloudinary upload failed for", file.originalname, error);
+                console.error("Cloudinary video upload error:", error);
                 reject(error);
               } else {
-                resolve({
+                uploadedVideos.push({
                   url: result.secure_url,
                   publicId: result.public_id,
                 });
+                resolve();
               }
             }
           );
-          stream.end(file.buffer);
-        });
-      });
-
-      const results = await Promise.all(uploadPromises);
-      uploadedImages.push(...results);
+          stream.end(videoFile.buffer);
+        })
+      );
     }
 
-    // ========================================
-    // UPLOAD VIDEO TO CLOUDINARY
-    // ========================================
-
-    const uploadedVideos = [];
-
-    if (req.files && req.files.videos && req.files.videos.length > 0) {
-      const videoFile = req.files.videos[0];
-
-      console.log("Uploading video:", videoFile.originalname);
-
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "samasyasetu/problems/videos",
-
-            resource_type: "video",
-          },
-
-          (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          },
+    // Documents
+    if (req.files?.documents?.length > 0) {
+      console.log(`Streaming ${req.files.documents.length} document(s) to Cloudinary concurrently...`);
+      req.files.documents.forEach((file) => {
+        uploadTasks.push(
+          new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              {
+                folder: "samasyasetu/problems/documents",
+                resource_type: "raw",
+              },
+              (error, result) => {
+                if (error) {
+                  console.error("Cloudinary document upload error:", error);
+                  reject(error);
+                } else {
+                  uploadedDocuments.push({
+                    url: result.secure_url,
+                    publicId: result.public_id,
+                    originalName: file.originalname,
+                    fileType: file.mimetype,
+                  });
+                  resolve();
+                }
+              }
+            );
+            stream.end(file.buffer);
+          })
         );
-
-        stream.end(videoFile.buffer);
-      });
-
-      console.log("Cloudinary video upload successful:", result.secure_url);
-
-      uploadedVideos.push({
-        url: result.secure_url,
-
-        publicId: result.public_id,
       });
     }
 
-    // ========================================
-    // UPLOAD DOCUMENTS TO CLOUDINARY
-    // ========================================
-    // PDF / Word / text files are stored as "raw" resources.
-
-    const uploadedDocuments = [];
-
-    if (req.files && req.files.documents && req.files.documents.length > 0) {
-      console.log(`Uploading ${req.files.documents.length} document(s) to Cloudinary...`);
-
-      for (const file of req.files.documents) {
-        console.log("Uploading:", file.originalname);
-
-        const result = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            {
-              folder: "samasyasetu/problems/documents",
-
-              resource_type: "raw",
-            },
-
-            (error, result) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            },
-          );
-
-          stream.end(file.buffer);
-        });
-
-        console.log("Cloudinary document upload successful:", result.secure_url);
-
-        uploadedDocuments.push({
-          url: result.secure_url,
-
-          publicId: result.public_id,
-
-          originalName: file.originalname,
-
-          fileType: file.mimetype,
-        });
-      }
+    if (uploadTasks.length > 0) {
+      await Promise.all(uploadTasks);
     }
 
     // ========================================
-    // AI CATEGORY PREDICTION
+    // AI CATEGORY PREDICTION (SYNCHRONOUS: ~80-100ms)
     // ========================================
+    // Synchronously predicts and validates category for the problem record
 
     let aiCategory = null;
-
     let aiConfidence = null;
-
     let aiKeywords = [];
-
     let aiMargin = null;
 
     try {
       const aiResult = await predictCategory(title.trim(), description.trim());
-
-      console.log("========================================");
-
-      console.log("AI RESULT FROM SERVICE:");
-
-      console.log(aiResult);
-
-      console.log("========================================");
-
-      // ========================================
-      // AI CATEGORY
-      // ========================================
-
       aiCategory = aiResult.category || null;
-
-      // ========================================
-      // AI CONFIDENCE
-      // ========================================
-      // Service returns "score"
 
       if (aiResult.confidence !== undefined && aiResult.confidence !== null) {
         aiConfidence = Number(aiResult.confidence);
       }
 
-      // ========================================
-      // AI MARGIN
-      // ========================================
-
       if (aiResult.margin !== undefined && aiResult.margin !== null) {
         aiMargin = Number(aiResult.margin);
       }
-
-      // ========================================
-      // AI TOP CATEGORIES
-      // ========================================
-      // If service provides scores array,
-      // save top 3 categories.
 
       if (Array.isArray(aiResult.scores)) {
         aiKeywords = aiResult.scores
@@ -441,284 +478,91 @@ const createProblem = async (req, res) => {
           .filter(Boolean);
       }
 
-      // ========================================
-      // FALLBACK
-      // ========================================
-
       if (aiKeywords.length === 0 && aiCategory) {
         aiKeywords = [aiCategory];
       }
-
-      // ========================================
-      // DEBUG
-      // ========================================
-
-      console.log("AI CATEGORY:", aiCategory);
-
-      console.log("AI CONFIDENCE:", aiConfidence);
-
-      console.log("AI MARGIN:", aiMargin);
-
-      console.log("AI KEYWORDS:", aiKeywords);
     } catch (aiError) {
-      // ========================================
-      // AI FAILURE SHOULD NOT BLOCK SUBMISSION
-      // ========================================
-
       console.error("AI category prediction failed:", aiError.message);
     }
 
     // ========================================
-    // AI EMBEDDING FOR DUPLICATE DETECTION
-    // ========================================
-
-    let embedding = [];
-
-    try {
-      embedding = await generateProblemEmbedding(
-        title.trim(),
-        description.trim(),
-      );
-    } catch (embeddingError) {
-      console.error("Embedding generation failed:", embeddingError.message);
-    }
-
-    // ========================================
-    // CREATE PROBLEM
+    // CREATE PROBLEM IN MONGODB
     // ========================================
 
     const problem = await Problem.create({
-      // ========================================
-      // BASIC INFORMATION
-      // ========================================
-
       title: title.trim(),
-
       description: description.trim(),
-
-      // Citizen's selected category
       category: category.trim(),
-
-      // ========================================
-      // LOCATION
-      // ========================================
-
       location: location.trim(),
-
       locationDetails: {
         district: locationDetails.district || "",
-
         state: locationDetails.state || "Jharkhand",
-
         pincode: locationDetails.pincode || "",
-
         latitude,
-
         longitude,
       },
-
       locationPoint: {
         type: "Point",
         coordinates: [longitude, latitude],
       },
-
-      // ========================================
-      // IMAGES
-      // ========================================
-
       images: uploadedImages,
-
-      // ========================================
-      // VIDEO EVIDENCE
-      // ========================================
-
       videos: uploadedVideos,
-
-      // ========================================
-      // SUPPORTING DOCUMENTS
-      // ========================================
-
       documents: uploadedDocuments,
-
-      // ========================================
-      // IMPACT
-      // ========================================
-
       affectedPeople: Number(affectedPeople) || 0,
-
       severity: severity || "medium",
-
-      // ========================================
-      // AI CLASSIFICATION
-      // ========================================
-
       aiCategory: aiCategory || null,
-
       aiKeywords: Array.isArray(aiKeywords) ? aiKeywords : [],
-
       aiConfidence:
         aiConfidence !== null &&
         aiConfidence !== undefined &&
         !Number.isNaN(aiConfidence)
           ? Number(aiConfidence)
           : null,
-
       aiMargin:
-        aiMargin !== null && aiMargin !== undefined && !Number.isNaN(aiMargin)
+        aiMargin !== null &&
+        aiMargin !== undefined &&
+        !Number.isNaN(aiMargin)
           ? Number(aiMargin)
           : null,
-
-      // ========================================
-      // AI EMBEDDING
-      // ========================================
-
-      embedding,
-
-      // ========================================
-      // USER & SUBMITTER TYPE
-      // ========================================
-
       submittedBy: req.user._id,
-
       submitterType: submitterType || "individual",
     });
 
     // ========================================
-    // DUPLICATE DETECTION + CLUSTER SIZE
+    // IMMEDIATE RESPONSE TO CITIZEN (< 1.5s)
     // ========================================
-    // Runs after creation so the problem has an _id to
-    // exclude from its own candidate search. Results are
-    // persisted onto the problem — the Admin review UI reads
-    // them from there, not from this response. The number of
-    // candidates (the cluster) also feeds the priority score.
-
-    let candidateMatches = [];
-
-    let clusterSize = 0;
-
-    try {
-      const candidates = await detectDuplicates(problem, { embedding });
-
-      candidateMatches = await saveDuplicateAnalysis(problem._id, candidates);
-
-      clusterSize = await getClusterSize(problem);
-    } catch (detectionError) {
-      // A failure here must never block the citizen's submission.
-      console.error("Duplicate detection failed:", detectionError.message);
-    }
-
-    // ========================================
-    // AI PARTNER ROUTING
-    // ========================================
-    // Recommends the top 3 universities / industries for this
-    // problem. Same contract as duplicate detection: a failure
-    // must never block the submission, and the snapshot is
-    // persisted for the Admin review UI. The hydrated DTOs are
-    // returned so the citizen sees the matches immediately.
-
-    let suggestedPartners = [];
-
-    try {
-      const { suggestions, message } = await recommendPartners(problem);
-
-      if (suggestions.length > 0) {
-        await saveRoutingAnalysis(problem._id, suggestions);
-
-        suggestedPartners = await toSuggestionDTOs(suggestions);
-      } else if (message) {
-        console.log(`AI routing: ${message}`);
-      }
-    } catch (routingError) {
-      console.error("AI routing failed:", routingError.message);
-    }
-
-    // ========================================
-    // AI SUMMARY
-    // ========================================
-    // Local extractive summary for the admin triage queue.
-
-    let summary = "";
-
-    try {
-      summary = summarizeProblem(problem);
-
-      await saveSummary(problem._id, summary);
-    } catch (summaryError) {
-      console.error("AI summary failed:", summaryError.message);
-    }
-
-    // ========================================
-    // AI PRIORITY
-    // ========================================
-    // Composite severity/scale/cluster/age score so the
-    // admin queue can be triaged by urgency. Runs last so
-    // it can use the cluster size computed above.
-
-    let priority = null;
-
-    try {
-      priority = await analyzeAndSavePriority(problem, { clusterSize });
-    } catch (priorityError) {
-      console.error("AI priority failed:", priorityError.message);
-    }
-
-    // ========================================
-    // NOTIFY ADMINS
-    // ========================================
-    // The government portal needs to triage new submissions.
-
-    await notifyAdmins({
-      type: "problem_submitted",
-
-      title: "New problem submitted",
-
-      message: `"${problem.title}" was reported in ${problem.location} by ${req.user.name}.`,
-
-      problemId: problem._id,
-    });
-
-    // ========================================
-    // SUCCESS RESPONSE
-    // ========================================
-    // The in-memory document still carries the embedding we
-    // just wrote (select: false only hides it on queries), so
-    // strip it rather than shipping 384 floats to the client.
 
     const problemResponse = problem.toObject();
-
     delete problemResponse.embedding;
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Problem submitted successfully",
-
       problem: problemResponse,
+    });
 
-      candidateMatches,
+    // ========================================
+    // DISPATCH BACKGROUND AI ENRICHMENT (NON-BLOCKING)
+    // ========================================
+    // Computes duplicate analysis, partner routing, summaries, priority,
+    // and dispatches admin notifications in the background so the citizen
+    // never waits. Updates the Admin Panel within 2-4 seconds.
 
-      suggestedPartners,
-
-      aiSummary: summary,
-
-      aiPriority: priority,
+    setImmediate(async () => {
+      try {
+        await runBackgroundAIEnrichment(problem._id, req.user);
+      } catch (bgErr) {
+        console.error("Async AI task error:", bgErr.message);
+      }
     });
   } catch (error) {
-    // ========================================
-    // DETAILED ERROR
-    // ========================================
-
     console.error("========================================");
-
     console.error("CREATE PROBLEM ERROR");
-
     console.error(error);
-
     console.error("ERROR MESSAGE:", error.message);
-
     console.error("========================================");
 
     return res.status(500).json({
       message: "Server error while submitting problem",
-
       error: error.message,
     });
   }
