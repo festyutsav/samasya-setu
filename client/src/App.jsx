@@ -38,6 +38,7 @@ import UniversityDashboard from "./pages/UniversityDashboard";
 import Navbar from "./components/Navbar";
 import AdminNavbar from "./components/AdminNavbar";
 import PartnerNavbar from "./components/PartnerNavbar";
+import InstallAppBanner from "./components/InstallAppBanner";
 import { API_BASE_URL } from "./config/api";
 
 function App() {
@@ -591,6 +592,9 @@ function App() {
             backPage={backPage}
           />
         )}
+
+      {/* PWA 1-CLICK INSTALL BANNER */}
+      <InstallAppBanner />
 
     </div>
   );
