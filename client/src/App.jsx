@@ -338,6 +338,10 @@ function App() {
             if (email) setRegisteredEmail(email);
             setAuthPage("login");
           }}
+          onBack={() => {
+            setSelectedPortal(null);
+            setAuthPage("login");
+          }}
         />
       );
     }
@@ -394,13 +398,13 @@ function App() {
         {/* PARTNER MANAGEMENT */}
 
         {adminPage === "partners" && (
-          <PartnerManagement />
+          <PartnerManagement setAdminPage={setAdminPage} />
         )}
 
         {/* ANALYTICS DASHBOARD */}
 
         {adminPage === "analytics" && (
-          <AnalyticsDashboard />
+          <AnalyticsDashboard setAdminPage={setAdminPage} />
         )}
 
         {/* ADMIN PROBLEM DETAILS */}
@@ -455,7 +459,7 @@ function App() {
         ======================================== */}
 
         {partnerPage === "problems" && (
-          <PartnerProblems />
+          <PartnerProblems setPartnerPage={setPartnerPage} />
         )}
 
 
@@ -488,7 +492,7 @@ function App() {
         ======================================== */}
 
         {partnerPage === "directory" && (
-          <PartnerDirectory user={user} />
+          <PartnerDirectory user={user} setPartnerPage={setPartnerPage} />
         )}
 
         {/* ========================================
@@ -565,7 +569,7 @@ function App() {
       {/* SUBMIT PROBLEM */}
 
       {currentPage === "submit" && (
-        <SubmitProblem />
+        <SubmitProblem setCurrentPage={setCurrentPage} />
       )}
 
 

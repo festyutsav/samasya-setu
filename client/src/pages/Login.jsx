@@ -52,6 +52,21 @@ const Login = ({ portal, onLogin, onSwitchToRegister, onBack, initialEmail = "" 
         </section>
         <section className="flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-md">
+            {/* Top Back to Portals Navigation */}
+            <div className="mb-6 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-2 rounded-full border border-[#dbe5df] bg-white px-4 py-2 text-xs font-bold text-[#315d56] shadow-sm transition hover:border-[#0b514a] hover:bg-[#f0f6f4] hover:text-[#0b514a]"
+              >
+                <span>← Back to Portals</span>
+              </button>
+
+              <span className="text-xs font-bold uppercase tracking-widest text-[#71827c]">
+                SamasyaSetu
+              </span>
+            </div>
+
             <div className="mb-8">
               <div className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${config.tint}`}>
                 {config.icon}

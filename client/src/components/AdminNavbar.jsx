@@ -20,23 +20,37 @@ const AdminNavbar = ({
     <nav className="sticky top-0 z-40 border-b border-[#e3e9e3] bg-white shadow-sm">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-        {/* Brand */}
-        <button
-          onClick={() => setCurrentPage("dashboard")}
-          className="flex shrink-0 items-center gap-3"
-        >
-          <JharkhandEmblem className="h-10 w-10 shrink-0 drop-shadow-sm" />
+        {/* Brand + Mobile Back Button */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {currentPage !== "dashboard" && (
+            <button
+              type="button"
+              onClick={() => setCurrentPage("dashboard")}
+              className="inline-flex items-center gap-1 rounded-xl border border-[#dbe5df] bg-[#f7f8f5] px-2.5 py-1.5 text-xs font-bold text-[#0b514a] transition hover:bg-[#e9f4f0] md:hidden"
+              aria-label="Back to dashboard"
+            >
+              <span>←</span>
+              <span>Back</span>
+            </button>
+          )}
 
-          <div className="hidden text-left sm:block">
-            <h1 className="whitespace-nowrap text-base font-bold leading-tight text-[#173d3a]">
-              SamasyaSetu
-            </h1>
+          <button
+            onClick={() => setCurrentPage("dashboard")}
+            className="flex items-center gap-2.5 sm:gap-3"
+          >
+            <JharkhandEmblem className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 drop-shadow-sm" />
 
-            <p className="hidden whitespace-nowrap text-[11px] leading-tight text-[#71827c] xl:block">
-              Government Admin Portal
-            </p>
-          </div>
-        </button>
+            <div className="hidden text-left sm:block">
+              <h1 className="whitespace-nowrap text-base font-bold leading-tight text-[#173d3a]">
+                SamasyaSetu
+              </h1>
+
+              <p className="hidden whitespace-nowrap text-[11px] leading-tight text-[#71827c] xl:block">
+                Government Admin Portal
+              </p>
+            </div>
+          </button>
+        </div>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1.5 md:flex">
@@ -125,9 +139,9 @@ const AdminNavbar = ({
 
           <button
             onClick={handleLogout}
-            className="mt-3 w-full rounded-lg border border-red-200 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
           >
-            Logout
+            <span>🚪 Logout / Switch Portal</span>
           </button>
         </div>
       )}

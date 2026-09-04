@@ -7,7 +7,7 @@ import {
 
 import ProblemEvidence from "../components/ProblemEvidence";
 
-const PartnerProblems = () => {
+const PartnerProblems = ({ setPartnerPage }) => {
   // ========================================
   // STATE
   // ========================================
@@ -246,6 +246,18 @@ const PartnerProblems = () => {
         {/* ========================================
             HEADER
         ======================================== */}
+
+        {setPartnerPage && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setPartnerPage("dashboard")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#dbe5df] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#0b514a] shadow-sm transition hover:border-[#0b514a] hover:bg-[#e9f4f0]"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        )}
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 

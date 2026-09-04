@@ -2,40 +2,47 @@
   <defs>
     <!-- Background Gradient: Deep Jharkhand Forest Teal -->
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#021714" />
-      <stop offset="50%" stop-color="#073f3a" />
+      <stop offset="0%" stop-color="#021512" />
+      <stop offset="45%" stop-color="#063833" />
       <stop offset="100%" stop-color="#0b514a" />
     </linearGradient>
 
     <!-- Sacred Jharkhand Gold Gradient -->
     <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff8e7" />
-      <stop offset="25%" stop-color="#f5e2b3" />
+      <stop offset="0%" stop-color="#fffbeb" />
+      <stop offset="25%" stop-color="#f5e1b0" />
       <stop offset="60%" stop-color="#e9c985" />
       <stop offset="85%" stop-color="#c9933b" />
-      <stop offset="100%" stop-color="#96641a" />
+      <stop offset="100%" stop-color="#8c5812" />
     </linearGradient>
 
     <!-- Inner Glow Gradient -->
     <linearGradient id="glow-grad" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#087f70" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#e9c985" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#e9c985" stop-opacity="0.4" />
     </linearGradient>
 
-    <!-- Palash Orange Accent -->
+    <!-- Palash Orange Accent Gradient -->
     <linearGradient id="palash-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="30%" stop-color="#f59e0b" />
       <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
 
+    <!-- Emerald Core Accent -->
+    <linearGradient id="emerald-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
     <!-- Drop Shadows -->
-    <filter id="gold-shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5" />
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#c9933b" flood-opacity="0.4" />
+    <filter id="gold-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.6" />
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#c9933b" flood-opacity="0.5" />
     </filter>
 
     <filter id="soft-glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feGaussianBlur stdDeviation="12" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
@@ -47,70 +54,98 @@
   <rect x="14" y="14" width="484" height="484" rx="106" fill="none" stroke="url(#gold-grad)" stroke-width="3" stroke-opacity="0.35" />
 
   <!-- Inner Subtle Ring -->
-  <rect x="26" y="26" width="460" height="460" rx="96" fill="none" stroke="url(#glow-grad)" stroke-width="1.5" stroke-opacity="0.4" />
+  <rect x="26" y="26" width="460" height="460" rx="96" fill="none" stroke="url(#glow-grad)" stroke-width="1.5" stroke-opacity="0.35" />
 
   <!-- Ambient Glow Behind the "S" -->
-  <circle cx="256" cy="256" r="160" fill="#087f70" opacity="0.25" filter="url(#soft-glow)" />
-  <circle cx="256" cy="256" r="90" fill="#e9c985" opacity="0.12" filter="url(#soft-glow)" />
+  <circle cx="256" cy="256" r="165" fill="#087f70" opacity="0.3" filter="url(#soft-glow)" />
+  <circle cx="256" cy="256" r="95" fill="#e9c985" opacity="0.18" filter="url(#soft-glow)" />
 
-  <!-- Setu Arch Lines (Background Bridge Geometry) -->
-  <path d="M 120 370 C 180 280, 332 280, 392 370" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="4 6" />
-  <path d="M 120 142 C 180 232, 332 232, 392 142" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="4 6" />
+  <!-- Setu Arch Lines (Background Bridge Suspension Geometry) -->
+  <path d="M 100 370 C 180 270, 332 270, 412 370" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.22" stroke-dasharray="4 6" />
+  <path d="M 100 142 C 180 242, 332 242, 412 142" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.22" stroke-dasharray="4 6" />
 
-  <!-- THE STYLISH "S" — BRIDGE EMBLEM -->
+  <!-- Vertical Suspension Cable Accents -->
+  <line x1="180" y1="185" x2="180" y2="327" stroke="#e9c985" stroke-width="1.2" stroke-opacity="0.16" stroke-dasharray="2 4" />
+  <line x1="256" y1="150" x2="256" y2="362" stroke="#e9c985" stroke-width="1.2" stroke-opacity="0.22" stroke-dasharray="2 4" />
+  <line x1="332" y1="185" x2="332" y2="327" stroke="#e9c985" stroke-width="1.2" stroke-opacity="0.16" stroke-dasharray="2 4" />
+
+  <!-- THE STYLISH NORMAL "S" EMBLEM -->
   <g filter="url(#gold-shadow)">
-    <!-- Main Fluid Calligraphic S Body -->
+    <!-- 1. Outer Broad Gold Body (Flawlessly Smooth S curve) -->
     <path
-      d="M 342 146
-         C 372 176, 376 216, 342 248
-         C 310 278, 202 264, 170 294
-         C 136 326, 140 366, 170 396
-         C 200 426, 260 426, 308 402
-         C 328 392, 344 380, 356 368
-         C 362 362, 370 364, 370 374
-         C 366 392, 344 416, 314 432
-         C 254 464, 174 462, 134 422
-         C 94 382, 92 324, 136 280
-         C 176 240, 276 256, 310 224
-         C 344 192, 338 154, 308 124
-         C 278 94, 218 94, 176 118
-         C 156 128, 142 140, 130 152
-         C 124 158, 116 156, 116 146
-         C 120 128, 142 104, 172 88
-         C 232 56, 302 58, 342 98
-         Z"
-      fill="url(#gold-grad)"
+      d="M 350 145
+         C 340 100, 290 85, 252 85
+         C 195 85, 150 120, 150 175
+         C 150 230, 205 250, 256 265
+         C 310 280, 362 300, 362 360
+         C 362 415, 315 445, 256 445
+         C 200 445, 155 415, 150 365"
+      fill="none"
+      stroke="url(#gold-grad)"
+      stroke-width="52"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     />
 
-    <!-- Setu Bridge Central Chord (Connecting problem to solution) -->
+    <!-- 2. Darker Under-Bevel Groove for 3D Architectural Depth -->
     <path
-      d="M 160 300
-         C 210 240, 302 272, 352 212"
+      d="M 350 145
+         C 340 100, 290 85, 252 85
+         C 195 85, 150 120, 150 175
+         C 150 230, 205 250, 256 265
+         C 310 280, 362 300, 362 360
+         C 362 415, 315 445, 256 445
+         C 200 445, 155 415, 150 365"
+      fill="none"
+      stroke="#042622"
+      stroke-width="22"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.8"
+    />
+
+    <!-- 3. Inner Flow Bridge Chord (Palash Orange dynamic energy ribbon) -->
+    <path
+      d="M 346 148
+         C 336 108, 290 95, 252 95
+         C 202 95, 160 126, 160 175
+         C 160 224, 210 244, 256 258
+         C 305 272, 352 292, 352 355
+         C 352 405, 310 435, 256 435
+         C 208 435, 168 408, 154 362"
       fill="none"
       stroke="url(#palash-grad)"
-      stroke-width="7"
+      stroke-width="10"
       stroke-linecap="round"
-      opacity="0.9"
-    />
-
-    <!-- Top Innovation Node (Academic / Idea Spark) -->
-    <circle cx="342" cy="116" r="14" fill="url(#palash-grad)" />
-    <circle cx="342" cy="116" r="7" fill="#ffffff" />
-
-    <!-- Bottom Grassroots Node (Citizen Anchor) -->
-    <circle cx="170" cy="396" r="14" fill="url(#gold-grad)" />
-    <circle cx="170" cy="396" r="7" fill="#032621" />
-
-    <!-- Central Diamond Spark (Setu Catalyst) -->
-    <path
-      d="M 256 236 L 264 256 L 284 264 L 264 272 L 256 292 L 248 272 L 228 264 L 248 256 Z"
-      fill="#ffffff"
+      stroke-linejoin="round"
       opacity="0.95"
     />
+
+    <!-- 4. Top Innovation Node (Academic / Idea Spark at S top head) -->
+    <circle cx="350" cy="145" r="16" fill="url(#gold-grad)" />
+    <circle cx="350" cy="145" r="10" fill="url(#palash-grad)" />
+    <circle cx="350" cy="145" r="4.5" fill="#ffffff" />
+
+    <!-- 5. Bottom Citizen Anchor Node (Grassroots Foundation at S tail) -->
+    <circle cx="150" cy="365" r="16" fill="url(#gold-grad)" />
+    <circle cx="150" cy="365" r="10" fill="url(#emerald-grad)" />
+    <circle cx="150" cy="365" r="4.5" fill="#ffffff" />
+
+    <!-- 6. Central Setu Nexus Star (The Bridge Catalyst where challenges meet solutions) -->
+    <g transform="translate(256, 262)">
+      <!-- Radiant diamond flare -->
+      <path
+        d="M 0 -22 L 6 -6 L 22 0 L 6 6 L 0 22 L -6 6 L -22 0 L -6 -6 Z"
+        fill="#ffffff"
+        filter="url(#soft-glow)"
+        opacity="0.95"
+      />
+      <circle cx="0" cy="0" r="3.5" fill="#fef08a" />
+    </g>
   </g>
 
   <!-- Bottom Brand Subtitle on Icon -->
-  <text x="256" y="476" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" letter-spacing="7" fill="#e9c985" opacity="0.85">
+  <text x="256" y="482" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="800" letter-spacing="8" fill="#e9c985" opacity="0.9">
     SAMASYASETU
   </text>
 </svg>

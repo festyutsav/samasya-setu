@@ -54,7 +54,7 @@ const COLLAB_ROLES = [
   { value: "adopter", label: "Adopter / Pilot" },
 ];
 
-const PartnerDirectory = ({ user }) => {
+const PartnerDirectory = ({ user, setPartnerPage }) => {
   // ========================================
   // STATE
   // ========================================
@@ -225,6 +225,18 @@ const PartnerDirectory = ({ user }) => {
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         {/* HEADER */}
+
+        {setPartnerPage && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setPartnerPage("dashboard")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#dbe5df] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#0b514a] shadow-sm transition hover:border-[#0b514a] hover:bg-[#e9f4f0]"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        )}
 
         <div className="mb-8">
           <p className="text-sm font-semibold text-[#0b6b60]">

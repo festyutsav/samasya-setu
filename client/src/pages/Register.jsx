@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { sendRegistrationOtp, verifyOtpAndRegister } from "../services/authService";
 import JharkhandEmblem from "../components/JharkhandEmblem";
 
-const Register = ({ onSwitchToLogin, onRegisterSuccess }) => {
+const Register = ({ onSwitchToLogin, onRegisterSuccess, onBack }) => {
   // ========================================
   // STATE
   // ========================================
@@ -199,6 +199,25 @@ const Register = ({ onSwitchToLogin, onRegisterSuccess }) => {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f7f8f5] px-4 py-10">
       <div className="w-full max-w-md">
+        {/* TOP NAVIGATION BACK BUTTON */}
+        <div className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack || onSwitchToLogin}
+            className="inline-flex items-center gap-2 rounded-full border border-[#dbe5df] bg-white px-4 py-2 text-xs font-bold text-[#315d56] shadow-sm transition hover:border-[#0b514a] hover:bg-[#f0f6f4] hover:text-[#0b514a]"
+          >
+            <span>← Back to Portals</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSwitchToLogin()}
+            className="text-xs font-semibold text-[#0b6b60] hover:underline"
+          >
+            Sign in instead →
+          </button>
+        </div>
+
         {/* LOGO AND EMBLEM */}
         <div className="mb-6 text-center">
           <JharkhandEmblem className="mx-auto mb-3 h-16 w-16 drop-shadow-sm" />
