@@ -289,14 +289,35 @@ async function runDemo() {
       detail: "Allotted food-grade vessel fabrication materials from Bokaro R&D workshops.",
       date: new Date(),
     });
+
+    // 2-way discussion between University and Industry
+    project.messages.push({
+      sender: universityUser._id,
+      senderPartner: universityPartner._id,
+      senderName: `${universityPartner.name} (Lead University)`,
+      senderRole: "lead",
+      message: "We have finalized the water filter design. Need Bokaro Steel to confirm dispatch of ductile materials.",
+      createdAt: new Date(),
+    });
+
+    project.messages.push({
+      sender: industryUser._id,
+      senderPartner: industryPartner._id,
+      senderName: `${industryPartner.name} (Industry Partner)`,
+      senderRole: "collaborator",
+      message: "Materials confirmed and dispatched from Bokaro logistics depot. Technical team standing by.",
+      createdAt: new Date(),
+    });
+
     await project.save();
 
     pass(`Industry logged contribution: "${collabEntry.contributions[0].title}"`);
+    pass(`2-way discussion messages successfully posted between University and Bokaro Steel (${project.messages.length} messages)`);
 
     // ----------------------------------------------------
     // STAGE 5: MILESTONE EXECUTION & WORKSPACE PROGRESS
     // ----------------------------------------------------
-    step("STAGE 5: Execution, Milestone Completion & Innovation Outcomes");
+    step("STAGE 5: Execution, Milestone Completion & Resolution Submission");
 
     project.status = "active";
     for (let i = 0; i < project.milestones.length; i++) {
@@ -316,15 +337,30 @@ async function runDemo() {
     pass(`Project Status updated to: '${project.status}'`);
     pass(`Innovation Outcomes recorded: ${project.outcomes.deployments} field deployments, ${project.outcomes.patents} patent filed, ${project.outcomes.publications} publication.`);
 
+    // Sync resolution to Problem record for Admin approval
+    newProblem.resolutionSubmitted = true;
+    newProblem.resolutionDetails = {
+      projectId: project._id,
+      projectTitle: project.title,
+      leadPartner: universityPartner.name,
+      collaborators: [industryPartner.name],
+      outcomes: project.outcomes,
+      submittedAt: new Date(),
+      summary: project.description,
+    };
+    await newProblem.save();
+    pass(`Project completion synced to Problem: resolutionSubmitted = true with full partner outcomes.`);
+
     // ----------------------------------------------------
-    // STAGE 6: PROBLEM SOLVED & CITIZEN NOTIFICATION
+    // STAGE 6: ADMIN RESOLUTION APPROVAL & CITIZEN RESOLUTION
     // ----------------------------------------------------
-    step("STAGE 6: Challenge Solved & Resolution Handover");
+    step("STAGE 6: Government Admin Approval & Citizen Resolution Certificate");
 
     newProblem.status = "solved";
+    newProblem.resolutionApprovedAt = new Date();
     await newProblem.save();
 
-    pass(`Problem status officially set to: '${newProblem.status}'`);
+    pass(`Admin approved resolution: Problem officially marked '${newProblem.status}' with approval timestamp.`);
 
     // Notify citizen
     await createNotification({

@@ -364,7 +364,7 @@ const PartnerDashboard = ({
 
         <section className="ss-enter mb-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" style={{ "--ss-delay": "120ms" }}>
           <StatCard
-            label="Total Assigned"
+            label={partner?.type === "industry" ? "Assigned Challenges" : "Total Assigned"}
             value={statistics?.totalProblems || 0}
             icon={icons.total}
             accent="linear-gradient(90deg, #0b514a, #62a99b)"
@@ -372,8 +372,12 @@ const PartnerDashboard = ({
           />
 
           <StatCard
-            label="Newly Assigned"
-            value={statistics?.assignedProblems || 0}
+            label={partner?.type === "industry" ? "Active Collaborations" : "Newly Assigned"}
+            value={
+              partner?.type === "industry"
+                ? projects.length || statistics?.collaborativeProjectsCount || 0
+                : statistics?.assignedProblems || 0
+            }
             icon={icons.assigned}
             accent="linear-gradient(90deg, #d99a2b, #f3ce7a)"
             chipClass="bg-[#f9f0dd] text-[#a2731b]"
@@ -381,15 +385,21 @@ const PartnerDashboard = ({
 
           <StatCard
             label="In Progress"
-            value={statistics?.inProgressProblems || 0}
+            value={
+              (statistics?.inProgressProblems || 0) +
+              projects.filter((p) => p.status === "active").length
+            }
             icon={icons.progress}
             accent="linear-gradient(90deg, #c96a2d, #e9a06b)"
             chipClass="bg-[#faecdf] text-[#b05c2d]"
           />
 
           <StatCard
-            label="Solved"
-            value={statistics?.solvedProblems || 0}
+            label="Solved & Completed"
+            value={
+              (statistics?.solvedProblems || 0) +
+              projects.filter((p) => p.status === "completed").length
+            }
             icon={icons.solved}
             accent="linear-gradient(90deg, #0b6b60, #7fc8b2)"
             chipClass="bg-[#e4f2ee] text-[#0b6b60]"
@@ -400,7 +410,7 @@ const PartnerDashboard = ({
             PROGRESS OVERVIEW
         ======================================== */}
 
-        {statistics?.totalProblems > 0 && (
+        {((statistics?.totalProblems || 0) > 0 || projects.length > 0) && (
           <section
             className="ss-enter mb-8 rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm"
             style={{ "--ss-delay": "180ms" }}
@@ -413,13 +423,14 @@ const PartnerDashboard = ({
               <p className="text-sm text-[#71827c]">
                 <span className="font-bold text-[#0b6b60]">
                   {Math.round(
-                    ((statistics?.solvedProblems || 0) /
-                      statistics.totalProblems) *
+                    (((statistics?.solvedProblems || 0) +
+                      projects.filter((p) => p.status === "completed").length) /
+                      Math.max(1, (statistics?.totalProblems || 0) + projects.length)) *
                       100
                   )}
                   %
                 </span>{" "}
-                of assigned problems solved
+                of assigned and collaborative challenges solved
               </p>
             </div>
 
@@ -428,8 +439,9 @@ const PartnerDashboard = ({
                 className="ss-progress-fill"
                 style={{
                   width: `${Math.round(
-                    ((statistics?.solvedProblems || 0) /
-                      statistics.totalProblems) *
+                    (((statistics?.solvedProblems || 0) +
+                      projects.filter((p) => p.status === "completed").length) /
+                      Math.max(1, (statistics?.totalProblems || 0) + projects.length)) *
                       100
                   )}%`,
                 }}

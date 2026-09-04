@@ -479,6 +479,24 @@ const problemSchema = new mongoose.Schema(
 
       default: "submitted",
     },
+
+    // ========================================
+    // RESOLUTION & COMPLETION WORKFLOW
+    // ========================================
+    resolutionSubmitted: {
+      type: Boolean,
+      default: false,
+    },
+
+    resolutionDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
+    resolutionApprovedAt: {
+      type: Date,
+      default: null,
+    },
   },
 
   {

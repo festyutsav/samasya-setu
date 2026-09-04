@@ -266,6 +266,19 @@ const getAllPartners = async (req, res) => {
         createdAt: -1,
       });
 
+    // Deduplicate by name, prioritizing the partner document with an active user account
+    const partnerMap = new Map();
+    for (const partner of partners) {
+      const key = String(partner.name || "").trim().toLowerCase();
+      const existing = partnerMap.get(key);
+      if (!existing) {
+        partnerMap.set(key, partner);
+      } else if (!existing.user && partner.user) {
+        partnerMap.set(key, partner);
+      }
+    }
+    const uniquePartners = Array.from(partnerMap.values());
+
     // ========================================
     // ATTACH LOGIN CREDENTIALS (ADMIN ONLY)
     // ========================================
@@ -283,7 +296,7 @@ const getAllPartners = async (req, res) => {
       ]),
     );
 
-    const partnersWithCredentials = partners.map((partner) => {
+    const partnersWithCredentials = uniquePartners.map((partner) => {
       const entry = passwordByName.get(
         String(partner.name || "").toLowerCase(),
       );

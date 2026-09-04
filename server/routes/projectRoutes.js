@@ -13,6 +13,8 @@ const {
   withdrawCollaborator,
   addContribution,
   requestCollaboration,
+  postProjectMessage,
+  getProjectMessages,
 } = require("../controllers/projectController");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
@@ -78,5 +80,11 @@ router.post(
   "/:id/collaborators/:collaboratorId/contributions",
   addContribution,
 );
+
+// Collaboration Discussion / Messages (Lead university & invited/accepted collaborators)
+
+router.post("/:id/messages", postProjectMessage);
+
+router.get("/:id/messages", getProjectMessages);
 
 module.exports = router;

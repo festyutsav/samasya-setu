@@ -906,27 +906,37 @@ const PartnerProjects = ({
                         Industry Collaboration
                       </p>
 
-                      {isLead(project) && (
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() =>
-                            setInviteForm((current) =>
-                              current.projectId === project._id
-                                ? { projectId: null, partnerId: "", role: "mentor" }
-                                : {
-                                    projectId: project._id,
-                                    partnerId: "",
-                                    role: "mentor",
-                                  },
-                            )
-                          }
-                          className="text-xs font-bold text-[#0b6b60] hover:underline"
+                          onClick={() => handleOpenWorkspace(project._id)}
+                          className="text-xs font-bold text-[#087f70] hover:underline"
                         >
-                          {inviteForm.projectId === project._id
-                            ? "Cancel"
-                            : "+ Invite partner"}
+                          💬 Discussion & Messages ({project.messages?.length || 0})
                         </button>
-                      )}
+
+                        {isLead(project) && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setInviteForm((current) =>
+                                current.projectId === project._id
+                                  ? { projectId: null, partnerId: "", role: "mentor" }
+                                  : {
+                                      projectId: project._id,
+                                      partnerId: "",
+                                      role: "mentor",
+                                    },
+                              )
+                            }
+                            className="text-xs font-bold text-[#0b6b60] hover:underline"
+                          >
+                            {inviteForm.projectId === project._id
+                              ? "Cancel"
+                              : "+ Invite partner"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* LIVE COLLABORATORS */}

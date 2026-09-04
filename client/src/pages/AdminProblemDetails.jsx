@@ -405,6 +405,72 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
           </div>
         )}
 
+        {/* RESOLUTION APPROVAL REVIEW BANNER */}
+        {problem.status !== "solved" && problem.resolutionSubmitted && (
+          <section className="mb-8 overflow-hidden rounded-2xl border-2 border-[#0b6b60] bg-gradient-to-br from-[#eef7f4] via-white to-[#edf7f4] p-6 shadow-md sm:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0b6b60] text-white shadow-sm sm:h-14 sm:w-14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-7 w-7">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#0b6b60] px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
+                      Action Required
+                    </span>
+                    <span className="text-xs font-semibold text-[#0b6b60]">
+                      Solution Project Completed
+                    </span>
+                  </div>
+
+                  <h2 className="mt-2 text-xl font-bold text-[#173d3a] sm:text-2xl">
+                    University & Industry Solution Ready for Government Approval
+                  </h2>
+
+                  <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-[#4b5e58]">
+                    <strong className="text-[#173d3a]">
+                      {problem.resolutionDetails?.leadPartner || (typeof problem.assignedPartner === "object" ? problem.assignedPartner?.name : "The assigned partner")}
+                    </strong>
+                    {problem.resolutionDetails?.collaborators && problem.resolutionDetails.collaborators.length > 0 && (
+                      <> in collaboration with <strong className="text-[#173d3a]">{problem.resolutionDetails.collaborators.join(", ")}</strong></>
+                    )}
+                    {" "}has marked project work on <em>"{problem.resolutionDetails?.projectTitle || "Solution Initiative"}"</em> as completed. Review the outcomes below and approve to finalize resolution for the citizen.
+                  </p>
+
+                  {problem.resolutionDetails?.outcomes && (
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#315d56]">
+                      {Object.entries(problem.resolutionDetails.outcomes)
+                        .filter(([, count]) => Number(count) > 0)
+                        .map(([metric, count]) => (
+                          <span key={metric} className="rounded-full bg-[#d8ebe4] px-2.5 py-1 capitalize">
+                            {count} {metric}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange("solved")}
+                  disabled={updatingStatus}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0b6b60] px-6 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-[#074f46] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-5 w-5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  {updatingStatus ? "Approving..." : "Approve & Mark Solved"}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* MAIN CARD */}
 
         <article className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm sm:p-10">

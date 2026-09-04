@@ -8,6 +8,7 @@ import {
   updateProjectOutcomes,
   respondToCollaboration,
   addCollaborationContribution,
+  postProjectMessage,
 } from "../services/partnerService";
 
 import ExportBriefButton from "../components/ExportBriefButton";
@@ -101,6 +102,9 @@ const ProjectWorkspace = ({
   const [outcomesForm, setOutcomesForm] = useState(emptyOutcomes);
 
   const [showOutcomesForm, setShowOutcomesForm] = useState(false);
+
+  const [chatMessage, setChatMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Inline due-date editing: index of the milestone being
   // edited (null = closed) and the pending date value.
@@ -261,6 +265,31 @@ const ProjectWorkspace = ({
     setContributionForm(emptyContribution);
 
     setShowContributionForm(false);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+
+    try {
+      setSendingMessage(true);
+      setMessage("");
+      const token = localStorage.getItem("token");
+      const data = await postProjectMessage(projectId, chatMessage.trim(), token);
+      setProject((prev) => ({
+        ...prev,
+        messages: data.messages,
+      }));
+      setChatMessage("");
+      setMessage("Message posted to discussion thread.");
+      setMessageType("success");
+    } catch (err) {
+      console.error("Send message error:", err);
+      setMessage(err.response?.data?.message || "Failed to post message.");
+      setMessageType("error");
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   // ========================================
@@ -667,6 +696,92 @@ const ProjectWorkspace = ({
                   </li>
                 )}
               </ul>
+            </section>
+
+            {/* COLLABORATION DISCUSSION / MESSAGING */}
+            <section className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2ee] pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-[#173d3a]">
+                    💬 Collaboration Discussion & Updates
+                  </h3>
+                  <p className="mt-0.5 text-xs text-[#71827c]">
+                    Direct messaging between {project?.partner?.name || "Lead University"} and industry partners.
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#0b514a]/10 px-3 py-1 text-xs font-semibold text-[#0b514a]">
+                  {isLead ? "✦ Posting as University Lead" : "🏢 Posting as Industry Collaborator"}
+                </span>
+              </div>
+
+              {/* MESSAGE STREAM */}
+              <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
+                {(project?.messages || []).length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[#d8ebe4] bg-[#f7fbf9] p-6 text-center">
+                    <p className="text-sm font-semibold text-[#5c6f69]">No discussion messages yet.</p>
+                    <p className="mt-1 text-xs text-[#899892]">
+                      {isLead
+                        ? "Post technical requirements, material specifications or coordinate meetings with industry partners."
+                        : "Send questions, resource updates or feedback to the university project team."}
+                    </p>
+                  </div>
+                ) : (
+                  (project?.messages || []).map((msg, index) => {
+                    const isFromLead = msg.senderRole === "lead";
+                    return (
+                      <div
+                        key={index}
+                        className={`rounded-xl p-3.5 text-sm ${
+                          isFromLead
+                            ? "border border-[#d8ebe4] bg-[#f4f9f7]"
+                            : "border border-[#dbe3f0] bg-[#f5f8fc]"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-bold text-[#173d3a]">
+                            {msg.senderName}
+                          </span>
+                          <span className="text-[11px] text-[#899892]">
+                            {msg.createdAt
+                              ? new Date(msg.createdAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }) +
+                                " · " +
+                                new Date(msg.createdAt).toLocaleDateString()
+                              : ""}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#2c403b]">
+                          {msg.message}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* SEND MESSAGE FORM */}
+              <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  placeholder={
+                    isLead
+                      ? "Message industry collaborators (e.g. materials needed, technical questions)..."
+                      : "Reply to university team (e.g. materials approved, site visit scheduled)..."
+                  }
+                  className="flex-1 rounded-xl border border-[#dbe5df] bg-[#fbfcfa] px-4 py-2.5 text-sm outline-none transition focus:border-[#0b514a] focus:bg-white focus:ring-2 focus:ring-[#dff1eb]"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingMessage || !chatMessage.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0b514a] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {sendingMessage ? "Sending..." : "Send Message"}
+                </button>
+              </form>
             </section>
           </div>
 
