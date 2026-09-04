@@ -1285,26 +1285,23 @@ const seedPartners = async () => {
 
     const credentials = [];
 
+    // Clean up any removed partners (e.g. NGOs, Govt, discontinued orgs)
+    // and their linked user accounts from the database.
+    for (const name of removals) {
+      const legacy = await Partner.findOne({ name });
+      if (legacy) {
+        if (legacy.user) {
+          await User.findByIdAndDelete(legacy.user);
+        }
+        await Partner.findByIdAndDelete(legacy._id);
+        console.log(`  ✗ Removed: ${legacy.name}`);
+      }
+    }
+
     for (let i = 0; i < allPartners.length; i++) {
       const data = allPartners[i];
 
-      // Skip factually incorrect partners (see partnerData.js
-      // removals). Their logins are removed too so stale
-      // accounts never persist.
-
       if (removals.includes(data.name)) {
-        const legacy = await Partner.findOne({ name: data.name });
-
-        if (legacy) {
-          if (legacy.user) {
-            await User.findByIdAndDelete(legacy.user);
-          }
-
-          await Partner.findByIdAndDelete(legacy._id);
-
-          console.log(`  ✗ Removed: ${legacy.name}`);
-        }
-
         continue;
       }
 
@@ -1416,7 +1413,7 @@ const seedPartners = async () => {
 
       const username = generateUsername(data.name, allPartners.length + i + 1);
 
-      const password = generatePassword(data.name);
+      const password = data.password || generatePassword(data.name);
 
       const email = generateEmail(data.name, data.type);
 

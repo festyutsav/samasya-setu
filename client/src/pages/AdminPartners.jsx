@@ -286,8 +286,6 @@ const AdminPartners = () => {
               ["all", "All partners"],
               ["university", "Universities"],
               ["industry", "Industries"],
-              ["ngo", "NGOs"],
-              ["government", "Government"],
             ].map(([key, label]) => (
               <button
                 key={key}

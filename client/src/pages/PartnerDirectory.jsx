@@ -248,7 +248,7 @@ const PartnerDirectory = ({ user, setPartnerPage }) => {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm text-[#71827c]">
-            Browse universities, industries and NGOs in the network — see their
+            Browse universities and industries in the network — see their
             expertise and the problems they are working on, and ask to
             collaborate.
           </p>
@@ -276,11 +276,9 @@ const PartnerDirectory = ({ user, setPartnerPage }) => {
 
             <div className="flex flex-wrap items-center gap-2">
               {[
-                ["all", "All"],
+                ["all", "All Partners"],
                 ["university", "Universities"],
                 ["industry", "Industries"],
-                ["ngo", "NGOs"],
-                ["government", "Government"],
               ].map(([value, label]) => (
                 <button
                   key={value}
