@@ -23,12 +23,6 @@ const getTypeStyle = (type) => {
     case "industry":
       return "bg-[#e0d7ef] text-[#564680]";
 
-    case "ngo":
-      return "bg-[#f7ebd8] text-[#a25a1b]";
-
-    case "government":
-      return "bg-[#e2e8f5] text-[#31527c]";
-
     default:
       return "bg-[#f7f8f5] text-[#315d56]";
   }

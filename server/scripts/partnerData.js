@@ -184,7 +184,7 @@ const enrichments = {
   },
 
   "National Institute of Advanced Manufacturing Technology Ranchi": {
-    website: "https://niamt.ac.in",
+    website: "http://www.niamt.ac.in",
 
     email: "smc@niamt.ac.in",
 
@@ -370,7 +370,7 @@ const enrichments = {
   },
 
   "Dr. Shyama Prasad Mukherjee University Ranchi": {
-    website: "https://www.dspmuranchi.ac.in",
+    website: "https://dspmuranchi.ac.in",
 
     description:
       "Dr. Shyama Prasad Mukherjee University is a unitary state university in Ranchi formed from the upgrade of Ranchi College, which was established in 1926 as a Government Intermediate College and began undergraduate and postgraduate courses in arts and science in 1946. Ranchi University's records list the university's creation as a bifurcation of Ranchi University in 2019, and it teaches humanities, science and social science faculties.",
@@ -592,7 +592,7 @@ const enrichments = {
   },
 
   "Steel Authority of India Limited": {
-    website: "https://sail.co.in",
+    website: "https://www.sail.co.in",
 
     description:
       "Bokaro Steel Plant, a premier SAIL unit in Bokaro Steel City, was incorporated in 1964 (with Soviet collaboration), joined SAIL in 1978 and is recognized as India's first 'Swadeshi' steel plant. It is a fully integrated plant with about 5.8 MT liquid steel capacity, undergoing modernisation targeting higher output.",
@@ -608,6 +608,25 @@ const enrichments = {
     ],
 
     districtsServed: ["Bokaro"],
+  },
+
+  "Bokaro Steel Plant": {
+    website: "https://www.sail.co.in/en/plants/bokaro-steel-plant",
+
+    description:
+      "Bokaro Steel Plant, a premier SAIL unit in Bokaro Steel City, was incorporated in 1964 (with Soviet collaboration), joined SAIL in 1978 and is recognized as India's first 'Swadeshi' steel plant. It is a fully integrated plant with about 5.8 MT liquid steel capacity, undergoing modernisation targeting higher output.",
+
+    expertise: ["manufacturing", "infrastructure", "energy", "technology"],
+
+    capabilities: [
+      "manufacturing",
+      "research_development",
+      "testing",
+      "training",
+      "deployment",
+    ],
+
+    districtsServed: ["Bokaro", "Dhanbad"],
   },
 
   "Usha Martin": {
@@ -923,6 +942,60 @@ const additions = [
     ],
     districtsServed: ["Ranchi", "Khunti", "Ramgarh", "Bokaro"],
     password: "icfai@2025",
+  },
+  {
+    name: "RKDF University Jharkhand",
+    type: "university",
+    website: "https://rkdfuniversity.org",
+    location: "Ranchi, Jharkhand",
+    description:
+      "Established in 2018 under the RKDF University Act and recognized by UGC, RKDF University Jharkhand delivers undergraduate and postgraduate programs in Engineering & Technology, Computer Applications, Agricultural Science, Management, and Basic Sciences with emphasis on regional employability and research.",
+    expertise: ["education", "technology", "agriculture", "electricity_energy"],
+    capabilities: [
+      "research_development",
+      "training",
+      "field_surveys",
+      "innovation_labs",
+      "community_outreach",
+    ],
+    districtsServed: ["Ranchi", "Ramgarh", "Khunti"],
+    password: "rkdf@2025",
+  },
+  {
+    name: "Mahatma Gandhi Memorial Medical College Jamshedpur",
+    type: "university",
+    website: "https://mgmmedicalcollege.org",
+    location: "Dimna, Jamshedpur, East Singhbhum, Jharkhand",
+    description:
+      "Established in 1961 and affiliated with Kolhan University, MGM Medical College is a premier government medical college and tertiary teaching hospital in Jamshedpur. It offers MBBS, MD/MS, and paramedical disciplines, driving clinical research, public healthcare delivery, and epidemic management across the Kolhan division.",
+    expertise: ["healthcare", "water_sanitation", "public_safety", "education"],
+    capabilities: [
+      "healthcare_services",
+      "research_development",
+      "testing",
+      "training",
+      "field_surveys",
+    ],
+    districtsServed: ["East Singhbhum", "Seraikela Kharsawan", "West Singhbhum"],
+    password: "mgm@2025",
+  },
+  {
+    name: "Shaheed Nirmal Mahto Medical College Dhanbad",
+    type: "university",
+    website: "https://www.snmmcdhn.org",
+    location: "Saraidhela, Dhanbad, Jharkhand",
+    description:
+      "Established in 1971 (formerly Patliputra Medical College Hospital) and affiliated with BBMKU, SNMMCH Dhanbad is a premier state government medical college and hospital serving the North Chotanagpur and coal-belt region with specialized research in occupational health, trauma, sanitation, and community medicine.",
+    expertise: ["healthcare", "public_safety", "water_sanitation", "environment"],
+    capabilities: [
+      "healthcare_services",
+      "research_development",
+      "field_surveys",
+      "testing",
+      "training",
+    ],
+    districtsServed: ["Dhanbad", "Bokaro", "Giridih"],
+    password: "snmmch@2025",
   },
 ];
 

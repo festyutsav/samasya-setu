@@ -92,9 +92,9 @@ const createPartner = async (req, res) => {
     // VALIDATE ORGANIZATION
     // ========================================
 
-    if (!name || !type) {
+    if (!name || !type || !["university", "industry"].includes(type)) {
       return res.status(400).json({
-        message: "Partner name and type are required.",
+        message: "Partner name and a valid type ('university' or 'industry') are required.",
       });
     }
 
@@ -257,7 +257,9 @@ const createPartner = async (req, res) => {
 const getAllPartners = async (req, res) => {
   try {
 
-    const partners = await Partner.find()
+    const partners = await Partner.find({
+      type: { $in: ["university", "industry"] },
+    })
       .populate({
         path: "user",
         select: "name email role",
@@ -435,9 +437,11 @@ const getPartnerDirectory = async (req, res) => {
   try {
     const { type, expertise, q, excludeSelf } = req.query;
 
-    const filter = {};
+    const filter = {
+      type: { $in: ["university", "industry"] },
+    };
 
-    if (type && ["university", "industry", "ngo", "government"].includes(type)) {
+    if (type && ["university", "industry"].includes(type)) {
       filter.type = type;
     }
 

@@ -22,8 +22,6 @@ const partnerSchema = new mongoose.Schema(
       enum: [
         "university",
         "industry",
-        "ngo",
-        "government",
       ],
 
       required: true,

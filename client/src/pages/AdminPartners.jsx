@@ -27,8 +27,6 @@ const EXPERTISE_OPTIONS = [
 const TYPE_STYLES = {
   university: "bg-[#d8ebe4] text-[#087f70]",
   industry: "bg-[#f7ebd8] text-[#a25a1b]",
-  ngo: "bg-[#e5dcf2] text-[#564680]",
-  government: "bg-[#e2e9f4] text-[#31527c]",
 };
 
 const AdminPartners = () => {
@@ -209,11 +207,9 @@ const AdminPartners = () => {
 
   const stats = useMemo(
     () => ({
-      all: partners.length,
+      all: partners.filter((p) => p.type === "university" || p.type === "industry").length,
       university: partners.filter((p) => p.type === "university").length,
       industry: partners.filter((p) => p.type === "industry").length,
-      ngo: partners.filter((p) => p.type === "ngo").length,
-      government: partners.filter((p) => p.type === "government").length,
     }),
     [partners],
   );
@@ -225,18 +221,20 @@ const AdminPartners = () => {
   const filteredPartners = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return partners.filter((partner) => {
-      const matchesType = typeFilter === "all" || partner.type === typeFilter;
+    return partners
+      .filter((p) => p.type === "university" || p.type === "industry")
+      .filter((partner) => {
+        const matchesType = typeFilter === "all" || partner.type === typeFilter;
 
-      const searchable = [partner.name, partner.location]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        const searchable = [partner.name, partner.location]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
-      const matchesSearch = !query || searchable.includes(query);
+        const matchesSearch = !query || searchable.includes(query);
 
-      return matchesType && matchesSearch;
-    });
+        return matchesType && matchesSearch;
+      });
   }, [partners, typeFilter, searchQuery]);
 
   // ========================================
@@ -365,12 +363,7 @@ const AdminPartners = () => {
                   className="w-full rounded-xl border border-[#dbe5df] px-4 py-3 outline-none focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
                 >
                   <option value="university">University</option>
-
                   <option value="industry">Industry</option>
-
-                  <option value="ngo">NGO</option>
-
-                  <option value="government">Government</option>
                 </select>
               </div>
 
