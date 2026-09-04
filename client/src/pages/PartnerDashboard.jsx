@@ -38,19 +38,19 @@ const icons = {
 const StatCard = ({ label, value, icon, accent, chipClass }) => (
   <div
     style={{ "--ss-accent": accent }}
-    className="ss-stat-card p-6"
+    className="ss-stat-card p-4 sm:p-6"
   >
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3 sm:gap-4">
       <span
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${chipClass}`}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${chipClass}`}
       >
-        <Icon path={icon} className="h-6 w-6" />
+        <Icon path={icon} className="h-5 w-5 sm:h-6 sm:w-6" />
       </span>
 
-      <div>
-        <p className="text-sm font-medium text-[#71827c]">{label}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-[#71827c] sm:text-sm">{label}</p>
 
-        <p className="ss-stat-value mt-1 text-3xl font-bold text-[#173d3a]">
+        <p className="ss-stat-value mt-0.5 text-2xl font-bold text-[#173d3a] sm:mt-1 sm:text-3xl">
           {value}
         </p>
       </div>
@@ -362,7 +362,7 @@ const PartnerDashboard = ({
             STATISTICS
         ======================================== */}
 
-        <section className="ss-enter mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" style={{ "--ss-delay": "120ms" }}>
+        <section className="ss-enter mb-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" style={{ "--ss-delay": "120ms" }}>
           <StatCard
             label="Total Assigned"
             value={statistics?.totalProblems || 0}

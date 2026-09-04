@@ -573,29 +573,39 @@ const PartnerManagement = () => {
             HEADER
         ======================================== */}
 
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
-          <p className="text-sm font-semibold text-[#0b6b60]">
+          <div>
+            <p className="text-sm font-semibold text-[#0b6b60]">
 
-            GOVERNMENT ADMIN PORTAL
+              GOVERNMENT ADMIN PORTAL
 
-          </p>
-
-
-          <h1 className="mt-2 text-3xl font-bold text-[#173d3a]">
-
-            Partner Management
-
-          </h1>
+            </p>
 
 
-          <p className="mt-2 text-[#5c6f69]">
+            <h1 className="mt-2 text-3xl font-bold text-[#173d3a]">
 
-            Manage universities, industry partners,
-            NGOs, and government organizations
-            available for problem assignments.
+              Partner Management
 
-          </p>
+            </h1>
+
+
+            <p className="mt-2 text-[#5c6f69]">
+
+              Manage universities, industry partners,
+              NGOs, and government organizations
+              available for problem assignments.
+
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAddForm((prev) => !prev)}
+            className="inline-flex items-center gap-2 self-start rounded-xl bg-[#0b514a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#073f3a] sm:self-auto lg:hidden"
+          >
+            <span>{showAddForm ? "✕ Hide Add Form" : "➕ Add Partner"}</span>
+          </button>
 
         </div>
 
@@ -700,29 +710,6 @@ const PartnerManagement = () => {
 
         )}
 
-
-        {/* ========================================
-            MOBILE VIEW TOGGLE
-        ======================================== */}
-
-        <div className="mb-6 flex items-center justify-between rounded-xl border border-[#e3e9e3] bg-white p-3.5 shadow-sm lg:hidden">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0b6b60]">
-              Partner Network
-            </p>
-            <p className="text-sm font-semibold text-[#173d3a]">
-              {filteredPartners.length} Organization{filteredPartners.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowAddForm((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-xl bg-[#0b514a] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#073f3a]"
-          >
-            <span>{showAddForm ? "✕ Close Form" : "➕ Add Partner"}</span>
-          </button>
-        </div>
 
         <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
           {/* ========================================
@@ -1261,7 +1248,7 @@ const PartnerManagement = () => {
             <div className="rounded-2xl border border-[#e3e9e3] bg-white shadow-sm">
 
 
-              <div className="border-b border-[#e3e9e3] p-6">
+              <div className="border-b border-[#e3e9e3] p-5 sm:p-6">
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
@@ -1289,25 +1276,26 @@ const PartnerManagement = () => {
                   </div>
 
 
-                  <button
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm((prev) => !prev)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#0b514a] bg-[#e9f4f0] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#0b514a] transition hover:bg-[#0b514a] hover:text-white lg:hidden"
+                    >
+                      <span>{showAddForm ? "✕ Close Add Form" : "➕ Add Partner"}</span>
+                    </button>
 
-                    type="button"
-
-                    onClick={handleDownloadCredentials}
-
-                    disabled={downloading}
-
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b514a] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
-
-                  >
-
-                    {downloading
-
-                      ? "Downloading..."
-
-                      : "📥 Download Credentials"}
-
-                  </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadCredentials}
+                      disabled={downloading}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#0b514a] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
+                    >
+                      {downloading
+                        ? "Downloading..."
+                        : "📥 Download Credentials"}
+                    </button>
+                  </div>
 
                 </div>
 
