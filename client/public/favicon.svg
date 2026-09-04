@@ -1,85 +1,116 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b514a" />
-      <stop offset="100%" stop-color="#042a26" />
+    <!-- Background Gradient: Deep Jharkhand Forest Teal -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#021714" />
+      <stop offset="50%" stop-color="#073f3a" />
+      <stop offset="100%" stop-color="#0b514a" />
     </linearGradient>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f6e09e" />
-      <stop offset="50%" stop-color="#d4af37" />
-      <stop offset="100%" stop-color="#aa820a" />
+
+    <!-- Sacred Jharkhand Gold Gradient -->
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8e7" />
+      <stop offset="25%" stop-color="#f5e2b3" />
+      <stop offset="60%" stop-color="#e9c985" />
+      <stop offset="85%" stop-color="#c9933b" />
+      <stop offset="100%" stop-color="#96641a" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3" />
+
+    <!-- Inner Glow Gradient -->
+    <linearGradient id="glow-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#087f70" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#e9c985" stop-opacity="0.3" />
+    </linearGradient>
+
+    <!-- Palash Orange Accent -->
+    <linearGradient id="palash-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="gold-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#c9933b" flood-opacity="0.4" />
+    </filter>
+
+    <filter id="soft-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- Outer Rounded Background -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <!-- App Icon Background: Premium Rounded Squircle -->
+  <rect width="512" height="512" rx="118" fill="url(#bg-grad)" />
 
-  <!-- Outer Ring with Gold Border -->
-  <circle cx="256" cy="256" r="216" fill="none" stroke="url(#goldGrad)" stroke-width="8" filter="url(#shadow)" />
-  <circle cx="256" cy="256" r="196" fill="#073f3a" stroke="#228b22" stroke-width="6" />
+  <!-- Outer Elegant Gold Rim -->
+  <rect x="14" y="14" width="484" height="484" rx="106" fill="none" stroke="url(#gold-grad)" stroke-width="3" stroke-opacity="0.35" />
 
-  <!-- Inner Off-White Medallion -->
-  <circle cx="256" cy="256" r="160" fill="#fcfbf7" stroke="url(#goldGrad)" stroke-width="6" />
+  <!-- Inner Subtle Ring -->
+  <rect x="26" y="26" width="460" height="460" rx="96" fill="none" stroke="url(#glow-grad)" stroke-width="1.5" stroke-opacity="0.4" />
 
-  <!-- Palash Flower Dots (Ring of 24) -->
-  <g fill="#f97316" stroke="#c2410c" stroke-width="1.5">
-    <circle cx="256" cy="76" r="8" />
-    <circle cx="302" cy="82" r="8" />
-    <circle cx="346" cy="100" r="8" />
-    <circle cx="384" cy="128" r="8" />
-    <circle cx="412" cy="166" r="8" />
-    <circle cx="430" cy="210" r="8" />
-    <circle cx="436" cy="256" r="8" />
-    <circle cx="430" cy="302" r="8" />
-    <circle cx="412" cy="346" r="8" />
-    <circle cx="384" cy="384" r="8" />
-    <circle cx="346" cy="412" r="8" />
-    <circle cx="302" cy="430" r="8" />
-    <circle cx="256" cy="436" r="8" />
-    <circle cx="210" cy="430" r="8" />
-    <circle cx="166" cy="412" r="8" />
-    <circle cx="128" cy="384" r="8" />
-    <circle cx="100" cy="346" r="8" />
-    <circle cx="82" cy="302" r="8" />
-    <circle cx="76" cy="256" r="8" />
-    <circle cx="82" cy="210" r="8" />
-    <circle cx="100" cy="166" r="8" />
-    <circle cx="128" cy="128" r="8" />
-    <circle cx="166" cy="100" r="8" />
-    <circle cx="210" cy="82" r="8" />
+  <!-- Ambient Glow Behind the "S" -->
+  <circle cx="256" cy="256" r="160" fill="#087f70" opacity="0.25" filter="url(#soft-glow)" />
+  <circle cx="256" cy="256" r="90" fill="#e9c985" opacity="0.12" filter="url(#soft-glow)" />
+
+  <!-- Setu Arch Lines (Background Bridge Geometry) -->
+  <path d="M 120 370 C 180 280, 332 280, 392 370" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="4 6" />
+  <path d="M 120 142 C 180 232, 332 232, 392 142" fill="none" stroke="#e9c985" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="4 6" />
+
+  <!-- THE STYLISH "S" — BRIDGE EMBLEM -->
+  <g filter="url(#gold-shadow)">
+    <!-- Main Fluid Calligraphic S Body -->
+    <path
+      d="M 342 146
+         C 372 176, 376 216, 342 248
+         C 310 278, 202 264, 170 294
+         C 136 326, 140 366, 170 396
+         C 200 426, 260 426, 308 402
+         C 328 392, 344 380, 356 368
+         C 362 362, 370 364, 370 374
+         C 366 392, 344 416, 314 432
+         C 254 464, 174 462, 134 422
+         C 94 382, 92 324, 136 280
+         C 176 240, 276 256, 310 224
+         C 344 192, 338 154, 308 124
+         C 278 94, 218 94, 176 118
+         C 156 128, 142 140, 130 152
+         C 124 158, 116 156, 116 146
+         C 120 128, 142 104, 172 88
+         C 232 56, 302 58, 342 98
+         Z"
+      fill="url(#gold-grad)"
+    />
+
+    <!-- Setu Bridge Central Chord (Connecting problem to solution) -->
+    <path
+      d="M 160 300
+         C 210 240, 302 272, 352 212"
+      fill="none"
+      stroke="url(#palash-grad)"
+      stroke-width="7"
+      stroke-linecap="round"
+      opacity="0.9"
+    />
+
+    <!-- Top Innovation Node (Academic / Idea Spark) -->
+    <circle cx="342" cy="116" r="14" fill="url(#palash-grad)" />
+    <circle cx="342" cy="116" r="7" fill="#ffffff" />
+
+    <!-- Bottom Grassroots Node (Citizen Anchor) -->
+    <circle cx="170" cy="396" r="14" fill="url(#gold-grad)" />
+    <circle cx="170" cy="396" r="7" fill="#032621" />
+
+    <!-- Central Diamond Spark (Setu Catalyst) -->
+    <path
+      d="M 256 236 L 264 256 L 284 264 L 264 272 L 256 292 L 248 272 L 228 264 L 248 256 Z"
+      fill="#ffffff"
+      opacity="0.95"
+    />
   </g>
 
-  <!-- Central Ashoka Stambh Emblem -->
-  <!-- Lotus Pedestal -->
-  <path d="M 216 328 C 236 316, 276 316, 296 328 C 286 340, 226 340, 216 328 Z" fill="url(#goldGrad)" stroke="#aa820a" stroke-width="2" />
-  <!-- Abacus Drum -->
-  <rect x="206" y="306" width="100" height="16" rx="4" fill="#0b514a" stroke="url(#goldGrad)" stroke-width="3" />
-  <!-- Ashoka Chakra -->
-  <circle cx="256" cy="314" r="7" fill="#000080" />
-  <circle cx="256" cy="314" r="5" fill="#ffffff" />
-  <circle cx="256" cy="314" r="2" fill="#000080" />
-
-  <!-- Four Lions Silhouette in Rich Gold -->
-  <!-- Left Lion -->
-  <path d="M 206 306 C 192 278, 198 246, 224 234 C 224 254, 218 282, 224 306 Z" fill="url(#goldGrad)" stroke="#aa820a" stroke-width="2" />
-  <!-- Right Lion -->
-  <path d="M 306 306 C 320 278, 314 246, 288 234 C 288 254, 294 282, 288 306 Z" fill="url(#goldGrad)" stroke="#aa820a" stroke-width="2" />
-  <!-- Front Center Lion Body & Mane -->
-  <path d="M 226 306 C 226 266, 238 244, 256 226 C 274 244, 286 266, 286 306 Z" fill="#f8e5ad" stroke="url(#goldGrad)" stroke-width="3" />
-  <!-- Lion Head & Crown -->
-  <circle cx="256" cy="232" r="16" fill="url(#goldGrad)" stroke="#aa820a" stroke-width="2" />
-  <circle cx="250" cy="228" r="2.5" fill="#042a26" />
-  <circle cx="262" cy="228" r="2.5" fill="#042a26" />
-  <path d="M 256 212 L 252 220 L 260 220 Z" fill="url(#goldGrad)" />
-
-  <!-- Banner text ring "JHARKHAND" -->
-  <text x="256" y="380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="900" fill="#0b514a" text-anchor="middle" letter-spacing="4">
-    SAMASYA SETU
-  </text>
-  <text x="256" y="398" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#c9933b" text-anchor="middle" letter-spacing="2">
-    GOVT. OF JHARKHAND
+  <!-- Bottom Brand Subtitle on Icon -->
+  <text x="256" y="476" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" letter-spacing="7" fill="#e9c985" opacity="0.85">
+    SAMASYASETU
   </text>
 </svg>
