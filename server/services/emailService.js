@@ -12,7 +12,30 @@ try {
 const getTransporter = () => {
   if (!nodemailer) return null;
 
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SERVICE } = process.env;
+  const rawUser = process.env.SMTP_USER || "";
+  const rawPass = process.env.SMTP_PASS || "";
+  const SMTP_USER = rawUser.trim().replace(/^["']|["']$/g, "");
+  // Gmail app passwords are 16 lowercase characters often formatted with spaces like 'zdyd ikdk yqrg pvca'
+  const SMTP_PASS = rawPass.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+  const SMTP_SERVICE = (process.env.SMTP_SERVICE || "").trim().toLowerCase();
+  const SMTP_HOST = (process.env.SMTP_HOST || "").trim();
+  const SMTP_PORT = process.env.SMTP_PORT;
+
+  // Dedicated direct SSL port 465 for Gmail (works reliably on cloud hosts like Render)
+  if (SMTP_USER && SMTP_PASS && (SMTP_SERVICE === "gmail" || !SMTP_HOST || SMTP_USER.includes("@gmail"))) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+      connectionTimeout: 8000,
+      greetingTimeout: 6000,
+      socketTimeout: 8000,
+    });
+  }
 
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     return nodemailer.createTransport({
@@ -23,16 +46,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-    });
-  }
-
-  if (SMTP_SERVICE && SMTP_USER && SMTP_PASS) {
-    return nodemailer.createTransport({
-      service: SMTP_SERVICE,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
+      connectionTimeout: 8000,
+      greetingTimeout: 6000,
+      socketTimeout: 8000,
     });
   }
 
@@ -131,7 +147,7 @@ const sendOtpEmail = async ({ to, name, otp }) => {
 
   if (transporter) {
     try {
-      await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: fromAddress,
         replyTo: `"SamasyaSetu Support" <support@samasyasetu.gov.in>`,
         to,
@@ -140,10 +156,16 @@ const sendOtpEmail = async ({ to, name, otp }) => {
         html: htmlContent,
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("SMTP handshake timeout")), 6000)
+      );
+
+      await Promise.race([sendPromise, timeoutPromise]);
+
       console.log(`[EMAIL SERVICE] OTP email sent successfully to ${to}`);
       return { sent: true, simulated: false, message: "Verification code sent to your email." };
     } catch (err) {
-      console.warn(`[EMAIL SERVICE] SMTP dispatch failed (${err.message}). Falling back to demo mode.`);
+      console.warn(`[EMAIL SERVICE] SMTP dispatch failed (${err.message}). Falling back to instant code verification.`);
     }
   }
 

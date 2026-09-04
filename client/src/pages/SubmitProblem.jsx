@@ -1144,9 +1144,16 @@ const SubmitProblem = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-[#0b514a] px-4 py-3 font-semibold text-white transition hover:bg-[#073f3a] disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#0b514a] px-4 py-3.5 font-semibold text-white shadow-md transition hover:bg-[#073f3a] hover:shadow-lg disabled:cursor-not-allowed disabled:bg-[#8fb5ad]"
             >
-              {loading ? "Submitting..." : "Submit Problem"}
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Uploading Media &amp; AI Analyzing...</span>
+                </>
+              ) : (
+                "Submit Problem"
+              )}
             </button>
           </form>
 
