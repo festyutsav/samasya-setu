@@ -134,7 +134,7 @@ const EmptyChart = ({ label }) => (
   </div>
 );
 
-const AnalyticsDashboard = () => {
+const AnalyticsDashboard = ({ setAdminPage }) => {
   const [analytics, setAnalytics] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -413,6 +413,18 @@ const AnalyticsDashboard = () => {
   return (
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        {setAdminPage && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setAdminPage("dashboard")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#dbe5df] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#0b514a] shadow-sm transition hover:border-[#0b514a] hover:bg-[#e9f4f0]"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        )}
+
         {/* Hero Header */}
 
         <section className="ss-dash-hero ss-enter mb-8 p-5 shadow-lg sm:p-10">

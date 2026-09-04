@@ -73,7 +73,7 @@ const categoryNames = {
 // SUBMIT PROBLEM
 // ========================================
 
-const SubmitProblem = () => {
+const SubmitProblem = ({ setCurrentPage }) => {
   // ========================================
   // FORM DATA
   // ========================================
@@ -787,10 +787,18 @@ const SubmitProblem = () => {
     <div className="min-h-screen bg-[#f7f8f5] px-4 py-10">
       <div className="mx-auto max-w-2xl">
         {/* ========================================
-            PAGE HEADING
+            PAGE HEADING + BACK BUTTON
         ======================================== */}
 
         <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => setCurrentPage ? setCurrentPage("home") : window.history.back()}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#dbe5df] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#0b514a] shadow-sm transition hover:border-[#0b514a] hover:bg-[#e9f4f0]"
+          >
+            ← Back to Home
+          </button>
+
           <h1 className="text-3xl font-bold text-[#173d3a]">
             Submit a Problem
           </h1>
