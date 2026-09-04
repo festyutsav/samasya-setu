@@ -28,8 +28,17 @@ app.use(cors());
 
 app.use(express.json());
 
-// Test route
+// Health check & warmup route
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "SamasyaSetu API",
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
 
+// Test route
 app.get("/", (req, res) => {
   res.send("SamasyaSetu API is running successfully!");
 });

@@ -279,18 +279,18 @@ const PortalSelection = ({ onSelectPortal }) => {
         </nav>
 
         {/* ============ HERO ============ */}
-        <section className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-6 pb-24 pt-12 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pt-16">
+        <section className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-4 pb-20 pt-8 sm:gap-14 sm:px-8 sm:pb-24 sm:pt-14 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pt-16">
           <div>
-            <p className="ss-enter mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.28em] text-[#e9c985]" style={{ "--ss-delay": "250ms" }}>
-              <span className="h-px w-10 bg-[#e9c985]/70" />
+            <p className="ss-enter mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[#e9c985] sm:mb-7 sm:gap-3 sm:text-xs sm:tracking-[0.28em]" style={{ "--ss-delay": "250ms" }}>
+              <span className="h-px w-8 bg-[#e9c985]/70 sm:w-10" />
               A shared platform for shared progress
             </p>
 
-            <h1 className="font-display max-w-3xl text-5xl font-medium leading-[1.04] tracking-[-0.03em] sm:text-6xl lg:text-7xl">
+            <h1 className="font-display max-w-3xl text-3xl font-medium leading-[1.15] tracking-[-0.03em] sm:text-5xl md:text-6xl lg:text-7xl sm:leading-[1.04]">
               {HEADLINE.map((word, i) => (
                 <span
                   key={i}
-                  className="ss-word mr-[0.26em]"
+                  className="ss-word mr-[0.24em]"
                   style={{ "--ss-delay": `${450 + i * 110}ms` }}
                 >
                   {word.accent ? (
@@ -302,16 +302,16 @@ const PortalSelection = ({ onSelectPortal }) => {
               ))}
             </h1>
 
-            <p className="ss-enter mt-8 max-w-xl text-lg leading-8 text-[#cfe4dc]" style={{ "--ss-delay": "1350ms" }}>
+            <p className="ss-enter mt-5 max-w-xl text-base leading-7 text-[#cfe4dc] sm:mt-8 sm:text-lg sm:leading-8" style={{ "--ss-delay": "1350ms" }}>
               SamasyaSetu connects citizens, universities, government and industry —
               turning Jharkhand’s most pressing challenges into practical, measurable,
               real-world solutions.
             </p>
 
-            <div className="ss-enter mt-10 flex flex-wrap items-center gap-4" style={{ "--ss-delay": "1500ms" }}>
+            <div className="ss-enter mt-8 flex flex-col gap-3.5 sm:mt-10 sm:flex-row sm:items-center sm:gap-4" style={{ "--ss-delay": "1500ms" }}>
               <button
                 onClick={scrollToPortals}
-                className="group relative overflow-hidden rounded-full bg-[#e9c985] px-8 py-4 text-sm font-bold text-[#032621] shadow-xl shadow-[#e9c985]/20 transition-transform duration-300 hover:scale-[1.03]"
+                className="group relative flex items-center justify-center overflow-hidden rounded-full bg-[#e9c985] px-8 py-4 text-sm font-bold text-[#032621] shadow-xl shadow-[#e9c985]/20 transition-transform duration-300 hover:scale-[1.03]"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   Choose your portal
@@ -320,7 +320,7 @@ const PortalSelection = ({ onSelectPortal }) => {
               </button>
               <a
                 href="#journey"
-                className="rounded-full border border-white/25 px-8 py-4 text-sm font-bold text-[#f4f7f4] backdrop-blur-sm transition hover:border-[#e9c985]/60 hover:text-[#e9c985]"
+                className="flex items-center justify-center rounded-full border border-white/25 px-8 py-4 text-sm font-bold text-[#f4f7f4] backdrop-blur-sm transition hover:border-[#e9c985]/60 hover:text-[#e9c985]"
               >
                 See how it works
               </a>
@@ -328,15 +328,15 @@ const PortalSelection = ({ onSelectPortal }) => {
           </div>
 
           {/* bridge visual */}
-          <div className="ss-enter relative" style={{ "--ss-delay": "700ms" }}>
-            <div className="ss-float relative rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 shadow-2xl shadow-black/30 backdrop-blur-md" style={{ "--ss-delay": "1s" }}>
+          <div className="ss-enter relative mt-4 lg:mt-0" style={{ "--ss-delay": "700ms" }}>
+            <div className="ss-float relative rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/30 backdrop-blur-md sm:rounded-[2rem] sm:p-8" style={{ "--ss-delay": "1s" }}>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-[#e9c985]/15 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-[#f4d99d]">
+                <span className="rounded-full bg-[#e9c985]/15 px-3 py-1 text-[10px] font-bold tracking-[0.16em] text-[#f4d99d] sm:text-[11px] sm:tracking-[0.18em]">
                   THE SETU EFFECT
                 </span>
-                <span className="ss-spin-slow inline-block text-xl text-[#e9c985]">✳</span>
+                <span className="ss-spin-slow inline-block text-lg text-[#e9c985] sm:text-xl">✳</span>
               </div>
-              <div className="mt-6">
+              <div className="mt-4 sm:mt-6">
                 <Bridge />
               </div>
             </div>
@@ -353,20 +353,20 @@ const PortalSelection = ({ onSelectPortal }) => {
           </div>
         </section>
 
-        {/* ============ STAT BAND ============ */}
-        <section className="relative z-10 border-t border-white/10 bg-[#031a17]/70">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-10 px-6 py-12 sm:grid-cols-4 lg:px-10">
+        {/* ============ STAT BAND (RESPONSIVE & SEPARATED TILES) ============ */}
+        <section className="relative z-10 border-t border-white/10 bg-[#031a17]/80 backdrop-blur-md">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-5 gap-y-6 px-4 py-10 sm:grid-cols-4 sm:gap-x-8 sm:gap-y-8 sm:px-8 lg:px-10">
             {[
               { value: 24, suffix: "", label: "districts of Jharkhand, one network" },
               { value: 10, suffix: "+", label: "domains of societal impact" },
               { value: 3, suffix: "", label: "portals, one shared purpose" },
               { value: 100, suffix: "%", label: "community-driven problems" },
             ].map((stat, i) => (
-              <Reveal key={stat.label} delay={i * 120} className="text-center">
-                <p className="font-display text-4xl font-semibold text-[#e9c985] sm:text-5xl">
+              <Reveal key={stat.label} delay={i * 120} className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-5 text-center shadow-inner sm:p-6">
+                <p className="font-display text-3xl font-semibold text-[#e9c985] sm:text-5xl">
                   <CountUp to={stat.value} suffix={stat.suffix} />
                 </p>
-                <p className="mx-auto mt-2 max-w-40 text-xs leading-5 text-[#9dc3b8]">{stat.label}</p>
+                <p className="mt-2.5 max-w-[140px] text-[11px] font-medium leading-relaxed text-[#9dc3b8] sm:max-w-none sm:text-xs sm:leading-5">{stat.label}</p>
               </Reveal>
             ))}
           </div>

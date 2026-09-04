@@ -12,10 +12,17 @@ try {
 const getTransporter = () => {
   if (!nodemailer) return null;
 
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SERVICE } = process.env;
+  const rawUser = process.env.SMTP_USER || "";
+  const rawPass = process.env.SMTP_PASS || "";
+  const SMTP_USER = rawUser.trim().replace(/^["']|["']$/g, "");
+  // Gmail app passwords are 16 lowercase characters often formatted with spaces like 'zdyd ikdk yqrg pvca'
+  const SMTP_PASS = rawPass.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+  const SMTP_SERVICE = (process.env.SMTP_SERVICE || "").trim().toLowerCase();
+  const SMTP_HOST = (process.env.SMTP_HOST || "").trim();
+  const SMTP_PORT = process.env.SMTP_PORT;
 
   // Dedicated direct SSL port 465 for Gmail (works reliably on cloud hosts like Render)
-  if (SMTP_USER && SMTP_PASS && (SMTP_SERVICE === "gmail" || (!SMTP_HOST && SMTP_USER.includes("@gmail")))) {
+  if (SMTP_USER && SMTP_PASS && (SMTP_SERVICE === "gmail" || !SMTP_HOST || SMTP_USER.includes("@gmail"))) {
     return nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
@@ -24,9 +31,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-      connectionTimeout: 5000,
-      greetingTimeout: 4000,
-      socketTimeout: 5000,
+      connectionTimeout: 8000,
+      greetingTimeout: 6000,
+      socketTimeout: 8000,
     });
   }
 
@@ -39,9 +46,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-      connectionTimeout: 5000,
-      greetingTimeout: 4000,
-      socketTimeout: 5000,
+      connectionTimeout: 8000,
+      greetingTimeout: 6000,
+      socketTimeout: 8000,
     });
   }
 

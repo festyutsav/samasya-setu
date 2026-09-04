@@ -265,39 +265,34 @@ const createProblem = async (req, res) => {
     const uploadedImages = [];
 
     if (req.files && req.files.images && req.files.images.length > 0) {
-      console.log(`Uploading ${req.files.images.length} image(s) to Cloudinary...`);
+      console.log(`Uploading ${req.files.images.length} image(s) to Cloudinary in parallel...`);
 
-      for (const file of req.files.images) {
-        console.log("Uploading:", file.originalname);
-
-        const result = await new Promise((resolve, reject) => {
+      const uploadPromises = req.files.images.map((file) => {
+        return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             {
               folder: "samasyasetu/problems",
-
               resource_type: "image",
+              transformation: [{ width: 1400, crop: "limit", quality: "auto" }],
             },
-
             (error, result) => {
               if (error) {
+                console.error("Cloudinary upload failed for", file.originalname, error);
                 reject(error);
               } else {
-                resolve(result);
+                resolve({
+                  url: result.secure_url,
+                  publicId: result.public_id,
+                });
               }
-            },
+            }
           );
-
           stream.end(file.buffer);
         });
+      });
 
-        console.log("Cloudinary upload successful:", result.secure_url);
-
-        uploadedImages.push({
-          url: result.secure_url,
-
-          publicId: result.public_id,
-        });
-      }
+      const results = await Promise.all(uploadPromises);
+      uploadedImages.push(...results);
     }
 
     // ========================================

@@ -38,8 +38,16 @@ import UniversityDashboard from "./pages/UniversityDashboard";
 import Navbar from "./components/Navbar";
 import AdminNavbar from "./components/AdminNavbar";
 import PartnerNavbar from "./components/PartnerNavbar";
+import { API_BASE_URL } from "./config/api";
 
 function App() {
+  // ==================================================
+  // WARM UP SERVER IMMEDIATELY ON VISIT (Eliminates Render cold start)
+  // ==================================================
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/health`).catch(() => {});
+  }, []);
   // ==================================================
   // AUTH USER
   // ==================================================
