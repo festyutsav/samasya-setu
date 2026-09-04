@@ -19,19 +19,28 @@ const removals = [
   // No operational presence in Jharkhand — its Tundoo lead
   // smelter (Dhanbad) is a discontinued unit; all active mines
   // and smelters are in Rajasthan.
-
   "Hindustan Zinc Limited",
-
   "Hindustan Zinc",
 
   // The Pragyan International University Act was repealed by
   // the Jharkhand legislature (Repeal Act, 2023, notified
   // March 2024); the university never commenced teaching and
   // has been removed from the UGC 2(f) list.
-
   "Pragyan International University Ranchi",
-
   "Pragyan International University",
+
+  // Remove NGOs and Government agency examples so the directory
+  // and AI routing stay strictly focused on the core
+  // University–Industry bipartite innovation ecosystem.
+  "CSIR - Central Institute of Mining and Fuel Research",
+  "CSIR - National Metallurgical Laboratory",
+  "Jharkhand Space Applications Center",
+  "Jharkhand Agency for Promotion of Information Technology",
+  "Jharkhand Industrial Area Development Authority",
+  "Vikas Bharti Bishunpur",
+  "PRADAN",
+  "KGVK - Krishi Gram Vikas Kendra",
+  "KGVK",
 ];
 
 // ========================================
@@ -175,7 +184,7 @@ const enrichments = {
   },
 
   "National Institute of Advanced Manufacturing Technology Ranchi": {
-    website: "https://niamt.ac.in",
+    website: "http://www.niamt.ac.in",
 
     email: "smc@niamt.ac.in",
 
@@ -361,7 +370,7 @@ const enrichments = {
   },
 
   "Dr. Shyama Prasad Mukherjee University Ranchi": {
-    website: "https://www.dspmuranchi.ac.in",
+    website: "https://dspmuranchi.ac.in",
 
     description:
       "Dr. Shyama Prasad Mukherjee University is a unitary state university in Ranchi formed from the upgrade of Ranchi College, which was established in 1926 as a Government Intermediate College and began undergraduate and postgraduate courses in arts and science in 1946. Ranchi University's records list the university's creation as a bifurcation of Ranchi University in 2019, and it teaches humanities, science and social science faculties.",
@@ -583,7 +592,7 @@ const enrichments = {
   },
 
   "Steel Authority of India Limited": {
-    website: "https://sail.co.in",
+    website: "https://www.sail.co.in",
 
     description:
       "Bokaro Steel Plant, a premier SAIL unit in Bokaro Steel City, was incorporated in 1964 (with Soviet collaboration), joined SAIL in 1978 and is recognized as India's first 'Swadeshi' steel plant. It is a fully integrated plant with about 5.8 MT liquid steel capacity, undergoing modernisation targeting higher output.",
@@ -599,6 +608,25 @@ const enrichments = {
     ],
 
     districtsServed: ["Bokaro"],
+  },
+
+  "Bokaro Steel Plant": {
+    website: "https://www.sail.co.in/en/plants/bokaro-steel-plant",
+
+    description:
+      "Bokaro Steel Plant, a premier SAIL unit in Bokaro Steel City, was incorporated in 1964 (with Soviet collaboration), joined SAIL in 1978 and is recognized as India's first 'Swadeshi' steel plant. It is a fully integrated plant with about 5.8 MT liquid steel capacity, undergoing modernisation targeting higher output.",
+
+    expertise: ["manufacturing", "infrastructure", "energy", "technology"],
+
+    capabilities: [
+      "manufacturing",
+      "research_development",
+      "testing",
+      "training",
+      "deployment",
+    ],
+
+    districtsServed: ["Bokaro", "Dhanbad"],
   },
 
   "Usha Martin": {
@@ -783,222 +811,191 @@ const enrichments = {
 };
 
 // ========================================
-// NEW PARTNERS
+// NEW PARTNER UNIVERSITIES
 // ========================================
-// Organizations the problem statement asks for but the
-// directory lacked: CSIR research laboratories, state
-// government agencies and grassroots NGOs.
+// Authenticated, UGC-recognized and state-chartered
+// universities in Jharkhand expanding the academic network.
 
 const additions = [
   {
-    name: "CSIR - Central Institute of Mining and Fuel Research",
-
-    type: "government",
-
-    website: "https://cimfr.res.in",
-
-    location: "Dhanbad, Jharkhand",
-
+    name: "Birla Institute of Technology Sindri",
+    type: "university",
+    website: "https://www.bitsindri.ac.in",
+    location: "Sindri, Dhanbad, Jharkhand",
     description:
-      "Constituent laboratory of CSIR (Ministry of Science & Technology, Government of India) based in Dhanbad, formed by merging the Central Mining Research Institute and the Central Fuel Research Institute to provide R&D inputs for the entire coal-energy chain from mining to consumption.",
-
-    expertise: ["mining", "energy", "environment", "public_safety", "technology"],
-
+      "Established in 1949 as the College of Mechanical and Electrical Engineering, BIT Sindri is Jharkhand's premier government engineering institute located on a roughly 450-acre campus near the Damodar river. Affiliated with Jharkhand University of Technology, it offers B.Tech, M.Tech and PhD programmes across Chemical, Mechanical, Electrical, Civil, Mining, and Metallurgical Engineering with deep research in regional industrial challenges.",
+    expertise: ["technology", "electricity_energy", "mining", "roads_infrastructure", "waste_management", "water_sanitation"],
     capabilities: [
       "research_development",
+      "prototyping",
       "testing",
-      "consulting",
-      "training",
-      "field_surveys",
-      "policy_design",
-    ],
-
-    districtsServed: ["Dhanbad"],
-  },
-
-  {
-    name: "CSIR - National Metallurgical Laboratory",
-
-    type: "government",
-
-    website: "https://www.nmlindia.org",
-
-    location: "Jamshedpur, Jharkhand",
-
-    description:
-      "CSIR national laboratory established in 1950 in Jamshedpur, focused on R&D in minerals, metals and materials. It hosts India's largest creep testing facility, with strengths in magnetic materials, rapidly solidified alloys, surface coatings and material characterization.",
-
-    expertise: ["manufacturing", "technology", "environment", "energy"],
-
-    capabilities: [
-      "research_development",
-      "testing",
-      "consulting",
       "training",
       "innovation_labs",
     ],
-
-    districtsServed: ["East Singhbhum"],
+    districtsServed: ["Dhanbad", "Bokaro", "Giridih", "Ramgarh"],
+    password: "bits@2025",
   },
-
   {
-    name: "Birla Institute of Technology Sindri",
-
+    name: "Binod Bihari Mahto Koyalanchal University",
     type: "university",
-
-    website: "https://www.bitsindri.ac.in",
-
-    location: "Sindri, Dhanbad, Jharkhand",
-
+    website: "https://bbmku.ac.in",
+    location: "Dhanbad, Jharkhand",
     description:
-      "Established in 1949 as the College of Mechanical and Electrical Engineering, BIT Sindri is one of India's oldest government engineering institutes, located on a roughly 450-acre campus near the Damodar river. It offers B.Tech, M.Tech and PhD programmes in branches including chemical, mechanical, electrical, civil and metallurgical engineering, and is affiliated to Jharkhand University of Technology.",
-
-    expertise: ["manufacturing", "energy", "mining", "technology", "waste"],
-
-    capabilities: ["research_development", "testing", "training", "prototyping"],
-
-    districtsServed: ["Dhanbad"],
-  },
-
-  {
-    name: "Jharkhand Space Applications Center",
-
-    type: "government",
-
-    website: "https://jsac.jharkhand.gov.in",
-
-    location: "Ranchi, Jharkhand",
-
-    description:
-      "Government of Jharkhand agency under the Department of Information Technology, established in 2003 as the state's premier remote sensing center. It hosts a Remote Sensing & GIS Division supporting space-application activities for state planning and development.",
-
-    expertise: ["technology", "agriculture", "environment", "water", "infrastructure"],
-
-    capabilities: ["data_analysis", "field_surveys", "research_development", "consulting"],
-
-    districtsServed: ["Ranchi"],
-  },
-
-  {
-    name: "Jharkhand Agency for Promotion of Information Technology",
-
-    type: "government",
-
-    website: "https://japit.jharkhand.gov.in",
-
-    location: "Ranchi, Jharkhand",
-
-    description:
-      "Nodal state agency for implementing IT and e-governance projects in Jharkhand, providing IT inputs to government departments. It supports and manages core e-governance infrastructure including the State Wide Area Network (SWAN), State Data Center and Common Service Centres.",
-
-    expertise: ["technology", "education", "public_safety"],
-
+      "Established in 2017 by the Jharkhand State Legislature with headquarters in Dhanbad, BBMKU is a prominent state university governing colleges across Dhanbad and Bokaro districts. It operates postgraduate departments in Environmental Science & Disaster Management, Life Sciences, Computer Science, Education, and Management, addressing coal-belt societal challenges.",
+    expertise: ["education", "environment", "technology", "public_safety", "waste_management"],
     capabilities: [
+      "research_development",
+      "field_surveys",
+      "training",
+      "data_analysis",
+      "community_outreach",
+    ],
+    districtsServed: ["Dhanbad", "Bokaro"],
+    password: "bbmku@2025",
+  },
+  {
+    name: "Jamshedpur Women's University",
+    type: "university",
+    website: "https://jwu.ac.in",
+    location: "Bistupur, Jamshedpur, East Singhbhum, Jharkhand",
+    description:
+      "Established as a state university in 2019 by upgrading the historic Jamshedpur Women's College (founded 1953), JWU is eastern India's dedicated state university for women's higher education. Located in Bistupur, Jamshedpur, it provides specialized programs in Biotechnology, Computer Applications, Environmental Science, Healthcare Nutrition, and Community Education.",
+    expertise: ["education", "healthcare", "technology", "environment", "public_safety"],
+    capabilities: [
+      "research_development",
+      "training",
+      "field_surveys",
+      "community_outreach",
+      "data_analysis",
+    ],
+    districtsServed: ["East Singhbhum", "Seraikela Kharsawan", "West Singhbhum"],
+    password: "jwu@2025",
+  },
+  {
+    name: "Jharkhand State Open University",
+    type: "university",
+    website: "https://jsou.ac.in",
+    location: "Kadru, Ranchi, Jharkhand",
+    description:
+      "Established under the Jharkhand State Open University Act 2021, JSOU is the state's apex open and distance learning university headquartered in Ranchi. It delivers vocational skills, rural livelihood training, digital technology education, and inclusive degree programs catering to students and communities across all 24 districts of Jharkhand.",
+    expertise: ["education", "technology", "agriculture", "public_safety"],
+    capabilities: [
+      "training",
+      "community_outreach",
       "software_development",
-      "policy_design",
-      "consulting",
-      "deployment",
+      "field_surveys",
       "data_analysis",
     ],
-
-    districtsServed: ["Ranchi"],
+    districtsServed: ["Ranchi", "Dhanbad", "Bokaro", "East Singhbhum", "Hazaribagh", "Deoghar", "Palamu", "Dumka"],
+    password: "jsou@2025",
   },
-
   {
-    name: "Jharkhand Industrial Area Development Authority",
-
-    type: "government",
-
-    website: "https://jiada.jharkhand.gov.in",
-
+    name: "Rajendra Institute of Medical Sciences",
+    type: "university",
+    website: "https://rimsranchi.ac.in",
+    location: "Bariatu, Ranchi, Jharkhand",
+    description:
+      "Established in 1960 and reconstituted as an autonomous apex state medical institute and teaching hospital, RIMS Ranchi is Jharkhand's premier medical university institution. Spread across 130 acres with super-specialty departments, emergency triage, and advanced pathology labs, it leads statewide public healthcare research, epidemiological surveillance, disease containment, and sanitation health programs.",
+    expertise: ["healthcare", "public_safety", "water_sanitation", "education"],
+    capabilities: [
+      "healthcare_services",
+      "research_development",
+      "field_surveys",
+      "testing",
+      "training",
+    ],
+    districtsServed: ["Ranchi", "Khunti", "Ramgarh", "Lohardaga", "Gumla", "Bokaro", "Dhanbad"],
+    password: "rims@2025",
+  },
+  {
+    name: "AISECT University Jharkhand",
+    type: "university",
+    website: "https://aisectuniversityjharkhand.ac.in",
+    location: "Hazaribagh, Jharkhand",
+    description:
+      "Established in 2016 under the Jharkhand State Private Universities Act and recognized by UGC, AISECT University Jharkhand operates from Hazaribag with focus on skill development and regional upliftment. It hosts faculties in Agriculture Science (Agronomy, Seed Science), Computer Science & IT, Renewable Energy Engineering, and Rural Management.",
+    expertise: ["agriculture", "technology", "education", "electricity_energy"],
+    capabilities: [
+      "research_development",
+      "training",
+      "field_surveys",
+      "innovation_labs",
+      "community_outreach",
+    ],
+    districtsServed: ["Hazaribagh", "Chatra", "Ramgarh", "Koderma", "Giridih"],
+    password: "aisect@2025",
+  },
+  {
+    name: "ICFAI University Jharkhand",
+    type: "university",
+    website: "https://www.iujharkhand.edu.in",
+    location: "Daladali Chowk, Simalia, Ranchi, Jharkhand",
+    description:
+      "Established in 2008 under the ICFAI University Jharkhand Act and recognized by the UGC, the university campus is located at Daladali Chowk, Ranchi. It offers undergraduate and postgraduate programs in Computer Science, Mining & Mechanical Engineering, Environmental Management, and Data Analytics with active industry tie-ups.",
+    expertise: ["technology", "education", "mining", "waste_management", "roads_infrastructure"],
+    capabilities: [
+      "research_development",
+      "software_development",
+      "training",
+      "data_analysis",
+      "prototyping",
+    ],
+    districtsServed: ["Ranchi", "Khunti", "Ramgarh", "Bokaro"],
+    password: "icfai@2025",
+  },
+  {
+    name: "RKDF University Jharkhand",
+    type: "university",
+    website: "https://rkdfuniversity.org",
     location: "Ranchi, Jharkhand",
-
     description:
-      "State authority that plans, develops and manages industrial areas and parks across Jharkhand through regional offices including Ranchi (Namkum), Adityapur, Bokaro and Santhal Pargana. It oversees plot allocation, industrial infrastructure and investment facilitation in areas such as Namkum, Barhi, Kulhi and Hotwar.",
-
-    expertise: ["infrastructure", "manufacturing", "technology", "energy"],
-
-    capabilities: ["policy_design", "deployment", "consulting", "funding"],
-
-    districtsServed: ["Ranchi", "Seraikela-Kharsawan", "Bokaro", "Hazaribagh"],
-  },
-
-  {
-    name: "Vikas Bharti Bishunpur",
-
-    type: "ngo",
-
-    website: "https://www.vikasbharti.in",
-
-    location: "Bishunpur, Gumla, Jharkhand",
-
-    description:
-      "Registered voluntary organization (Society Registration Act, 1860) founded as a people's movement in 1982 and registered on 14 January 1983 by founder-secretary Padma Shri Ashok Bhagat. It works with underprivileged and tribal communities across all 24 districts of Jharkhand in education, health, livelihood and institutional development, including ashrams for orphaned and disabled children and a Krishi Vigyan Kendra in Gumla.",
-
-    expertise: ["education", "healthcare", "agriculture", "environment"],
-
+      "Established in 2018 under the RKDF University Act and recognized by UGC, RKDF University Jharkhand delivers undergraduate and postgraduate programs in Engineering & Technology, Computer Applications, Agricultural Science, Management, and Basic Sciences with emphasis on regional employability and research.",
+    expertise: ["education", "technology", "agriculture", "electricity_energy"],
     capabilities: [
-      "community_outreach",
+      "research_development",
       "training",
+      "field_surveys",
+      "innovation_labs",
+      "community_outreach",
+    ],
+    districtsServed: ["Ranchi", "Ramgarh", "Khunti"],
+    password: "rkdf@2025",
+  },
+  {
+    name: "Mahatma Gandhi Memorial Medical College Jamshedpur",
+    type: "university",
+    website: "https://mgmmedicalcollege.org",
+    location: "Dimna, Jamshedpur, East Singhbhum, Jharkhand",
+    description:
+      "Established in 1961 and affiliated with Kolhan University, MGM Medical College is a premier government medical college and tertiary teaching hospital in Jamshedpur. It offers MBBS, MD/MS, and paramedical disciplines, driving clinical research, public healthcare delivery, and epidemic management across the Kolhan division.",
+    expertise: ["healthcare", "water_sanitation", "public_safety", "education"],
+    capabilities: [
       "healthcare_services",
-      "field_surveys",
-      "funding",
-    ],
-
-    districtsServed: ["Gumla", "Ranchi"],
-  },
-
-  {
-    name: "PRADAN",
-
-    type: "ngo",
-
-    website: "https://www.pradan.net",
-
-    location: "Ranchi, Jharkhand (multiple field locations)",
-
-    description:
-      "National NGO whose mission is enabling marginalized rural people, especially women, to earn a decent living by organizing them into self-help groups, with professionals working alongside village communities. PRADAN is active in Jharkhand (e.g., Godda, Hazaribagh and other districts) and collaborates with the Jharkhand State Livelihood Promotion Society (JSLPS).",
-
-    expertise: ["agriculture", "education", "healthcare"],
-
-    capabilities: [
-      "community_outreach",
+      "research_development",
+      "testing",
       "training",
       "field_surveys",
-      "policy_design",
-      "consulting",
-      "funding",
     ],
-
-    districtsServed: ["Godda", "Hazaribagh", "Ranchi"],
+    districtsServed: ["East Singhbhum", "Seraikela Kharsawan", "West Singhbhum"],
+    password: "mgm@2025",
   },
-
   {
-    name: "KGVK - Krishi Gram Vikas Kendra",
-
-    type: "ngo",
-
-    website: "https://www.kgvk.org",
-
-    email: "info@kgvk.org",
-
-    location: "Rukka, Ormanjhi, Ranchi, Jharkhand",
-
+    name: "Shaheed Nirmal Mahto Medical College Dhanbad",
+    type: "university",
+    website: "https://www.snmmcdhn.org",
+    location: "Saraidhela, Dhanbad, Jharkhand",
     description:
-      "Ranchi-based NGO working in rural India for sustainable integrated development through its Total Village Management (TVM) approach, with historic roots in Usha Martin's CSR. It operates from Rukka village near Ranchi and runs development programmes in education, health, livelihood and water across its operational areas in Jharkhand.",
-
-    expertise: ["agriculture", "education", "healthcare", "water", "environment"],
-
+      "Established in 1971 (formerly Patliputra Medical College Hospital) and affiliated with BBMKU, SNMMCH Dhanbad is a premier state government medical college and hospital serving the North Chotanagpur and coal-belt region with specialized research in occupational health, trauma, sanitation, and community medicine.",
+    expertise: ["healthcare", "public_safety", "water_sanitation", "environment"],
     capabilities: [
-      "community_outreach",
-      "training",
       "healthcare_services",
+      "research_development",
       "field_surveys",
-      "data_analysis",
+      "testing",
+      "training",
     ],
-
-    districtsServed: ["Ranchi"],
+    districtsServed: ["Dhanbad", "Bokaro", "Giridih"],
+    password: "snmmch@2025",
   },
 ];
 

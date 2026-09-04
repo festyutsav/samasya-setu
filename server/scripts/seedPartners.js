@@ -191,8 +191,8 @@ const universities = [
     name: "National Institute of Advanced Manufacturing Technology",
     type: "university",
     location: "Ranchi, Jharkhand",
-    email: "director@niamtranchi.org",
-    website: "https://www.niamtranchi.org",
+    email: "smc@niamt.ac.in",
+    website: "http://www.niamt.ac.in",
     description:
       "Deemed university focused on advanced manufacturing, foundry technology, production engineering and industrial tooling.",
     expertise: [
@@ -372,7 +372,7 @@ const universities = [
     type: "university",
     location: "Ranchi, Jharkhand",
     email: "vc@jutranchi.ac.in",
-    website: "https://www.jutranchi.ac.in",
+    website: "https://jutranchi.ac.in",
     description:
       "State technical university affiliating engineering colleges across Jharkhand with focus on technology and management education.",
     expertise: [
@@ -446,7 +446,7 @@ const universities = [
     type: "university",
     location: "Ranchi, Jharkhand",
     email: "info@nusrl.ac.in",
-    website: "https://www.nusrl.ac.in",
+    website: "https://nusrlranchi.ac.in",
     description:
       "National Law University offering integrated law programs, research and policy advocacy with focus on tribal and human rights law.",
     expertise: ["law", "public_administration", "governance"],
@@ -515,7 +515,7 @@ const universities = [
     type: "university",
     location: "Ranchi, Jharkhand",
     email: "vc@dspmuranchi.ac.in",
-    website: "https://www.dspmuranchi.ac.in",
+    website: "https://dspmuranchi.ac.in",
     description:
       "State university formed from Ranchi College, offering arts, science and commerce with strong research focus.",
     expertise: [
@@ -609,7 +609,7 @@ const universities = [
     type: "university",
     location: "Ranchi, Jharkhand",
     email: "info@sainathuniversity.ac.in",
-    website: "https://www.sainathuniversity.ac.in",
+    website: "http://www.sainathuniversity.com",
     description:
       "Private university offering multidisciplinary programs in arts, science, commerce, management and education.",
     expertise: [
@@ -819,7 +819,7 @@ const industries = [
     type: "industry",
     location: "Bokaro, Jharkhand",
     email: "info@sailbokaro.co.in",
-    website: "https://www.sailbokaro.co.in",
+    website: "https://www.sail.co.in/en/plants/bokaro-steel-plant",
     description:
       "One of India's largest steel plants under SAIL. Major hub for steel, power, cement and chemical industries.",
     expertise: [
@@ -1285,26 +1285,23 @@ const seedPartners = async () => {
 
     const credentials = [];
 
+    // Clean up any removed partners (e.g. NGOs, Govt, discontinued orgs)
+    // and their linked user accounts from the database.
+    for (const name of removals) {
+      const legacy = await Partner.findOne({ name });
+      if (legacy) {
+        if (legacy.user) {
+          await User.findByIdAndDelete(legacy.user);
+        }
+        await Partner.findByIdAndDelete(legacy._id);
+        console.log(`  ✗ Removed: ${legacy.name}`);
+      }
+    }
+
     for (let i = 0; i < allPartners.length; i++) {
       const data = allPartners[i];
 
-      // Skip factually incorrect partners (see partnerData.js
-      // removals). Their logins are removed too so stale
-      // accounts never persist.
-
       if (removals.includes(data.name)) {
-        const legacy = await Partner.findOne({ name: data.name });
-
-        if (legacy) {
-          if (legacy.user) {
-            await User.findByIdAndDelete(legacy.user);
-          }
-
-          await Partner.findByIdAndDelete(legacy._id);
-
-          console.log(`  ✗ Removed: ${legacy.name}`);
-        }
-
         continue;
       }
 
@@ -1416,7 +1413,7 @@ const seedPartners = async () => {
 
       const username = generateUsername(data.name, allPartners.length + i + 1);
 
-      const password = generatePassword(data.name);
+      const password = data.password || generatePassword(data.name);
 
       const email = generateEmail(data.name, data.type);
 

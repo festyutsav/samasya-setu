@@ -1,6 +1,7 @@
 const SolutionProposal = require("../models/SolutionProposal");
 const Problem = require("../models/Problem");
 const Partner = require("../models/Partner");
+const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const { notifyAdmins, notifyPartnerUser, createNotification } = require("../services/notificationService");
 
@@ -133,6 +134,37 @@ const getProposalsForProblem = async (req, res) => {
 
     return res.status(500).json({
       message: "Server error while fetching proposals.",
+    });
+  }
+};
+
+// ========================================
+// GET ALL PROPOSALS (ADMIN)
+// ========================================
+
+const getAllProposals = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    const proposals = await SolutionProposal.find(filter)
+      .populate("problem", "title category status location")
+      .populate("university", "name type location email website expertise")
+      .populate("submittedBy", "name email")
+      .populate("reviewedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: proposals.length,
+      proposals,
+    });
+  } catch (error) {
+    console.error("Get all proposals error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while fetching all proposals.",
     });
   }
 };
@@ -384,6 +416,7 @@ const deleteProposal = async (req, res) => {
 module.exports = {
   createProposal,
   getProposalsForProblem,
+  getAllProposals,
   getMyProposals,
   reviewProposal,
   updateProposal,

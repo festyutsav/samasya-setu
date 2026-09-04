@@ -286,17 +286,22 @@ const PartnerManagement = ({ setAdminPage }) => {
   // FILTER LOGIC
   // ========================================
 
-  const filteredPartners = partners.filter((partner) => {
-    const matchesSearch =
-      partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredPartners = partners
+    .filter(
+      (partner) =>
+        partner.type === "university" || partner.type === "industry"
+    )
+    .filter((partner) => {
+      const matchesSearch =
+        partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType =
-      filterType === "all" || partner.type === filterType;
+      const matchesType =
+        filterType === "all" || partner.type === filterType;
 
-    return matchesSearch && matchesType;
-  });
+      return matchesSearch && matchesType;
+    });
 
 
   // ========================================
@@ -603,11 +608,8 @@ const PartnerManagement = ({ setAdminPage }) => {
 
 
             <p className="mt-2 text-[#5c6f69]">
-
-              Manage universities, industry partners,
-              NGOs, and government organizations
-              available for problem assignments.
-
+              Manage universities and industry partners
+              available for problem assignments and collaborative resolution.
             </p>
           </div>
 
@@ -817,44 +819,13 @@ const PartnerManagement = ({ setAdminPage }) => {
 
 
                 <select
-
                   name="type"
-
                   value={formData.type}
-
                   onChange={handleChange}
-
                   className="w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
-
                 >
-
-                  <option value="university">
-
-                    University
-
-                  </option>
-
-
-                  <option value="industry">
-
-                    Industry
-
-                  </option>
-
-
-                  <option value="ngo">
-
-                    NGO
-
-                  </option>
-
-
-                  <option value="government">
-
-                    Government
-
-                  </option>
-
+                  <option value="university">University</option>
+                  <option value="industry">Industry</option>
                 </select>
 
               </div>
@@ -1336,19 +1307,14 @@ const PartnerManagement = ({ setAdminPage }) => {
 
 
                   <select
-
                     value={filterType}
-
                     onChange={(event) =>
                       setFilterType(event.target.value)
                     }
-
                     className="rounded-xl border border-[#dbe5df] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
-
                   >
-
                     <option value="all">
-                      All Types
+                      All Partners (Universities & Industries)
                     </option>
 
                     <option value="university">
@@ -1358,15 +1324,6 @@ const PartnerManagement = ({ setAdminPage }) => {
                     <option value="industry">
                       Industries
                     </option>
-
-                    <option value="ngo">
-                      NGOs
-                    </option>
-
-                    <option value="government">
-                      Government
-                    </option>
-
                   </select>
 
                 </div>
