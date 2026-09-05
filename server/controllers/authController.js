@@ -35,9 +35,11 @@ const registerUser = async (req, res) => {
     // CHECK EXISTING USER
     // ========================================
 
+    const cleanEmail = email.trim().toLowerCase();
+
     const existingUser =
       await User.findOne({
-        email: email.toLowerCase(),
+        email: cleanEmail,
       });
 
 
@@ -65,7 +67,7 @@ const registerUser = async (req, res) => {
 
     const user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email: cleanEmail,
       password: hashedPassword,
       role: "citizen",
     });
@@ -141,9 +143,11 @@ const loginUser = async (req, res) => {
     // FIND USER + ORGANIZATION
     // ========================================
 
+    const cleanEmail = email.trim().toLowerCase();
+
     const user =
       await User.findOne({
-        email: email.toLowerCase(),
+        email: cleanEmail,
       })
         .populate({
           path: "partner",
