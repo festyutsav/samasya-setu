@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loginUser } from "../services/authService";
+import { setAuthSession } from "../utils/authStorage";
 import JharkhandEmblem from "../components/JharkhandEmblem";
 
 const Login = ({ portal, onLogin, onSwitchToRegister, onBack, initialEmail = "" }) => {
@@ -17,12 +18,15 @@ const Login = ({ portal, onLogin, onSwitchToRegister, onBack, initialEmail = "" 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      setLoading(true); setMessage("");
-      const data = await loginUser(email, password);
+      setLoading(true);
+      setMessage("");
+      const cleanEmail = (email || "").trim();
+      const data = await loginUser(cleanEmail, password);
       if (portal === "admin" && data.user.role !== "admin") return setMessage("This account does not have access to the Government Portal.");
       if (portal === "partner" && (data.user.role !== "partner" || !data.user.organization)) return setMessage(data.user.role !== "partner" ? "This account does not have access to the Organization Portal." : "No organization is linked to this account.");
       if (portal === "citizen" && data.user.role !== "citizen") return setMessage("Please select the correct portal for this account.");
-      localStorage.setItem("token", data.token); localStorage.setItem("user", JSON.stringify(data.user)); onLogin(data.user);
+      setAuthSession(data.token, data.user);
+      onLogin(data.user);
     } catch (error) { setMessage(error.response?.data?.message || "Login failed. Please check your details."); } finally { setLoading(false); }
   };
 
@@ -75,16 +79,37 @@ const Login = ({ portal, onLogin, onSwitchToRegister, onBack, initialEmail = "" 
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">Sign in to continue</h2>
               <p className="mt-2 text-sm text-[#71827c]">Access your SamasyaSetu workspace.</p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-[#e1e8e2] bg-white p-7 shadow-xl shadow-[#164f47]/5 sm:p-9">
+            <form
+              key={portal}
+              onSubmit={handleSubmit}
+              className="space-y-5 rounded-3xl border border-[#e1e8e2] bg-white p-7 shadow-xl shadow-[#164f47]/5 sm:p-9"
+            >
               <div>
-                <label className="mb-2 block text-sm font-semibold">Email address</label>
-                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required className="w-full rounded-xl border border-[#dbe5df] bg-[#fbfcfa] px-4 py-3.5 text-sm outline-none transition placeholder:text-[#a1aca7] focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]" />
+                <label htmlFor="login-email" className="mb-2 block text-sm font-semibold">
+                  Email address
+                </label>
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full rounded-xl border border-[#dbe5df] bg-[#fbfcfa] px-4 py-3.5 text-sm outline-none transition placeholder:text-[#a1aca7] focus:border-[#62a99b] focus:ring-4 focus:ring-[#dff1eb]"
+                />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold">Password</label>
+                <label htmlFor="login-password" className="mb-2 block text-sm font-semibold">
+                  Password
+                </label>
                 <div className="relative">
                   <input
+                    id="login-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter your password"

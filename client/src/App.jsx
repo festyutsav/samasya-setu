@@ -41,6 +41,7 @@ import AdminNavbar from "./components/AdminNavbar";
 import PartnerNavbar from "./components/PartnerNavbar";
 import InstallAppBanner from "./components/InstallAppBanner";
 import { API_BASE_URL } from "./config/api";
+import { getAuthUser, clearAuthSession } from "./utils/authStorage";
 
 function App() {
   // ==================================================
@@ -55,18 +56,7 @@ function App() {
   // ==================================================
 
   const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem("user");
-
-      return savedUser
-        ? JSON.parse(savedUser)
-        : null;
-    } catch (error) {
-      console.error("Failed to parse stored user data:", error);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      return null;
-    }
+    return getAuthUser();
   });
 
   // ==================================================
@@ -281,15 +271,15 @@ function App() {
   const handleLogout = () => {
     // ================= REMOVE AUTH =================
 
-    localStorage.removeItem("token");
-
-    localStorage.removeItem("user");
+    clearAuthSession();
 
     setUser(null);
 
     // ================= RESET AUTH =================
 
     setAuthPage("login");
+
+    setRegisteredEmail("");
 
     setSelectedPortal(null);
 
