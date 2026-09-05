@@ -251,11 +251,12 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
   const pendingProposalsByProblem = useMemo(() => {
     const map = {};
     (proposals || []).forEach((proposal) => {
-      if (proposal.status === "submitted") {
-        const pid =
+      if (proposal.status === "submitted" || proposal.status === "under_review") {
+        const pid = String(
           typeof proposal.problem === "object"
-            ? proposal.problem?._id
-            : proposal.problem;
+            ? proposal.problem?._id || ""
+            : proposal.problem || ""
+        ).trim();
         if (pid) {
           if (!map[pid]) map[pid] = [];
           map[pid].push(proposal);
@@ -310,7 +311,7 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "proposals_pending"
-          ? Boolean(pendingProposalsByProblem[problem._id]?.length)
+          ? Boolean(pendingProposalsByProblem[String(problem._id)]?.length)
           : problem.status === statusFilter);
 
       // CATEGORY FILTER
@@ -515,16 +516,27 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setStatusFilter("proposals_pending");
-                scrollToProblems();
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#a25a1b] px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#854511]"
-            >
-              Filter Problems with Proposals ({totalPendingProposalsCount})
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAdminPage("proposals")}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#0b514a] px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#073d38]"
+              >
+                <span>🏛️ Review Proposals Portal ({totalPendingProposalsCount})</span>
+                <span>→</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("proposals_pending");
+                  scrollToProblems();
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white px-3.5 py-2.5 text-xs font-bold text-amber-900 shadow-2xs transition hover:bg-amber-50"
+              >
+                Filter Problem Cards
+              </button>
+            </div>
           </div>
         )}
 
@@ -878,14 +890,20 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
 
                       {/* PENDING SOLUTION PROPOSAL BADGE */}
 
-                      {pendingProposalsByProblem[problem._id]?.length > 0 && (
-                        <span
-                          className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 shadow-2xs"
-                          title="University partner submitted a solution proposal awaiting admin review"
+                      {pendingProposalsByProblem[String(problem._id)]?.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAdminProblemId(problem._id);
+                            setAdminPage("problem-details");
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 shadow-2xs transition hover:bg-amber-100 hover:shadow-xs"
+                          title="Click to review solution proposal"
                         >
-                          <span className="h-2 w-2 rounded-full bg-amber-500" />
-                          📑 Solution Proposal Received ({pendingProposalsByProblem[problem._id][0]?.university?.name || "University Partner"})
-                        </span>
+                          <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                          📑 Solution Proposal Received ({pendingProposalsByProblem[String(problem._id)][0]?.university?.name || "University Partner"}) →
+                        </button>
                       )}
 
                     </div>

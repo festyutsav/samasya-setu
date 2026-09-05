@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   getProposalsForProblem,
+  getAllProposals,
   getMyProposals,
   reviewProposal,
 } from "../services/proposalService";
@@ -41,8 +42,12 @@ const ProposalList = ({
 
       let data;
 
-      if (isAdmin && problemId) {
-        data = await getProposalsForProblem(problemId, token);
+      if (isAdmin) {
+        if (problemId) {
+          data = await getProposalsForProblem(problemId, token);
+        } else {
+          data = await getAllProposals(token);
+        }
       } else {
         data = await getMyProposals(token);
       }

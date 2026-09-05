@@ -384,7 +384,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
   // ========================================
 
   const pendingProposals = (proposals || []).filter(
-    (p) => p.status === "submitted"
+    (p) => p.status === "submitted" || p.status === "under_review"
   );
 
   return (

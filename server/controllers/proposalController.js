@@ -265,21 +265,27 @@ const reviewProposal = async (req, res) => {
       problemId: proposal.problem._id,
     });
 
-    // If the proposal was approved, the citizen also deserves
-    // to know a solution is moving forward on their problem.
+    // If the proposal was approved, advance problem status to in_progress and notify citizen
+    if (status === "approved") {
+      try {
+        const problemDoc = await Problem.findById(proposal.problem._id);
+        if (problemDoc && (problemDoc.status === "assigned" || problemDoc.status === "under_review")) {
+          problemDoc.status = "in_progress";
+          await problemDoc.save();
+        }
+      } catch (err) {
+        console.error("Failed to advance problem status to in_progress:", err.message);
+      }
 
-    if (status === "approved" && proposal.problem.submittedBy) {
-      await createNotification({
-        recipientId: proposal.problem.submittedBy,
-
-        type: "proposal_reviewed",
-
-        title: "Solution proposal approved",
-
-        message: `A solution proposal for your problem "${proposal.problem.title}" by ${proposal.university.name} was approved.`,
-
-        problemId: proposal.problem._id,
-      });
+      if (proposal.problem.submittedBy) {
+        await createNotification({
+          recipientId: proposal.problem.submittedBy,
+          type: "proposal_reviewed",
+          title: "Solution proposal approved",
+          message: `A solution proposal for your problem "${proposal.problem.title}" by ${proposal.university.name} was approved. Field execution is now underway.`,
+          problemId: proposal.problem._id,
+        });
+      }
     }
 
     return res.status(200).json({

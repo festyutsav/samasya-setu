@@ -101,7 +101,7 @@ const hashFor = (user, notification) => {
   return `#problem-details?id=${problemId}`;
 };
 
-const NotificationBell = ({ user }) => {
+const NotificationBell = ({ user, onNavigate }) => {
   const [open, setOpen] = useState(false);
 
   const [notifications, setNotifications] = useState([]);
@@ -227,6 +227,41 @@ const NotificationBell = ({ user }) => {
         await markAsRead(notification._id, token);
       } catch (error) {
         console.error("Failed to mark as read:", error.message);
+      }
+    }
+
+    const problemId =
+      typeof notification.problem === "object"
+        ? notification.problem?._id
+        : notification.problem;
+
+    if (onNavigate) {
+      if (user?.role === "admin") {
+        if (
+          notification.type === "proposal_submitted" ||
+          notification.type === "proposal_reviewed"
+        ) {
+          onNavigate("proposals", problemId);
+        } else if (problemId) {
+          onNavigate("problem-details", problemId);
+        } else {
+          onNavigate("dashboard");
+        }
+      } else if (user?.role === "partner") {
+        if (
+          notification.type === "proposal_submitted" ||
+          notification.type === "proposal_reviewed"
+        ) {
+          onNavigate("university");
+        } else {
+          onNavigate("problems");
+        }
+      } else {
+        if (problemId) {
+          onNavigate("problem-details", problemId);
+        } else {
+          onNavigate("home");
+        }
       }
     }
 

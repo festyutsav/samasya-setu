@@ -7,11 +7,13 @@ const AdminNavbar = ({
   handleLogout,
   currentPage,
   setCurrentPage,
+  setSelectedAdminProblemId,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { label: "Dashboard", page: "dashboard" },
+    { label: "Proposals", page: "proposals" },
     { label: "Analytics", page: "analytics" },
     { label: "Partners", page: "partners" },
   ];
@@ -72,7 +74,19 @@ const AdminNavbar = ({
         {/* Desktop User Section */}
         <div className="hidden shrink-0 items-center gap-3 md:flex">
 
-          <NotificationBell user={user} />
+          <NotificationBell
+            user={user}
+            onNavigate={(page, id) => {
+              if (page === "problem-details" && id && setSelectedAdminProblemId) {
+                setSelectedAdminProblemId(id);
+                setCurrentPage("problem-details");
+              } else if (page === "proposals") {
+                setCurrentPage("proposals");
+              } else {
+                setCurrentPage(page);
+              }
+            }}
+          />
 
           <div className="hidden border-l border-[#e3e9e3] pl-3 text-left sm:block">
             <p className="max-w-32 truncate text-sm font-semibold leading-tight text-[#315d56]">
@@ -94,7 +108,19 @@ const AdminNavbar = ({
 
         {/* Mobile Actions */}
         <div className="flex shrink-0 items-center gap-2.5 md:hidden">
-          <NotificationBell user={user} />
+          <NotificationBell
+            user={user}
+            onNavigate={(page, id) => {
+              if (page === "problem-details" && id && setSelectedAdminProblemId) {
+                setSelectedAdminProblemId(id);
+                setCurrentPage("problem-details");
+              } else if (page === "proposals") {
+                setCurrentPage("proposals");
+              } else {
+                setCurrentPage(page);
+              }
+            }}
+          />
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -113,7 +139,10 @@ const AdminNavbar = ({
             {navItems.map((item) => (
               <button
                 key={item.page}
-                onClick={() => setCurrentPage(item.page)}
+                onClick={() => {
+                  setCurrentPage(item.page);
+                  setMobileMenuOpen(false);
+                }}
                 className={`rounded-lg px-4 py-2.5 text-left text-sm font-semibold transition ${
                   currentPage === item.page
                     ? "bg-[#0b514a] text-white"
