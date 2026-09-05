@@ -17,6 +17,7 @@ import AllProblems from "./pages/AllProblems";
 // ================= ADMIN PAGES =================
 
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminProposals from "./pages/AdminProposals";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import PartnerManagement from "./pages/PartnerManagement";
 import AdminProblemDetails from "./pages/AdminProblemDetails";
@@ -148,6 +149,8 @@ function App() {
       if (user.role === "admin") {
         if (pagePart === "admin-partners") {
           setAdminPage("partners");
+        } else if (pagePart === "admin-proposals") {
+          setAdminPage("proposals");
         } else if (pagePart === "admin-analytics") {
           setAdminPage("analytics");
         } else if (pagePart === "admin-problem-details" && idParam) {
@@ -201,6 +204,8 @@ function App() {
     if (user.role === "admin") {
       if (adminPage === "partners") {
         newHash = "admin-partners";
+      } else if (adminPage === "proposals") {
+        newHash = "admin-proposals";
       } else if (adminPage === "analytics") {
         newHash = "admin-analytics";
       } else if (adminPage === "problem-details" && selectedAdminProblemId) {
@@ -382,12 +387,24 @@ function App() {
           handleLogout={handleLogout}
           currentPage={adminPage}
           setCurrentPage={setAdminPage}
+          setSelectedAdminProblemId={setSelectedAdminProblemId}
         />
 
         {/* ADMIN DASHBOARD */}
 
         {adminPage === "dashboard" && (
           <AdminDashboard
+            setAdminPage={setAdminPage}
+            setSelectedAdminProblemId={
+              setSelectedAdminProblemId
+            }
+          />
+        )}
+
+        {/* ADMIN PROPOSALS */}
+
+        {adminPage === "proposals" && (
+          <AdminProposals
             setAdminPage={setAdminPage}
             setSelectedAdminProblemId={
               setSelectedAdminProblemId
