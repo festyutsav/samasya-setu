@@ -5,7 +5,7 @@ const cors = require("cors");
 const problemRoutes = require("./routes/problemRoutes");
 
 const authRoutes = require("./routes/authRoutes");
-
+const otpRoutes = require("./routes/otpRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
 const partnerRoutes = require("./routes/partnerRoutes");
@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
 // Authentication routes
 
 app.use("/api/auth", authRoutes);
-
+app.use("/api/auth", otpRoutes);
 // Problem routes
 
 app.use("/api/problems", problemRoutes);
