@@ -40,21 +40,13 @@ export const sendRegistrationOtp = async (name, email, password) => {
 
 // ================= VERIFY OTP AND REGISTER =================
 
-export const verifyOtpAndRegister = async (
-  name,
-  email,
-  password,
-  otp
-) => {
-  const response = await axios.post(
-    `${AUTH_API_URL}/verify-otp-register`,
-    {
-      name,
-      email,
-      password,
-      otp,
-    }
-  );
+export const verifyOtpAndRegister = async (name, email, password, otp) => {
+  const response = await axios.post(`${AUTH_API_URL}/verify-otp-register`, {
+    name,
+    email,
+    password,
+    otp,
+  });
 
   return response.data;
 };
