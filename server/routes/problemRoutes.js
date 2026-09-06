@@ -1,0 +1,295 @@
+const { uploadProblemMedia } = require("../middleware/uploadMiddleware");
+const express = require("express");
+
+const {
+
+  // Citizen controllers
+
+  createProblem,
+
+  getMyProblems,
+
+  deleteMyProblem,
+
+
+  // General controllers
+
+  getAllProblems,
+
+  getProblemById,
+
+
+  // Admin controllers
+
+  updateProblemStatus,
+
+  assignPartnerToProblem,
+
+  aiReviewProblem,
+
+  reanalyzeDuplicates,
+
+  rerunRouting,
+
+
+  // Partner controllers
+
+  getPartnerDashboard,
+
+  getPartnerProblems,
+
+  updatePartnerProblemStatus,
+} = require("../controllers/problemController");
+
+const { deleteProblemByAdmin } = require("../controllers/adminController");
+
+
+const {
+
+  protect,
+
+  authorizeRoles,
+
+} = require("../middleware/authMiddleware");
+
+
+const router = express.Router();
+
+
+// ========================================
+// CITIZEN ROUTES
+// ========================================
+
+
+// Citizen submits a problem
+
+router.post(
+  "/",
+  protect,
+  authorizeRoles("citizen"),
+  uploadProblemMedia,
+  createProblem
+);
+
+
+// Get problems submitted by logged-in citizen
+
+router.get(
+
+  "/my/problems",
+
+  protect,
+
+  authorizeRoles("citizen"),
+
+  getMyProblems
+
+);
+
+
+// Delete own problem
+// Only allowed while status is "submitted"
+
+router.delete(
+
+  "/my/:id",
+
+  protect,
+
+  authorizeRoles("citizen"),
+
+  deleteMyProblem
+
+);
+
+
+// ========================================
+// PARTNER ROUTES
+// ========================================
+
+
+// Get partner dashboard
+
+router.get(
+
+  "/partner/dashboard",
+
+  protect,
+
+  authorizeRoles("partner"),
+
+  getPartnerDashboard
+
+);
+
+
+// Get all problems assigned to logged-in partner
+
+router.get(
+
+  "/partner/problems",
+
+  protect,
+
+  authorizeRoles("partner"),
+
+  getPartnerProblems
+
+);
+
+
+// Partner updates the status of
+// their assigned problem
+
+router.patch(
+
+  "/partner/problems/:id/status",
+
+  protect,
+
+  authorizeRoles("partner"),
+
+  updatePartnerProblemStatus
+
+);
+
+
+// ========================================
+// GENERAL PROBLEM ROUTES
+// ========================================
+
+
+// Get all problems
+// Accessible to Citizen, Admin, and Partner
+
+router.get(
+
+  "/",
+
+  protect,
+
+  authorizeRoles(
+
+    "citizen",
+
+    "admin",
+
+    "partner"
+
+  ),
+
+  getAllProblems
+
+);
+
+
+// ========================================
+// ADMIN ROUTES
+// ========================================
+
+
+// Admin updates problem status
+
+router.patch(
+
+  "/:id/status",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  updateProblemStatus
+
+);
+
+
+// Admin assigns a partner to a problem
+
+router.patch(
+
+  "/:id/assign-partner",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  assignPartnerToProblem
+
+);
+
+
+// Admin AI review action for duplicate/recurring detection
+
+router.patch(
+
+  "/:id/ai-review",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  aiReviewProblem
+
+);
+
+
+// Admin re-runs AI duplicate detection for a problem.
+// Needed for problems created before duplicate detection
+// existed, and to refresh suggestions as new reports arrive.
+
+router.post(
+
+  "/:id/duplicate-analysis",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  reanalyzeDuplicates
+
+);
+
+
+// Admin re-runs AI partner routing for a problem.
+// Needed for problems created before routing existed
+// (including seeded data) and to refresh suggestions
+// after the partner registry or scoring engine changes.
+
+router.post(
+
+  "/:id/rerun-routing",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  rerunRouting
+
+);
+
+
+// ========================================
+// GET SINGLE PROBLEM
+// ========================================
+
+
+// IMPORTANT:
+// Keep this route at the bottom.
+// Otherwise ":id" could capture routes
+// such as "/partner/dashboard".
+
+router.get(
+  "/:id",
+  protect,
+  getProblemById
+);
+
+// Admin deletes any problem
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin"),
+  deleteProblemByAdmin
+);
+
+module.exports = router;
