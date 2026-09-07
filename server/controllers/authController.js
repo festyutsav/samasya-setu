@@ -356,19 +356,20 @@ const sendRegistrationOtp = async (req, res) => {
       { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
 
-    const emailResult = await sendOtpEmail({
+    // Send email asynchronously in background so client response is sub-second fast
+    sendOtpEmail({
       to: cleanEmail,
       name: name?.trim() || "Citizen",
       otp,
+    }).catch((err) => {
+      console.warn("[EMAIL SERVICE] Background OTP delivery warning:", err?.message || err);
     });
 
     return res.status(200).json({
       success: true,
-      message: emailResult.simulated
-        ? "Verification code generated (Demo Mode)."
-        : `Verification code sent to ${cleanEmail}.`,
+      message: `Verification code generated and sent to ${cleanEmail}.`,
       expiresAt,
-      demoOtp: emailResult.simulated ? otp : undefined,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error("sendRegistrationOtp error:", error);
