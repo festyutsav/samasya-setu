@@ -214,6 +214,8 @@ const SubmitProblem = ({ setCurrentPage }) => {
   // AI REQUEST TRACKING
   // ========================================
 
+  const aiRequestId = useRef(0);
+
   // ========================================
   // RURAL OFFLINE OUTBOX & CONNECTIVITY
   // ========================================
@@ -309,11 +311,7 @@ const SubmitProblem = ({ setCurrentPage }) => {
 
     const timer = setTimeout(async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          return;
-        }
+        const token = localStorage.getItem("token") || "";
 
         setAiLoading(true);
 
@@ -337,9 +335,11 @@ const SubmitProblem = ({ setCurrentPage }) => {
         // GET AI CATEGORY
         // ========================================
 
-        const aiCategory = result.category;
+        const aiCategory = result?.category;
 
-        const formCategory = aiCategoryMap[aiCategory];
+        const formCategory = aiCategory
+          ? aiCategoryMap[aiCategory] || aiCategory.toLowerCase()
+          : null;
 
         // ========================================
         // SAVE AI SUGGESTION
@@ -347,7 +347,7 @@ const SubmitProblem = ({ setCurrentPage }) => {
 
         setAiSuggestion(aiCategory || "");
 
-        setAiSuggestionLevel(result.suggestionLevel || "");
+        setAiSuggestionLevel(result?.suggestionLevel || "");
 
         // ========================================
         // AUTO SELECT CATEGORY
@@ -357,7 +357,7 @@ const SubmitProblem = ({ setCurrentPage }) => {
         // citizen makes the call — silently selecting a low-confidence
         // category is how a wrong one ends up submitted unnoticed.
 
-        const confident = result.suggestionLevel !== "uncertain";
+        const confident = result?.suggestionLevel !== "uncertain";
 
         if (formCategory && confident && !manualCategoryChange.current) {
           setFormData((currentData) => ({
