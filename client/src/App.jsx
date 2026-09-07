@@ -50,6 +50,7 @@ import Navbar from "./components/Navbar";
 import AdminNavbar from "./components/AdminNavbar";
 import PartnerNavbar from "./components/PartnerNavbar";
 import InstallAppBanner from "./components/InstallAppBanner";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { API_BASE_URL } from "./config/api";
 import { getAuthUser, clearAuthSession } from "./utils/authStorage";
 import { syncOfflineQueue } from "./utils/offlineStorage";
@@ -349,42 +350,44 @@ function App() {
 
   if (!user) {
     return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        {!selectedPortal ? (
-          <PortalSelection
-            onSelectPortal={(portal) => {
-              setSelectedPortal(portal);
-              setAuthPage("login");
-            }}
-          />
-        ) : authPage === "register" && selectedPortal === "citizen" ? (
-          <Register
-            onSwitchToLogin={(email) => {
-              if (email) setRegisteredEmail(email);
-              setAuthPage("login");
-            }}
-            onBack={() => {
-              setSelectedPortal(null);
-              setAuthPage("login");
-            }}
-          />
-        ) : (
-          <Login
-            portal={selectedPortal}
-            initialEmail={registeredEmail}
-            onLogin={handleLogin}
-            onSwitchToRegister={() => {
-              if (selectedPortal === "citizen") {
-                setAuthPage("register");
-              }
-            }}
-            onBack={() => {
-              setSelectedPortal(null);
-              setAuthPage("login");
-            }}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoadingFallback />}>
+          {!selectedPortal ? (
+            <PortalSelection
+              onSelectPortal={(portal) => {
+                setSelectedPortal(portal);
+                setAuthPage("login");
+              }}
+            />
+          ) : authPage === "register" && selectedPortal === "citizen" ? (
+            <Register
+              onSwitchToLogin={(email) => {
+                if (email) setRegisteredEmail(email);
+                setAuthPage("login");
+              }}
+              onBack={() => {
+                setSelectedPortal(null);
+                setAuthPage("login");
+              }}
+            />
+          ) : (
+            <Login
+              portal={selectedPortal}
+              initialEmail={registeredEmail}
+              onLogin={handleLogin}
+              onSwitchToRegister={() => {
+                if (selectedPortal === "citizen") {
+                  setAuthPage("register");
+                }
+              }}
+              onBack={() => {
+                setSelectedPortal(null);
+                setAuthPage("login");
+              }}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -404,53 +407,55 @@ function App() {
           setSelectedAdminProblemId={setSelectedAdminProblemId}
         />
 
-        <Suspense fallback={<PageLoadingFallback />}>
-          {/* ADMIN DASHBOARD */}
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoadingFallback />}>
+            {/* ADMIN DASHBOARD */}
 
-          {adminPage === "dashboard" && (
-            <AdminDashboard
-              setAdminPage={setAdminPage}
-              setSelectedAdminProblemId={
-                setSelectedAdminProblemId
-              }
-            />
-          )}
-
-          {/* ADMIN PROPOSALS */}
-
-          {adminPage === "proposals" && (
-            <AdminProposals
-              setAdminPage={setAdminPage}
-              setSelectedAdminProblemId={
-                setSelectedAdminProblemId
-              }
-            />
-          )}
-
-          {/* PARTNER MANAGEMENT */}
-
-          {adminPage === "partners" && (
-            <PartnerManagement setAdminPage={setAdminPage} />
-          )}
-
-          {/* ANALYTICS DASHBOARD */}
-
-          {adminPage === "analytics" && (
-            <AnalyticsDashboard setAdminPage={setAdminPage} />
-          )}
-
-          {/* ADMIN PROBLEM DETAILS */}
-
-          {adminPage === "problem-details" &&
-            selectedAdminProblemId && (
-              <AdminProblemDetails
-                problemId={
-                  selectedAdminProblemId
-                }
+            {adminPage === "dashboard" && (
+              <AdminDashboard
                 setAdminPage={setAdminPage}
+                setSelectedAdminProblemId={
+                  setSelectedAdminProblemId
+                }
               />
             )}
-        </Suspense>
+
+            {/* ADMIN PROPOSALS */}
+
+            {adminPage === "proposals" && (
+              <AdminProposals
+                setAdminPage={setAdminPage}
+                setSelectedAdminProblemId={
+                  setSelectedAdminProblemId
+                }
+              />
+            )}
+
+            {/* PARTNER MANAGEMENT */}
+
+            {adminPage === "partners" && (
+              <PartnerManagement setAdminPage={setAdminPage} />
+            )}
+
+            {/* ANALYTICS DASHBOARD */}
+
+            {adminPage === "analytics" && (
+              <AnalyticsDashboard setAdminPage={setAdminPage} />
+            )}
+
+            {/* ADMIN PROBLEM DETAILS */}
+
+            {adminPage === "problem-details" &&
+              selectedAdminProblemId && (
+                <AdminProblemDetails
+                  problemId={
+                    selectedAdminProblemId
+                  }
+                  setAdminPage={setAdminPage}
+                />
+              )}
+          </Suspense>
+        </ErrorBoundary>
 
       </div>
     );
@@ -479,84 +484,86 @@ function App() {
             PARTNER DASHBOARD
         ======================================== */}
 
-        <Suspense fallback={<PageLoadingFallback />}>
-          {partnerPage === "dashboard" && (
-            <PartnerDashboard
-              setPartnerPage={setPartnerPage}
-              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-            />
-          )}
-
-
-          {/* ========================================
-              PARTNER PROBLEMS
-          ======================================== */}
-
-          {partnerPage === "problems" && (
-            <PartnerProblems setPartnerPage={setPartnerPage} />
-          )}
-
-
-          {/* ========================================
-              PARTNER PROJECTS
-          ======================================== */}
-
-          {partnerPage === "projects" && (
-            <PartnerProjects
-              user={user}
-              setPartnerPage={setPartnerPage}
-              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-            />
-          )}
-
-          {/* ========================================
-              INDUSTRY COLLABORATIONS
-          ======================================== */}
-
-          {partnerPage === "collaborations" && (
-            <PartnerCollaborations
-              user={user}
-              setPartnerPage={setPartnerPage}
-              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-            />
-          )}
-
-          {/* ========================================
-              PARTNER DIRECTORY (DISCOVER)
-          ======================================== */}
-
-          {partnerPage === "directory" && (
-            <PartnerDirectory user={user} setPartnerPage={setPartnerPage} />
-          )}
-
-          {/* ========================================
-              SHARED PROJECT WORKSPACE
-          ======================================== */}
-
-          {partnerPage === "workspace" &&
-            selectedPartnerProjectId && (
-              <ProjectWorkspace
-                projectId={selectedPartnerProjectId}
-                user={user}
-                setSelectedPartnerProjectId={
-                  setSelectedPartnerProjectId
-                }
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoadingFallback />}>
+            {partnerPage === "dashboard" && (
+              <PartnerDashboard
                 setPartnerPage={setPartnerPage}
+                setSelectedPartnerProjectId={setSelectedPartnerProjectId}
               />
             )}
 
 
-          {/* ========================================
-              UNIVERSITY DASHBOARD
-          ======================================== */}
+            {/* ========================================
+                PARTNER PROBLEMS
+            ======================================== */}
 
-          {partnerPage === "university" && (
-            <UniversityDashboard
-              setCurrentPage={setPartnerPage}
-              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-            />
-          )}
-        </Suspense>
+            {partnerPage === "problems" && (
+              <PartnerProblems setPartnerPage={setPartnerPage} />
+            )}
+
+
+            {/* ========================================
+                PARTNER PROJECTS
+            ======================================== */}
+
+            {partnerPage === "projects" && (
+              <PartnerProjects
+                user={user}
+                setPartnerPage={setPartnerPage}
+                setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+              />
+            )}
+
+            {/* ========================================
+                INDUSTRY COLLABORATIONS
+            ======================================== */}
+
+            {partnerPage === "collaborations" && (
+              <PartnerCollaborations
+                user={user}
+                setPartnerPage={setPartnerPage}
+                setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+              />
+            )}
+
+            {/* ========================================
+                PARTNER DIRECTORY (DISCOVER)
+            ======================================== */}
+
+            {partnerPage === "directory" && (
+              <PartnerDirectory user={user} setPartnerPage={setPartnerPage} />
+            )}
+
+            {/* ========================================
+                SHARED PROJECT WORKSPACE
+            ======================================== */}
+
+            {partnerPage === "workspace" &&
+              selectedPartnerProjectId && (
+                <ProjectWorkspace
+                  projectId={selectedPartnerProjectId}
+                  user={user}
+                  setSelectedPartnerProjectId={
+                    setSelectedPartnerProjectId
+                  }
+                  setPartnerPage={setPartnerPage}
+                />
+              )}
+
+
+            {/* ========================================
+                UNIVERSITY DASHBOARD
+            ======================================== */}
+
+            {partnerPage === "university" && (
+              <UniversityDashboard
+                setCurrentPage={setPartnerPage}
+                setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+              />
+            )}
+          </Suspense>
+        </ErrorBoundary>
 
       </div>
     );
@@ -579,61 +586,63 @@ function App() {
       />
 
 
-      <Suspense fallback={<PageLoadingFallback />}>
-        {/* HOME */}
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoadingFallback />}>
+          {/* HOME */}
 
-        {currentPage === "home" && (
-          <Home
-            user={user}
-            setCurrentPage={setCurrentPage}
-          />
-        )}
-
-
-        {/* EXPLORE PROBLEMS */}
-
-        {currentPage === "all-problems" && (
-          <AllProblems
-            setCurrentPage={setCurrentPage}
-            setSelectedProblemId={
-              setSelectedProblemId
-            }
-            setBackPage={setBackPage}
-          />
-        )}
-
-
-        {/* SUBMIT PROBLEM */}
-
-        {currentPage === "submit" && (
-          <SubmitProblem setCurrentPage={setCurrentPage} />
-        )}
-
-
-        {/* MY PROBLEMS */}
-
-        {currentPage === "my-problems" && (
-          <MyProblems
-            setCurrentPage={setCurrentPage}
-            setSelectedProblemId={
-              setSelectedProblemId
-            }
-            setBackPage={setBackPage}
-          />
-        )}
-
-
-        {/* PROBLEM DETAILS */}
-
-        {currentPage === "problem-details" &&
-          selectedProblemId && (
-            <ProblemDetails
-              problemId={selectedProblemId}
+          {currentPage === "home" && (
+            <Home
+              user={user}
               setCurrentPage={setCurrentPage}
-              backPage={backPage}
             />
           )}
-      </Suspense>
+
+
+          {/* EXPLORE PROBLEMS */}
+
+          {currentPage === "all-problems" && (
+            <AllProblems
+              setCurrentPage={setCurrentPage}
+              setSelectedProblemId={
+                setSelectedProblemId
+              }
+              setBackPage={setBackPage}
+            />
+          )}
+
+
+          {/* SUBMIT PROBLEM */}
+
+          {currentPage === "submit" && (
+            <SubmitProblem setCurrentPage={setCurrentPage} />
+          )}
+
+
+          {/* MY PROBLEMS */}
+
+          {currentPage === "my-problems" && (
+            <MyProblems
+              setCurrentPage={setCurrentPage}
+              setSelectedProblemId={
+                setSelectedProblemId
+              }
+              setBackPage={setBackPage}
+            />
+          )}
+
+
+          {/* PROBLEM DETAILS */}
+
+          {currentPage === "problem-details" &&
+            selectedProblemId && (
+              <ProblemDetails
+                problemId={selectedProblemId}
+                setCurrentPage={setCurrentPage}
+                backPage={backPage}
+              />
+            )}
+        </Suspense>
+      </ErrorBoundary>
 
       {/* PWA 1-CLICK INSTALL BANNER */}
       <InstallAppBanner />

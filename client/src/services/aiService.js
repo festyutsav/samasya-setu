@@ -9,17 +9,18 @@ export const predictCategory = async (
   token
 ) => {
 
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await axios.post(
     API_URL,
     {
       title,
       description,
     },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { headers }
   );
 
   return response.data;
