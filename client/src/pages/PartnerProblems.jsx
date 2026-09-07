@@ -6,6 +6,7 @@ import {
 } from "../services/partnerService";
 
 import ProblemEvidence from "../components/ProblemEvidence";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const PartnerProblems = ({ setPartnerPage }) => {
   // ========================================
@@ -19,6 +20,9 @@ const PartnerProblems = ({ setPartnerPage }) => {
     useState(true);
 
   const [updatingId, setUpdatingId] =
+    useState(null);
+
+  const [problemToSolve, setProblemToSolve] =
     useState(null);
 
   const [message, setMessage] =
@@ -473,10 +477,7 @@ const PartnerProblems = ({ setPartnerPage }) => {
 
                         <button
                           onClick={() =>
-                            handleStatusUpdate(
-                              problem._id,
-                              "solved"
-                            )
+                            setProblemToSolve(problem)
                           }
                           disabled={
                             updatingId ===
@@ -518,6 +519,34 @@ const PartnerProblems = ({ setPartnerPage }) => {
         )}
 
       </div>
+
+      {/* ========================================
+          CONFIRMATION MODAL (SAFEGUARD)
+      ======================================== */}
+      <ConfirmationModal
+        isOpen={Boolean(problemToSolve)}
+        onClose={() => setProblemToSolve(null)}
+        onConfirm={async () => {
+          if (!problemToSolve) return;
+          const id = problemToSolve._id;
+          setProblemToSolve(null);
+          await handleStatusUpdate(id, "solved");
+        }}
+        title="Mark Problem as Solved?"
+        confirmText="Yes, Mark as Solved"
+        cancelText="Keep Working / Cancel"
+        confirmVariant="success"
+        isLoading={updatingId === problemToSolve?._id}
+      >
+        <div className="space-y-3 text-left">
+          <p className="text-xs text-[#5c6f69] leading-relaxed">
+            Are you sure you want to mark <strong className="text-[#173d3a]">"{problemToSolve?.title}"</strong> as solved?
+          </p>
+          <div className="rounded-xl bg-[#f7f8f5] p-3 text-xs text-[#5c6f69] border border-[#e3e9e3]">
+            Marking this problem as solved will notify the citizen and Government Administration that field work and solutions have concluded.
+          </div>
+        </div>
+      </ConfirmationModal>
 
     </main>
   );

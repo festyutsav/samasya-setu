@@ -11,6 +11,7 @@ import {
   withdrawCollaborator,
   respondToCollaboration,
 } from "../services/partnerService";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 // ========================================
 // PROJECT STATUS STYLE
@@ -128,6 +129,8 @@ const PartnerProjects = ({
   const [messageType, setMessageType] = useState("");
 
   const [updatingId, setUpdatingId] = useState(null);
+  const [projectToComplete, setProjectToComplete] = useState(null);
+  const [projectToReopen, setProjectToReopen] = useState(null);
 
   // ========================================
   // COLLABORATION STATE
@@ -1150,11 +1153,9 @@ const PartnerProjects = ({
 
                     {isLead(project) && project.status === "active" && (
                       <button
-                        onClick={() =>
-                          handleStatusUpdate(project._id, "completed")
-                        }
+                        onClick={() => setProjectToComplete(project)}
                         disabled={updatingId === project._id}
-                        className="rounded-xl bg-[#087f70] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae]"
+                        className="rounded-xl bg-[#087f70] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae] shadow-sm"
                       >
                         {updatingId === project._id
                           ? "Updating..."
@@ -1169,9 +1170,22 @@ const PartnerProjects = ({
                     )}
 
                     {project.status === "completed" && (
-                      <span className="rounded-xl bg-[#e1f1ed] px-4 py-2 text-sm font-semibold text-[#087f70]">
-                        ✓ Project completed
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-xl bg-[#e1f1ed] px-4 py-2 text-sm font-semibold text-[#087f70]">
+                          ✓ Project completed
+                        </span>
+                        {isLead(project) && (
+                          <button
+                            type="button"
+                            onClick={() => setProjectToReopen(project)}
+                            disabled={updatingId === project._id}
+                            className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                            title="Reopen project if marked completed by accident"
+                          >
+                            Reopen
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </article>
@@ -1180,6 +1194,51 @@ const PartnerProjects = ({
           </div>
         )}
       </div>
+
+      {/* ========================================
+          CONFIRMATION MODALS (SAFEGUARDS)
+      ======================================== */}
+      <ConfirmationModal
+        isOpen={Boolean(projectToComplete)}
+        onClose={() => setProjectToComplete(null)}
+        onConfirm={async () => {
+          if (!projectToComplete) return;
+          const id = projectToComplete._id;
+          setProjectToComplete(null);
+          await handleStatusUpdate(id, "completed");
+        }}
+        title="Complete Project & Submit Resolution"
+        confirmText="Yes, Mark Completed"
+        cancelText="Keep Working / Cancel"
+        confirmVariant="success"
+        isLoading={updatingId === projectToComplete?._id}
+      >
+        <div className="space-y-3 text-left">
+          <p className="text-xs text-[#5c6f69] leading-relaxed">
+            Are you sure you want to mark <strong className="text-[#173d3a]">"{projectToComplete?.title}"</strong> as completed?
+          </p>
+          <div className="rounded-xl bg-[#f7f8f5] p-3 text-xs text-[#5c6f69] border border-[#e3e9e3]">
+            Submitting marks this collaborative effort as completed and forwards resolution details to Government Administrators for official review and approval.
+          </div>
+        </div>
+      </ConfirmationModal>
+
+      <ConfirmationModal
+        isOpen={Boolean(projectToReopen)}
+        onClose={() => setProjectToReopen(null)}
+        onConfirm={async () => {
+          if (!projectToReopen) return;
+          const id = projectToReopen._id;
+          setProjectToReopen(null);
+          await handleStatusUpdate(id, "active");
+        }}
+        title="Reopen Project?"
+        message={`Are you sure you want to move "${projectToReopen?.title}" back to Active status? Partners can resume collaborating and updating milestones.`}
+        confirmText="Reopen to Active"
+        cancelText="Cancel"
+        confirmVariant="primary"
+        isLoading={updatingId === projectToReopen?._id}
+      />
     </main>
   );
 };

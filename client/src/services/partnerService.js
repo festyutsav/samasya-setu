@@ -208,11 +208,13 @@ export const updateProjectStatus = async (
   projectId,
   status,
   token,
+  payload = {},
 ) => {
   const response = await axios.patch(
     `${PROJECT_API_URL}/${projectId}/status`,
     {
       status,
+      ...payload,
     },
     getAuthConfig(token),
   );

@@ -6,6 +6,7 @@ import {
   getMyProjects,
   updatePartnerProblemStatus,
 } from "../services/partnerService";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 // ========================================
 // ICONS + STAT CARD
@@ -83,6 +84,8 @@ const PartnerDashboard = ({
 
   const [updatingId, setUpdatingId] =
     useState(null);
+
+  const [problemToSolve, setProblemToSolve] = useState(null);
 
   // ========================================
   // FETCH DASHBOARD DATA
@@ -693,9 +696,7 @@ const PartnerDashboard = ({
 
                       {problem.status === "in_progress" && (
                         <button
-                          onClick={() =>
-                            handleStatusUpdate(problem._id, "solved")
-                          }
+                          onClick={() => setProblemToSolve(problem)}
                           disabled={updatingId === problem._id}
                           className="inline-flex items-center gap-2 rounded-xl bg-[#087f70] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#066a5d] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#7fb8ae]"
                         >
@@ -721,6 +722,34 @@ const PartnerDashboard = ({
         </section>
 
       </div>
+
+      {/* ========================================
+          CONFIRMATION MODAL (SAFEGUARD)
+      ======================================== */}
+      <ConfirmationModal
+        isOpen={Boolean(problemToSolve)}
+        onClose={() => setProblemToSolve(null)}
+        onConfirm={async () => {
+          if (!problemToSolve) return;
+          const id = problemToSolve._id;
+          setProblemToSolve(null);
+          await handleStatusUpdate(id, "solved");
+        }}
+        title="Mark Problem as Solved?"
+        confirmText="Yes, Mark as Solved"
+        cancelText="Keep Working / Cancel"
+        confirmVariant="success"
+        isLoading={updatingId === problemToSolve?._id}
+      >
+        <div className="space-y-3 text-left">
+          <p className="text-xs text-[#5c6f69] leading-relaxed">
+            Are you sure you want to mark <strong className="text-[#173d3a]">"{problemToSolve?.title}"</strong> as solved?
+          </p>
+          <div className="rounded-xl bg-[#f7f8f5] p-3 text-xs text-[#5c6f69] border border-[#e3e9e3]">
+            Marking this problem as solved will notify the citizen and Government Administration that field work and solutions have concluded.
+          </div>
+        </div>
+      </ConfirmationModal>
 
     </main>
   );
