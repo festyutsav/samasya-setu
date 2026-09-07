@@ -121,6 +121,8 @@ const ProjectWorkspace = ({
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showReopenModal, setShowReopenModal] = useState(false);
   const [completionSummary, setCompletionSummary] = useState("");
+  const [confirmCheck, setConfirmCheck] = useState(false);
+  const [overrideMilestones, setOverrideMilestones] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setNow(Date.now()), 0);
@@ -211,6 +213,8 @@ const ProjectWorkspace = ({
       resolutionSummary: completionSummary.trim() || undefined,
     });
     setShowCompleteModal(false);
+    setConfirmCheck(false);
+    setOverrideMilestones(false);
   };
 
   const handleConfirmReopen = async () => {
@@ -319,6 +323,8 @@ const ProjectWorkspace = ({
   ).length;
 
   const totalMilestones = (project?.milestones || []).length;
+  const hasIncompleteMilestones =
+    totalMilestones > 0 && completedMilestones < totalMilestones;
 
   // Unified contribution feed across the lead university and
   // all collaborators — the "merged" activity view.
@@ -1135,14 +1141,44 @@ const ProjectWorkspace = ({
                   )}
 
                   {project.status === "active" && (
-                    <button
-                      type="button"
-                      onClick={() => setShowCompleteModal(true)}
-                      disabled={busy}
-                      className="w-full rounded-xl bg-[#087f70] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae] shadow-sm"
-                    >
-                      {busy ? "Updating..." : "Mark completed"}
-                    </button>
+                    <div className="space-y-2">
+                      <div
+                        className={`rounded-xl border p-2.5 text-xs ${
+                          hasIncompleteMilestones
+                            ? "border-amber-200 bg-amber-50 text-amber-900"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-semibold">
+                          <span>Milestones:</span>
+                          <span>
+                            {completedMilestones}/{totalMilestones} Completed
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-[#5c6f69]">
+                          {hasIncompleteMilestones
+                            ? `${totalMilestones - completedMilestones} milestone(s) pending on ground`
+                            : "All planned milestones concluded"}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConfirmCheck(false);
+                          setOverrideMilestones(false);
+                          setShowCompleteModal(true);
+                        }}
+                        disabled={busy}
+                        className="w-full rounded-xl bg-[#087f70] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae]"
+                      >
+                        {busy ? "Updating..." : "Mark completed"}
+                      </button>
+
+                      <p className="text-center text-[11px] text-[#899892]">
+                        Requires deliverables review & sign-off
+                      </p>
+                    </div>
                   )}
 
                   {project.status === "completed" && (
@@ -1185,34 +1221,49 @@ const ProjectWorkspace = ({
       {/* Completion & Resolution Submission Modal */}
       <ConfirmationModal
         isOpen={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
+        onClose={() => {
+          setShowCompleteModal(false);
+          setConfirmCheck(false);
+          setOverrideMilestones(false);
+        }}
         onConfirm={handleConfirmCompletion}
         title="Complete Project & Submit Resolution"
         confirmText="Confirm & Mark Completed"
         cancelText="Keep Working / Cancel"
         confirmVariant="success"
         isLoading={busy}
+        isConfirmDisabled={
+          !confirmCheck ||
+          completionSummary.trim().length < 15 ||
+          (hasIncompleteMilestones && !overrideMilestones)
+        }
       >
         <div className="space-y-4 text-left">
-          <div className="rounded-xl bg-[#f7f8f5] p-3.5 text-xs text-[#5c6f69] border border-[#e3e9e3]">
-            <p className="font-semibold text-[#173d3a] mb-1">
+          <div className="rounded-xl border border-[#e3e9e3] bg-[#f7f8f5] p-3.5 text-xs text-[#5c6f69]">
+            <p className="mb-1 font-semibold text-[#173d3a]">
               ⚠️ Concluding Collaboration
             </p>
             <p>
-              Submitting marks the project as completed and compiles all collaborator contributions for Government Administration review and final resolution sign-off.
+              Submitting marks this R&D project as completed and compiles all collaborator contributions for Government Administration review and final citizen ground verification.
             </p>
           </div>
 
           {/* Progress Overview */}
-          <div className="rounded-xl border border-[#e3e9e3] p-3 space-y-2 bg-white">
-            <div className="flex justify-between items-center text-xs">
+          <div className="rounded-xl border border-[#e3e9e3] bg-white p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-[#71827c]">Milestones Completed</span>
-              <span className="font-bold text-[#173d3a]">
-                {(project?.milestones || []).filter((m) => m.completed).length} of{" "}
-                {(project?.milestones || []).length}
+              <span
+                className={`font-bold ${
+                  completedMilestones === totalMilestones
+                    ? "text-emerald-700"
+                    : "text-amber-700"
+                }`}
+              >
+                {completedMilestones} of {totalMilestones}{" "}
+                ({totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 100}%)
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs">
+            <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-[#71827c]">Active Collaborators</span>
               <span className="font-bold text-[#087f70]">
                 {(project?.collaborators || []).filter((c) => c.status === "accepted").length} Partners
@@ -1220,18 +1271,73 @@ const ProjectWorkspace = ({
             </div>
           </div>
 
-          {/* Optional Resolution Summary Note */}
+          {/* Incomplete Milestones Warning & Override */}
+          {hasIncompleteMilestones && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3 text-xs space-y-2">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <span>⚠️</span>
+                <span>
+                  {totalMilestones - completedMilestones} milestone{totalMilestones - completedMilestones === 1 ? " is" : "s are"} still incomplete
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Before marking the project as completed, please ensure all planned deliverables have been satisfied in the field.
+              </p>
+              <label className="flex items-start gap-2 pt-1 cursor-pointer font-medium text-amber-950">
+                <input
+                  type="checkbox"
+                  checked={overrideMilestones}
+                  onChange={(e) => setOverrideMilestones(e.target.checked)}
+                  className="mt-0.5 rounded border-amber-400 text-[#087f70] focus:ring-[#087f70]"
+                />
+                <span className="text-xs">
+                  I confirm that any pending milestones are superseded or fulfilled by final deliverables.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Deliverables & Solution Summary Note (Required) */}
           <div>
-            <label className="block text-xs font-semibold text-[#315d56] uppercase tracking-wider mb-1.5">
-              Deliverables & Solution Summary (Optional)
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#315d56]">
+              Deliverables & Solution Summary <span className="text-red-500">*</span>
             </label>
             <textarea
               value={completionSummary}
               onChange={(e) => setCompletionSummary(e.target.value)}
               rows={3}
-              placeholder="e.g., Successfully deployed IoT water monitoring sensors and verified safe TDS levels with municipal department..."
-              className="w-full rounded-xl border border-[#dbe5df] p-3 text-xs focus:border-[#087f70] focus:ring-1 focus:ring-[#087f70] focus:outline-none placeholder:text-[#a1aca7]"
+              placeholder="Describe the solution and field deliverables accomplished (min 15 chars), e.g., Successfully deployed IoT sensors and verified water potability with local panchayat..."
+              className="w-full rounded-xl border border-[#dbe5df] p-3 text-xs placeholder:text-[#a1aca7] focus:border-[#087f70] focus:outline-none focus:ring-1 focus:ring-[#087f70]"
             />
+            <div className="mt-1 flex items-center justify-between text-[11px]">
+              <span
+                className={
+                  completionSummary.trim().length < 15
+                    ? "font-medium text-amber-600"
+                    : "font-medium text-emerald-700"
+                }
+              >
+                {completionSummary.trim().length < 15
+                  ? `Minimum 15 characters required (${15 - completionSummary.trim().length} more needed)`
+                  : "✓ Solution summary provided"}
+              </span>
+              <span className="text-[#899892]">{completionSummary.length} chars</span>
+            </div>
+          </div>
+
+          {/* Confirmation Checkbox Safeguard */}
+          <div className="border-t border-[#e3e9e3] pt-3">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs font-medium text-[#173d3a]">
+              <input
+                type="checkbox"
+                checked={confirmCheck}
+                onChange={(e) => setConfirmCheck(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-[#087f70] focus:ring-[#087f70]"
+              />
+              <span>
+                I confirm that all research fieldwork and technical deliverables are concluded and ready for Government Administrative sign-off.
+              </span>
+            </label>
           </div>
         </div>
       </ConfirmationModal>
