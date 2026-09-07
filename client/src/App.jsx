@@ -1,39 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 
-// ================= AUTH PAGES =================
+// ================= AUTH PAGES (LAZY) =================
 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import PortalSelection from "./pages/PortalSelection";
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const PortalSelection = lazy(() => import("./pages/PortalSelection"));
 
-// ================= CITIZEN PAGES =================
+// ================= CITIZEN PAGES (LAZY) =================
 
-import Home from "./pages/Home";
-import SubmitProblem from "./pages/SubmitProblem";
-import MyProblems from "./pages/MyProblems";
-import ProblemDetails from "./pages/ProblemDetails";
-import AllProblems from "./pages/AllProblems";
+const Home = lazy(() => import("./pages/Home"));
+const SubmitProblem = lazy(() => import("./pages/SubmitProblem"));
+const MyProblems = lazy(() => import("./pages/MyProblems"));
+const ProblemDetails = lazy(() => import("./pages/ProblemDetails"));
+const AllProblems = lazy(() => import("./pages/AllProblems"));
 
-// ================= ADMIN PAGES =================
+// ================= ADMIN PAGES (LAZY) =================
 
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminProposals from "./pages/AdminProposals";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
-import PartnerManagement from "./pages/PartnerManagement";
-import AdminProblemDetails from "./pages/AdminProblemDetails";
-// ================= PARTNER PAGES =================
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminProposals = lazy(() => import("./pages/AdminProposals"));
+const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
+const PartnerManagement = lazy(() => import("./pages/PartnerManagement"));
+const AdminProblemDetails = lazy(() => import("./pages/AdminProblemDetails"));
 
-import PartnerDashboard from "./pages/PartnerDashboard";
+// ================= PARTNER PAGES (LAZY) =================
 
-import PartnerProblems from "./pages/PartnerProblems";
+const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
+const PartnerProblems = lazy(() => import("./pages/PartnerProblems"));
+const PartnerProjects = lazy(() => import("./pages/PartnerProjects"));
+const PartnerCollaborations = lazy(() => import("./pages/PartnerCollaborations"));
+const PartnerDirectory = lazy(() => import("./pages/PartnerDirectory"));
+const ProjectWorkspace = lazy(() => import("./pages/ProjectWorkspace"));
+const UniversityDashboard = lazy(() => import("./pages/UniversityDashboard"));
 
-import PartnerProjects from "./pages/PartnerProjects";
+// ================= PAGE LOADING FALLBACK =================
 
-import PartnerCollaborations from "./pages/PartnerCollaborations";
-import PartnerDirectory from "./pages/PartnerDirectory";
-import ProjectWorkspace from "./pages/ProjectWorkspace";
-
-import UniversityDashboard from "./pages/UniversityDashboard";
+const PageLoadingFallback = () => (
+  <div className="flex min-h-[50vh] w-full items-center justify-center py-16">
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-9 w-9 animate-spin rounded-full border-3 border-[#d8ebe4] border-t-[#0b514a]" />
+      <span className="text-xs font-medium uppercase tracking-wider text-[#71827c]">
+        Loading...
+      </span>
+    </div>
+  </div>
+);
 // ================= COMPONENTS =================
 
 import Navbar from "./components/Navbar";
@@ -338,60 +348,43 @@ function App() {
   // ==================================================
 
   if (!user) {
-    // ================= PORTAL SELECTION =================
-
-    if (!selectedPortal) {
-      return (
-        <PortalSelection
-          onSelectPortal={(portal) => {
-            setSelectedPortal(portal);
-
-            setAuthPage("login");
-          }}
-        />
-      );
-    }
-
-    // ================= CITIZEN REGISTER =================
-
-    if (
-      authPage === "register" &&
-      selectedPortal === "citizen"
-    ) {
-      return (
-        <Register
-          onSwitchToLogin={(email) => {
-            if (email) setRegisteredEmail(email);
-            setAuthPage("login");
-          }}
-          onBack={() => {
-            setSelectedPortal(null);
-            setAuthPage("login");
-          }}
-        />
-      );
-    }
-
-    // ================= LOGIN =================
-
     return (
-      <Login
-        portal={selectedPortal}
-        initialEmail={registeredEmail}
-        onLogin={handleLogin}
-        onSwitchToRegister={() => {
-          if (
-            selectedPortal === "citizen"
-          ) {
-            setAuthPage("register");
-          }
-        }}
-        onBack={() => {
-          setSelectedPortal(null);
-
-          setAuthPage("login");
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        {!selectedPortal ? (
+          <PortalSelection
+            onSelectPortal={(portal) => {
+              setSelectedPortal(portal);
+              setAuthPage("login");
+            }}
+          />
+        ) : authPage === "register" && selectedPortal === "citizen" ? (
+          <Register
+            onSwitchToLogin={(email) => {
+              if (email) setRegisteredEmail(email);
+              setAuthPage("login");
+            }}
+            onBack={() => {
+              setSelectedPortal(null);
+              setAuthPage("login");
+            }}
+          />
+        ) : (
+          <Login
+            portal={selectedPortal}
+            initialEmail={registeredEmail}
+            onLogin={handleLogin}
+            onSwitchToRegister={() => {
+              if (selectedPortal === "citizen") {
+                setAuthPage("register");
+              }
+            }}
+            onBack={() => {
+              setSelectedPortal(null);
+              setAuthPage("login");
+            }}
+          />
+        )}
+      </Suspense>
     );
   }
 
@@ -411,51 +404,53 @@ function App() {
           setSelectedAdminProblemId={setSelectedAdminProblemId}
         />
 
-        {/* ADMIN DASHBOARD */}
+        <Suspense fallback={<PageLoadingFallback />}>
+          {/* ADMIN DASHBOARD */}
 
-        {adminPage === "dashboard" && (
-          <AdminDashboard
-            setAdminPage={setAdminPage}
-            setSelectedAdminProblemId={
-              setSelectedAdminProblemId
-            }
-          />
-        )}
-
-        {/* ADMIN PROPOSALS */}
-
-        {adminPage === "proposals" && (
-          <AdminProposals
-            setAdminPage={setAdminPage}
-            setSelectedAdminProblemId={
-              setSelectedAdminProblemId
-            }
-          />
-        )}
-
-        {/* PARTNER MANAGEMENT */}
-
-        {adminPage === "partners" && (
-          <PartnerManagement setAdminPage={setAdminPage} />
-        )}
-
-        {/* ANALYTICS DASHBOARD */}
-
-        {adminPage === "analytics" && (
-          <AnalyticsDashboard setAdminPage={setAdminPage} />
-        )}
-
-        {/* ADMIN PROBLEM DETAILS */}
-
-        {adminPage === "problem-details" &&
-          selectedAdminProblemId && (
-            <AdminProblemDetails
-              problemId={
-                selectedAdminProblemId
-              }
+          {adminPage === "dashboard" && (
+            <AdminDashboard
               setAdminPage={setAdminPage}
+              setSelectedAdminProblemId={
+                setSelectedAdminProblemId
+              }
             />
           )}
+
+          {/* ADMIN PROPOSALS */}
+
+          {adminPage === "proposals" && (
+            <AdminProposals
+              setAdminPage={setAdminPage}
+              setSelectedAdminProblemId={
+                setSelectedAdminProblemId
+              }
+            />
+          )}
+
+          {/* PARTNER MANAGEMENT */}
+
+          {adminPage === "partners" && (
+            <PartnerManagement setAdminPage={setAdminPage} />
+          )}
+
+          {/* ANALYTICS DASHBOARD */}
+
+          {adminPage === "analytics" && (
+            <AnalyticsDashboard setAdminPage={setAdminPage} />
+          )}
+
+          {/* ADMIN PROBLEM DETAILS */}
+
+          {adminPage === "problem-details" &&
+            selectedAdminProblemId && (
+              <AdminProblemDetails
+                problemId={
+                  selectedAdminProblemId
+                }
+                setAdminPage={setAdminPage}
+              />
+            )}
+        </Suspense>
 
       </div>
     );
@@ -484,82 +479,84 @@ function App() {
             PARTNER DASHBOARD
         ======================================== */}
 
-        {partnerPage === "dashboard" && (
-          <PartnerDashboard
-            setPartnerPage={setPartnerPage}
-            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-          />
-        )}
-
-
-        {/* ========================================
-            PARTNER PROBLEMS
-        ======================================== */}
-
-        {partnerPage === "problems" && (
-          <PartnerProblems setPartnerPage={setPartnerPage} />
-        )}
-
-
-        {/* ========================================
-            PARTNER PROJECTS
-        ======================================== */}
-
-        {partnerPage === "projects" && (
-          <PartnerProjects
-            user={user}
-            setPartnerPage={setPartnerPage}
-            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-          />
-        )}
-
-        {/* ========================================
-            INDUSTRY COLLABORATIONS
-        ======================================== */}
-
-        {partnerPage === "collaborations" && (
-          <PartnerCollaborations
-            user={user}
-            setPartnerPage={setPartnerPage}
-            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-          />
-        )}
-
-        {/* ========================================
-            PARTNER DIRECTORY (DISCOVER)
-        ======================================== */}
-
-        {partnerPage === "directory" && (
-          <PartnerDirectory user={user} setPartnerPage={setPartnerPage} />
-        )}
-
-        {/* ========================================
-            SHARED PROJECT WORKSPACE
-        ======================================== */}
-
-        {partnerPage === "workspace" &&
-          selectedPartnerProjectId && (
-            <ProjectWorkspace
-              projectId={selectedPartnerProjectId}
-              user={user}
-              setSelectedPartnerProjectId={
-                setSelectedPartnerProjectId
-              }
+        <Suspense fallback={<PageLoadingFallback />}>
+          {partnerPage === "dashboard" && (
+            <PartnerDashboard
               setPartnerPage={setPartnerPage}
+              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
             />
           )}
 
 
-        {/* ========================================
-            UNIVERSITY DASHBOARD
-        ======================================== */}
+          {/* ========================================
+              PARTNER PROBLEMS
+          ======================================== */}
 
-        {partnerPage === "university" && (
-          <UniversityDashboard
-            setCurrentPage={setPartnerPage}
-            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
-          />
-        )}
+          {partnerPage === "problems" && (
+            <PartnerProblems setPartnerPage={setPartnerPage} />
+          )}
+
+
+          {/* ========================================
+              PARTNER PROJECTS
+          ======================================== */}
+
+          {partnerPage === "projects" && (
+            <PartnerProjects
+              user={user}
+              setPartnerPage={setPartnerPage}
+              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+            />
+          )}
+
+          {/* ========================================
+              INDUSTRY COLLABORATIONS
+          ======================================== */}
+
+          {partnerPage === "collaborations" && (
+            <PartnerCollaborations
+              user={user}
+              setPartnerPage={setPartnerPage}
+              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+            />
+          )}
+
+          {/* ========================================
+              PARTNER DIRECTORY (DISCOVER)
+          ======================================== */}
+
+          {partnerPage === "directory" && (
+            <PartnerDirectory user={user} setPartnerPage={setPartnerPage} />
+          )}
+
+          {/* ========================================
+              SHARED PROJECT WORKSPACE
+          ======================================== */}
+
+          {partnerPage === "workspace" &&
+            selectedPartnerProjectId && (
+              <ProjectWorkspace
+                projectId={selectedPartnerProjectId}
+                user={user}
+                setSelectedPartnerProjectId={
+                  setSelectedPartnerProjectId
+                }
+                setPartnerPage={setPartnerPage}
+              />
+            )}
+
+
+          {/* ========================================
+              UNIVERSITY DASHBOARD
+          ======================================== */}
+
+          {partnerPage === "university" && (
+            <UniversityDashboard
+              setCurrentPage={setPartnerPage}
+              setSelectedPartnerProjectId={setSelectedPartnerProjectId}
+            />
+          )}
+        </Suspense>
 
       </div>
     );
@@ -582,59 +579,61 @@ function App() {
       />
 
 
-      {/* HOME */}
+      <Suspense fallback={<PageLoadingFallback />}>
+        {/* HOME */}
 
-      {currentPage === "home" && (
-        <Home
-          user={user}
-          setCurrentPage={setCurrentPage}
-        />
-      )}
-
-
-      {/* EXPLORE PROBLEMS */}
-
-      {currentPage === "all-problems" && (
-        <AllProblems
-          setCurrentPage={setCurrentPage}
-          setSelectedProblemId={
-            setSelectedProblemId
-          }
-          setBackPage={setBackPage}
-        />
-      )}
-
-
-      {/* SUBMIT PROBLEM */}
-
-      {currentPage === "submit" && (
-        <SubmitProblem setCurrentPage={setCurrentPage} />
-      )}
-
-
-      {/* MY PROBLEMS */}
-
-      {currentPage === "my-problems" && (
-        <MyProblems
-          setCurrentPage={setCurrentPage}
-          setSelectedProblemId={
-            setSelectedProblemId
-          }
-          setBackPage={setBackPage}
-        />
-      )}
-
-
-      {/* PROBLEM DETAILS */}
-
-      {currentPage === "problem-details" &&
-        selectedProblemId && (
-          <ProblemDetails
-            problemId={selectedProblemId}
+        {currentPage === "home" && (
+          <Home
+            user={user}
             setCurrentPage={setCurrentPage}
-            backPage={backPage}
           />
         )}
+
+
+        {/* EXPLORE PROBLEMS */}
+
+        {currentPage === "all-problems" && (
+          <AllProblems
+            setCurrentPage={setCurrentPage}
+            setSelectedProblemId={
+              setSelectedProblemId
+            }
+            setBackPage={setBackPage}
+          />
+        )}
+
+
+        {/* SUBMIT PROBLEM */}
+
+        {currentPage === "submit" && (
+          <SubmitProblem setCurrentPage={setCurrentPage} />
+        )}
+
+
+        {/* MY PROBLEMS */}
+
+        {currentPage === "my-problems" && (
+          <MyProblems
+            setCurrentPage={setCurrentPage}
+            setSelectedProblemId={
+              setSelectedProblemId
+            }
+            setBackPage={setBackPage}
+          />
+        )}
+
+
+        {/* PROBLEM DETAILS */}
+
+        {currentPage === "problem-details" &&
+          selectedProblemId && (
+            <ProblemDetails
+              problemId={selectedProblemId}
+              setCurrentPage={setCurrentPage}
+              backPage={backPage}
+            />
+          )}
+      </Suspense>
 
       {/* PWA 1-CLICK INSTALL BANNER */}
       <InstallAppBanner />
