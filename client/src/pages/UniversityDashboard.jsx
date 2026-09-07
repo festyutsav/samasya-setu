@@ -16,8 +16,8 @@ const UniversityDashboard = ({ setCurrentPage }) => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [selectedProblemId, setSelectedProblemId] =
-    useState(null);
+  const [selectedProblemId, setSelectedProblemId] = useState(null);
+  const [activeTab, setActiveTab] = useState("proposals");
 
   // ========================================
   // FETCH PROBLEMS
@@ -61,17 +61,17 @@ const UniversityDashboard = ({ setCurrentPage }) => {
       <div className="mx-auto max-w-6xl">
         {/* HEADER */}
 
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-sm font-semibold text-[#0b6b60]">
             UNIVERSITY PORTAL
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-[#173d3a]">
-            University Dashboard
+            University Proposals & Problem Workspace
           </h1>
 
           <p className="mt-2 text-[#5c6f69]">
-            Review assigned societal challenges and submit solution proposals.
+            Draft and track R&D solution proposals for community challenges across Jharkhand.
           </p>
         </div>
 
@@ -90,9 +90,9 @@ const UniversityDashboard = ({ setCurrentPage }) => {
             <button
               type="button"
               onClick={() => setSelectedProblemId(null)}
-              className="mb-4 text-sm font-semibold text-[#0b6b60] transition hover:text-[#087f70]"
+              className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-[#dbe5df] bg-white px-3 py-1.5 text-xs font-bold text-[#0b6b60] shadow-2xs transition hover:bg-[#eef7f4]"
             >
-              ← Back to Problems
+              ← Back to Overview
             </button>
 
             <div className="grid gap-8 lg:grid-cols-2">
@@ -100,6 +100,7 @@ const UniversityDashboard = ({ setCurrentPage }) => {
                 problemId={selectedProblemId}
                 onProposalSubmitted={() => {
                   setSelectedProblemId(null);
+                  setActiveTab("proposals");
                   fetchProblems();
                 }}
               />
@@ -112,10 +113,49 @@ const UniversityDashboard = ({ setCurrentPage }) => {
           </div>
         )}
 
-        {/* PROBLEMS LIST */}
+        {/* TAB NAVIGATION & SECTIONS */}
 
         {!selectedProblemId && (
-          <section>
+          <div>
+            <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-[#e3e9e3] pb-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("proposals")}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                  activeTab === "proposals"
+                    ? "bg-[#0b514a] text-white shadow-sm"
+                    : "border border-[#dbe5df] bg-white text-[#5c6f69] hover:bg-[#f7f8f5] hover:text-[#173d3a]"
+                }`}
+              >
+                <span>📑 My Submitted Proposals</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("problems")}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                  activeTab === "problems"
+                    ? "bg-[#0b514a] text-white shadow-sm"
+                    : "border border-[#dbe5df] bg-white text-[#5c6f69] hover:bg-[#f7f8f5] hover:text-[#173d3a]"
+                }`}
+              >
+                <span>🎯 Assigned Challenges</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">
+                  {problems.length}
+                </span>
+              </button>
+            </div>
+
+            {/* TAB: MY SUBMITTED PROPOSALS */}
+            {activeTab === "proposals" && (
+              <section className="space-y-6">
+                <ProposalList isAdmin={false} />
+              </section>
+            )}
+
+            {/* TAB: ASSIGNED PROBLEMS */}
+            {activeTab === "problems" && (
+              <section>
             <h2 className="mb-4 text-xl font-bold text-[#173d3a]">
               Assigned Problems
             </h2>
@@ -177,8 +217,10 @@ const UniversityDashboard = ({ setCurrentPage }) => {
                 ))}
               </div>
             )}
-          </section>
-        )}
+            </section>
+          )}
+        </div>
+      )}
       </div>
     </main>
   );

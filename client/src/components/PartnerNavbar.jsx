@@ -10,7 +10,9 @@ const PartnerNavbar = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isUniversity = user?.organization?.type === "university";
+  const isUniversity = user?.organization?.type
+    ? user.organization.type.toLowerCase() === "university"
+    : true;
 
   const navItems = [
     { label: "Dashboard", page: "dashboard" },
