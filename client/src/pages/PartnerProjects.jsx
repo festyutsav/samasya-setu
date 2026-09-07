@@ -132,6 +132,7 @@ const PartnerProjects = ({
 
   const [updatingId, setUpdatingId] = useState(null);
   const [projectToComplete, setProjectToComplete] = useState(null);
+  const [completeConfirmed, setCompleteConfirmed] = useState(false);
   const [projectToReopen, setProjectToReopen] = useState(null);
 
   // ========================================
@@ -1207,11 +1208,15 @@ const PartnerProjects = ({
       ======================================== */}
       <ConfirmationModal
         isOpen={Boolean(projectToComplete)}
-        onClose={() => setProjectToComplete(null)}
+        onClose={() => {
+          setProjectToComplete(null);
+          setCompleteConfirmed(false);
+        }}
         onConfirm={async () => {
           if (!projectToComplete) return;
           const id = projectToComplete._id;
           setProjectToComplete(null);
+          setCompleteConfirmed(false);
           await handleStatusUpdate(id, "completed");
         }}
         title="Complete Project & Submit Resolution"
@@ -1219,13 +1224,29 @@ const PartnerProjects = ({
         cancelText="Keep Working / Cancel"
         confirmVariant="success"
         isLoading={updatingId === projectToComplete?._id}
+        isConfirmDisabled={!completeConfirmed}
       >
-        <div className="space-y-3 text-left">
+        <div className="space-y-4 text-left">
           <p className="text-xs text-[#5c6f69] leading-relaxed">
             Are you sure you want to mark <strong className="text-[#173d3a]">"{projectToComplete?.title}"</strong> as completed?
           </p>
-          <div className="rounded-xl bg-[#f7f8f5] p-3 text-xs text-[#5c6f69] border border-[#e3e9e3]">
-            Submitting marks this collaborative effort as completed and forwards resolution details to Government Administrators for official review and approval.
+
+          <div className="rounded-xl border border-[#e3e9e3] bg-[#f7f8f5] p-3 text-xs text-[#5c6f69]">
+            Submitting marks this collaborative effort as completed and forwards resolution details to Government Administrators for official review and citizen ground verification.
+          </div>
+
+          <div className="border-t border-[#e3e9e3] pt-3">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs font-medium text-[#173d3a]">
+              <input
+                type="checkbox"
+                checked={completeConfirmed}
+                onChange={(e) => setCompleteConfirmed(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-[#087f70] focus:ring-[#087f70]"
+              />
+              <span>
+                I confirm that all research deliverables and field solutions are completed and ready for final submission.
+              </span>
+            </label>
           </div>
         </div>
       </ConfirmationModal>

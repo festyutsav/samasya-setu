@@ -10,6 +10,7 @@ export default function ConfirmationModal({
   cancelText = "Cancel",
   confirmVariant = "primary", // "primary" | "success" | "danger" | "warning"
   isLoading = false,
+  isConfirmDisabled = false,
   children,
 }) {
   useEffect(() => {
@@ -132,7 +133,7 @@ export default function ConfirmationModal({
             <button
               type="button"
               onClick={onConfirm}
-              disabled={isLoading}
+              disabled={isLoading || isConfirmDisabled}
               className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${getVariantStyles()}`}
             >
               {isLoading ? (
