@@ -31,9 +31,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-      connectionTimeout: 8000,
-      greetingTimeout: 6000,
-      socketTimeout: 8000,
+      connectionTimeout: 4000,
+      greetingTimeout: 3000,
+      socketTimeout: 4000,
     });
   }
 
@@ -46,9 +46,9 @@ const getTransporter = () => {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-      connectionTimeout: 8000,
-      greetingTimeout: 6000,
-      socketTimeout: 8000,
+      connectionTimeout: 4000,
+      greetingTimeout: 3000,
+      socketTimeout: 4000,
     });
   }
 
