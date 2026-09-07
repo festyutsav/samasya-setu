@@ -13,6 +13,7 @@ import {
 
 import ExportBriefButton from "../components/ExportBriefButton";
 import ResolutionProof from "../components/ResolutionProof";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 // ========================================
 // HELPERS
@@ -117,6 +118,9 @@ const ProjectWorkspace = ({
   // during render (no Date.now() in the component body).
 
   const [now, setNow] = useState(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
+  const [completionSummary, setCompletionSummary] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setNow(Date.now()), 0);
@@ -199,8 +203,20 @@ const ProjectWorkspace = ({
     }
   };
 
-  const handleStatus = (status) =>
-    runAction((token) => updateProjectStatus(projectId, status, token));
+  const handleStatus = (status, payload = {}) =>
+    runAction((token) => updateProjectStatus(projectId, status, token, payload));
+
+  const handleConfirmCompletion = async () => {
+    await handleStatus("completed", {
+      resolutionSummary: completionSummary.trim() || undefined,
+    });
+    setShowCompleteModal(false);
+  };
+
+  const handleConfirmReopen = async () => {
+    await handleStatus("active");
+    setShowReopenModal(false);
+  };
 
   const handleToggleMilestone = (index) =>
     runAction((token) => toggleProjectMilestone(projectId, index, token));
@@ -1121,18 +1137,30 @@ const ProjectWorkspace = ({
                   {project.status === "active" && (
                     <button
                       type="button"
-                      onClick={() => handleStatus("completed")}
+                      onClick={() => setShowCompleteModal(true)}
                       disabled={busy}
-                      className="w-full rounded-xl bg-[#087f70] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae]"
+                      className="w-full rounded-xl bg-[#087f70] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#066a5d] disabled:cursor-not-allowed disabled:bg-[#7fb8ae] shadow-sm"
                     >
                       {busy ? "Updating..." : "Mark completed"}
                     </button>
                   )}
 
                   {project.status === "completed" && (
-                    <p className="rounded-xl bg-[#e1f1ed] px-4 py-2.5 text-sm font-semibold text-[#087f70]">
-                      ✓ Project completed
-                    </p>
+                    <div className="space-y-2">
+                      <p className="rounded-xl bg-[#e1f1ed] px-4 py-2.5 text-center text-sm font-semibold text-[#087f70]">
+                        ✓ Project completed
+                      </p>
+                      {isLead && (
+                        <button
+                          type="button"
+                          onClick={() => setShowReopenModal(true)}
+                          disabled={busy}
+                          className="w-full rounded-xl border border-[#dbe5df] bg-white px-4 py-2 text-xs font-semibold text-[#5c6f69] transition hover:bg-[#f7f8f5] hover:text-[#173d3a] disabled:opacity-50"
+                        >
+                          Reopen project (Return to Active)
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </section>
@@ -1149,6 +1177,77 @@ const ProjectWorkspace = ({
           />
         )}
       </div>
+
+      {/* ========================================
+          CONFIRMATION MODALS (SAFEGUARDS)
+      ======================================== */}
+
+      {/* Completion & Resolution Submission Modal */}
+      <ConfirmationModal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        onConfirm={handleConfirmCompletion}
+        title="Complete Project & Submit Resolution"
+        confirmText="Confirm & Mark Completed"
+        cancelText="Keep Working / Cancel"
+        confirmVariant="success"
+        isLoading={busy}
+      >
+        <div className="space-y-4 text-left">
+          <div className="rounded-xl bg-[#f7f8f5] p-3.5 text-xs text-[#5c6f69] border border-[#e3e9e3]">
+            <p className="font-semibold text-[#173d3a] mb-1">
+              ⚠️ Concluding Collaboration
+            </p>
+            <p>
+              Submitting marks the project as completed and compiles all collaborator contributions for Government Administration review and final resolution sign-off.
+            </p>
+          </div>
+
+          {/* Progress Overview */}
+          <div className="rounded-xl border border-[#e3e9e3] p-3 space-y-2 bg-white">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-medium text-[#71827c]">Milestones Completed</span>
+              <span className="font-bold text-[#173d3a]">
+                {(project?.milestones || []).filter((m) => m.completed).length} of{" "}
+                {(project?.milestones || []).length}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-medium text-[#71827c]">Active Collaborators</span>
+              <span className="font-bold text-[#087f70]">
+                {(project?.collaborators || []).filter((c) => c.status === "accepted").length} Partners
+              </span>
+            </div>
+          </div>
+
+          {/* Optional Resolution Summary Note */}
+          <div>
+            <label className="block text-xs font-semibold text-[#315d56] uppercase tracking-wider mb-1.5">
+              Deliverables & Solution Summary (Optional)
+            </label>
+            <textarea
+              value={completionSummary}
+              onChange={(e) => setCompletionSummary(e.target.value)}
+              rows={3}
+              placeholder="e.g., Successfully deployed IoT water monitoring sensors and verified safe TDS levels with municipal department..."
+              className="w-full rounded-xl border border-[#dbe5df] p-3 text-xs focus:border-[#087f70] focus:ring-1 focus:ring-[#087f70] focus:outline-none placeholder:text-[#a1aca7]"
+            />
+          </div>
+        </div>
+      </ConfirmationModal>
+
+      {/* Reopen Project Modal */}
+      <ConfirmationModal
+        isOpen={showReopenModal}
+        onClose={() => setShowReopenModal(false)}
+        onConfirm={handleConfirmReopen}
+        title="Reopen Collaborative Project?"
+        message="Are you sure you want to move this project back to Active status? This enables team members and partners to resume adding contributions and editing milestones."
+        confirmText="Yes, Reopen Project"
+        cancelText="Keep as Completed"
+        confirmVariant="primary"
+        isLoading={busy}
+      />
     </main>
   );
 };

@@ -5,6 +5,8 @@ import {
   getMyProposals,
   reviewProposal,
 } from "../services/proposalService";
+import EmptyState from "./EmptyState";
+import ProposalReviewModal from "./ProposalReviewModal";
 
 // ========================================
 // PROPOSAL LIST
@@ -22,6 +24,11 @@ const ProposalList = ({
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [reviewingId, setReviewingId] = useState(null);
+  const [reviewModalState, setReviewModalState] = useState({
+    isOpen: false,
+    proposal: null,
+    action: "approve",
+  });
 
   // ========================================
   // FETCH PROPOSALS
@@ -74,28 +81,39 @@ const ProposalList = ({
   // REVIEW PROPOSAL (ADMIN)
   // ========================================
 
-  const handleReview = async (proposalId, status) => {
+  const openReviewModal = (proposal, action) => {
+    setReviewModalState({
+      isOpen: true,
+      proposal,
+      action,
+    });
+  };
+
+  const handleConfirmReview = async (reviewNotes) => {
+    const { proposal, action } = reviewModalState;
+    if (!proposal) return;
+
     try {
-      setReviewingId(proposalId);
+      setReviewingId(proposal._id);
       setMessage("");
 
       const token = localStorage.getItem("token");
 
-      const reviewNotes = prompt(
-        status === "approved"
-          ? "Enter approval notes (optional):"
-          : "Enter rejection reason (optional):"
+      await reviewProposal(
+        proposal._id,
+        action,
+        reviewNotes?.trim() || "",
+        token,
       );
 
-      await reviewProposal(proposalId, status, reviewNotes || "", token);
-
-      setMessage(`Proposal ${status} successfully.`);
+      setMessage(`Proposal ${action === "approve" ? "approved" : "rejected"} successfully.`);
       setMessageType("success");
+      setReviewModalState({ isOpen: false, proposal: null, action: "approve" });
 
       await fetchProposals();
 
       if (onProposalReviewed) {
-        onProposalReviewed(proposalId, status);
+        onProposalReviewed(proposal._id, action);
       }
     } catch (error) {
       setMessage(
@@ -161,17 +179,19 @@ const ProposalList = ({
 
   if (!loading && proposals.length === 0) {
     return (
-      <div className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-[#173d3a]">
-          {isAdmin ? "Solution Proposals" : "My Proposals"}
-        </h2>
-
-        <p className="mt-2 text-sm text-[#71827c]">
-          {isAdmin
-            ? "No solution proposals have been submitted for this problem yet. Assigned universities will submit proposals here."
-            : "You have not submitted any proposals yet."}
-        </p>
-      </div>
+      <EmptyState
+        icon={
+          <svg className="h-8 w-8 text-[#087f70]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        }
+        title={isAdmin ? "No Solution Proposals Yet" : "No Submitted Proposals"}
+        description={
+          isAdmin
+            ? "No university proposals have been submitted for this problem yet. When an institution submits an R&D solution plan, it will appear here for review."
+            : "Your university has not submitted any solution proposals yet. Select an assigned challenge to formulate and submit a proposal."
+        }
+      />
     );
   }
 
@@ -329,7 +349,7 @@ const ProposalList = ({
 
                   <button
                     type="button"
-                    onClick={() => handleReview(proposal._id, "approved")}
+                    onClick={() => openReviewModal(proposal, "approved")}
                     disabled={reviewingId === proposal._id}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b6b60] px-4 py-2 text-sm font-semibold text-white shadow-xs transition hover:bg-[#087f70] disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -341,7 +361,7 @@ const ProposalList = ({
 
                   <button
                     type="button"
-                    onClick={() => handleReview(proposal._id, "rejected")}
+                    onClick={() => openReviewModal(proposal, "rejected")}
                     disabled={reviewingId === proposal._id}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-2xs transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -356,6 +376,18 @@ const ProposalList = ({
           ))}
         </div>
       )}
+
+      {/* PROPOSAL REVIEW MODAL */}
+      <ProposalReviewModal
+        isOpen={reviewModalState.isOpen}
+        onClose={() =>
+          setReviewModalState({ isOpen: false, proposal: null, action: "approve" })
+        }
+        onConfirm={handleConfirmReview}
+        proposal={reviewModalState.proposal}
+        action={reviewModalState.action === "approved" ? "approve" : "reject"}
+        isLoading={Boolean(reviewingId)}
+      />
     </div>
   );
 };

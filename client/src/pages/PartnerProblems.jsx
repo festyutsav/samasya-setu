@@ -6,6 +6,10 @@ import {
 } from "../services/partnerService";
 
 import ProblemEvidence from "../components/ProblemEvidence";
+import ConfirmationModal from "../components/ConfirmationModal";
+import EmptyState from "../components/EmptyState";
+import CategoryBadge from "../components/CategoryBadge";
+import StatusBadge from "../components/StatusBadge";
 
 const PartnerProblems = ({ setPartnerPage }) => {
   // ========================================
@@ -19,6 +23,9 @@ const PartnerProblems = ({ setPartnerPage }) => {
     useState(true);
 
   const [updatingId, setUpdatingId] =
+    useState(null);
+
+  const [problemToSolve, setProblemToSolve] =
     useState(null);
 
   const [message, setMessage] =
@@ -313,18 +320,13 @@ const PartnerProblems = ({ setPartnerPage }) => {
         ======================================== */}
 
         {problems.length === 0 ? (
-          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
-
-            <h2 className="text-lg font-bold text-[#173d3a]">
-              No Assigned Problems
-            </h2>
-
-            <p className="mt-2 text-[#71827c]">
-              Your organization has not been
-              assigned any problems yet.
-            </p>
-
-          </div>
+          <EmptyState
+            icon="🎯"
+            title="No Assigned Problems Yet"
+            description="When state administration assigns crowdsourced civic challenges to your university or industry team, they will appear here with field photos, geolocation, and citizen context."
+            actionText="Explore Problem Directory"
+            onAction={() => setPartnerPage("directory")}
+          />
         ) : (
           /* ========================================
               PROBLEMS LIST
@@ -337,7 +339,7 @@ const PartnerProblems = ({ setPartnerPage }) => {
 
                 <article
                   key={problem._id}
-                  className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm"
+                  className="group rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b4d4cb] hover:shadow-md"
                 >
 
                   {/* TITLE */}
@@ -346,31 +348,32 @@ const PartnerProblems = ({ setPartnerPage }) => {
 
                     <div>
 
-                      <h2 className="text-xl font-bold text-[#173d3a]">
+                      <h2 className="text-xl font-bold text-[#173d3a] group-hover:text-[#087f70] transition-colors">
                         {problem.title}
                       </h2>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
 
                         {/* STATUS */}
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                            problem.status
-                          )}`}
-                        >
-                          {formatStatus(
-                            problem.status
-                          )}
-                        </span>
+                        <StatusBadge status={problem.status} />
 
                         {/* CATEGORY */}
-
                         {problem.category && (
-                          <span className="rounded-full bg-[#f7f8f5] px-3 py-1 text-xs font-semibold capitalize text-[#5c6f69]">
+                          <CategoryBadge category={problem.category} />
+                        )}
 
-                            {problem.category}
-
+                        {/* SEVERITY */}
+                        {problem.severity && (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                              problem.severity === "high" || problem.severity === "critical"
+                                ? "border-rose-200 bg-rose-50 text-rose-700"
+                                : problem.severity === "medium"
+                                ? "border-amber-200 bg-amber-50 text-amber-800"
+                                : "border-slate-200 bg-slate-50 text-slate-700"
+                            }`}
+                          >
+                            <span>⚡ Severity: {problem.severity.toUpperCase()}</span>
                           </span>
                         )}
 
@@ -473,10 +476,7 @@ const PartnerProblems = ({ setPartnerPage }) => {
 
                         <button
                           onClick={() =>
-                            handleStatusUpdate(
-                              problem._id,
-                              "solved"
-                            )
+                            setProblemToSolve(problem)
                           }
                           disabled={
                             updatingId ===
@@ -518,6 +518,34 @@ const PartnerProblems = ({ setPartnerPage }) => {
         )}
 
       </div>
+
+      {/* ========================================
+          CONFIRMATION MODAL (SAFEGUARD)
+      ======================================== */}
+      <ConfirmationModal
+        isOpen={Boolean(problemToSolve)}
+        onClose={() => setProblemToSolve(null)}
+        onConfirm={async () => {
+          if (!problemToSolve) return;
+          const id = problemToSolve._id;
+          setProblemToSolve(null);
+          await handleStatusUpdate(id, "solved");
+        }}
+        title="Mark Problem as Solved?"
+        confirmText="Yes, Mark as Solved"
+        cancelText="Keep Working / Cancel"
+        confirmVariant="success"
+        isLoading={updatingId === problemToSolve?._id}
+      >
+        <div className="space-y-3 text-left">
+          <p className="text-xs text-[#5c6f69] leading-relaxed">
+            Are you sure you want to mark <strong className="text-[#173d3a]">"{problemToSolve?.title}"</strong> as solved?
+          </p>
+          <div className="rounded-xl bg-[#f7f8f5] p-3 text-xs text-[#5c6f69] border border-[#e3e9e3]">
+            Marking this problem as solved will notify the citizen and Government Administration that field work and solutions have concluded.
+          </div>
+        </div>
+      </ConfirmationModal>
 
     </main>
   );

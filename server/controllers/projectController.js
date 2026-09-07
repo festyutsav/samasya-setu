@@ -762,7 +762,7 @@ const addContribution = async (req, res) => {
 
 const updateProjectStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, outcomes, resolutionSummary } = req.body;
 
     const allowedStatuses = ["planning", "active", "completed"];
 
@@ -792,6 +792,12 @@ const updateProjectStatus = async (req, res) => {
     }
 
     project.status = status;
+    if (outcomes && typeof outcomes === "object") {
+      project.outcomes = {
+        ...(project.outcomes?.toObject ? project.outcomes.toObject() : project.outcomes || {}),
+        ...outcomes,
+      };
+    }
 
     await project.save();
 
@@ -818,7 +824,7 @@ const updateProjectStatus = async (req, res) => {
             .filter(Boolean),
           outcomes: populated.outcomes,
           submittedAt: new Date(),
-          summary: populated.description,
+          summary: resolutionSummary?.trim() || populated.description,
         };
         if (problem.status === "assigned" || problem.status === "submitted" || problem.status === "under_review") {
           problem.status = "in_progress";
@@ -833,6 +839,14 @@ const updateProjectStatus = async (req, res) => {
         problemId: populated.problem._id,
       });
     } else {
+      if (status === "active") {
+        const problem = await Problem.findById(project.problem);
+        if (problem && problem.status !== "solved") {
+          problem.resolutionSubmitted = false;
+          await problem.save();
+        }
+      }
+
       await notifyAdmins({
         type: "project_updated",
         title: "Project status updated",

@@ -27,6 +27,9 @@ import LifecycleStepper from "../components/LifecycleStepper";
 import ResolutionProof from "../components/ResolutionProof";
 
 import ExportBriefButton from "../components/ExportBriefButton";
+import ProposalReviewModal from "../components/ProposalReviewModal";
+import CategoryBadge from "../components/CategoryBadge";
+import StatusBadge from "../components/StatusBadge";
 
 const statusStyles = {
   submitted: "bg-[#f7ebd8] text-[#a25a1b]",
@@ -136,19 +139,29 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
     }
   };
 
-  const handleReviewProposalDirect = async (proposalId, status) => {
+  const [reviewModalState, setReviewModalState] = useState({
+    isOpen: false,
+    proposal: null,
+    action: "approve",
+  });
+
+  const handleConfirmProposalReview = async (reviewNotes) => {
+    const { proposal, action } = reviewModalState;
+    if (!proposal) return;
+
     try {
-      setReviewingProposalId(proposalId);
+      setReviewingProposalId(proposal._id);
       setMessage("");
       const token = localStorage.getItem("token");
 
-      const reviewNotes = prompt(
-        status === "approved"
-          ? "Enter approval notes (optional):"
-          : "Enter rejection reason (optional):"
+      await reviewProposal(
+        proposal._id,
+        action,
+        reviewNotes?.trim() || "",
+        token,
       );
 
-      await reviewProposal(proposalId, status, reviewNotes || "", token);
+      setReviewModalState({ isOpen: false, proposal: null, action: "approve" });
       await fetchData({ silent: true });
     } catch (error) {
       setMessage(
@@ -493,7 +506,13 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
               <div className="flex flex-wrap items-center gap-3 lg:flex-col lg:items-end">
                 <button
                   type="button"
-                  onClick={() => handleReviewProposalDirect(pendingProposals[0]._id, "approved")}
+                  onClick={() =>
+                    setReviewModalState({
+                      isOpen: true,
+                      proposal: pendingProposals[0],
+                      action: "approved",
+                    })
+                  }
                   disabled={reviewingProposalId === pendingProposals[0]._id}
                   className="inline-flex items-center gap-2 rounded-xl bg-[#0b6b60] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#087f70] disabled:opacity-50"
                 >
@@ -505,7 +524,13 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
                 <button
                   type="button"
-                  onClick={() => handleReviewProposalDirect(pendingProposals[0]._id, "rejected")}
+                  onClick={() =>
+                    setReviewModalState({
+                      isOpen: true,
+                      proposal: pendingProposals[0],
+                      action: "rejected",
+                    })
+                  }
                   disabled={reviewingProposalId === pendingProposals[0]._id}
                   className="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-2xs transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                 >
@@ -599,9 +624,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
 
           <div className="flex flex-col gap-4 border-b border-[#e3e9e3] pb-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <span className="inline-flex rounded-full bg-[#d8ebe4] px-3 py-1 text-sm font-semibold text-[#087f70]">
-                {categoryNames[problem.category?.toLowerCase()] || "Other"}
-              </span>
+              <CategoryBadge category={problem.category} />
 
               <h1 className="mt-4 text-3xl font-bold text-[#173d3a]">
                 {problem.title}
@@ -609,14 +632,7 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
             </div>
 
             {/* STATUS BADGE */}
-
-            <span
-              className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-                statusStyles[problem.status] || "bg-[#f7f8f5] text-[#315d56]"
-              }`}
-            >
-              {statusLabels[problem.status] || problem.status}
-            </span>
+            <StatusBadge status={problem.status} />
           </div>
 
           {/* ========================================
@@ -1015,6 +1031,18 @@ const AdminProblemDetails = ({ problemId, setAdminPage }) => {
         {/* RESOLUTION PROOF (SOLVED CHALLENGES) */}
         <ResolutionProof problem={problem} className="mt-8" />
       </div>
+
+      {/* PROPOSAL REVIEW MODAL */}
+      <ProposalReviewModal
+        isOpen={reviewModalState.isOpen}
+        onClose={() =>
+          setReviewModalState({ isOpen: false, proposal: null, action: "approve" })
+        }
+        onConfirm={handleConfirmProposalReview}
+        proposal={reviewModalState.proposal}
+        action={reviewModalState.action === "approved" ? "approve" : "reject"}
+        isLoading={Boolean(reviewingProposalId)}
+      />
     </main>
   );
 };
