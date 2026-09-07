@@ -638,6 +638,47 @@ const MyProblems = ({
                     </div>
                   )}
 
+                  {/* CITIZEN RESOLUTION VERIFICATION STATUS */}
+                  {normalizedStatus === "solved" && !problem.citizenFeedback?.isVerified && (
+                    <div className="mt-4 rounded-xl border-2 border-emerald-500/40 bg-emerald-50/80 p-3.5 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">⭐</span>
+                        <div>
+                          <p className="text-xs font-bold text-emerald-950">
+                            Resolution Verification Needed
+                          </p>
+                          <p className="text-[11px] text-emerald-800/80">
+                            Confirm whether this issue was resolved on the ground.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleViewDetails(problem._id)}
+                        className="shrink-0 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 transition"
+                      >
+                        Verify Now →
+                      </button>
+                    </div>
+                  )}
+
+                  {normalizedStatus === "solved" && problem.citizenFeedback?.isVerified && (
+                    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-2 flex items-center justify-between text-xs">
+                      <span className="font-semibold text-emerald-800 flex items-center gap-1.5">
+                        <span>✓</span> Verified by You
+                      </span>
+                      {problem.citizenFeedback.isSatisfied ? (
+                        <span className="font-bold text-amber-600">
+                          Rated ⭐ {problem.citizenFeedback.rating} / 5
+                        </span>
+                      ) : (
+                        <span className="font-bold text-amber-700">
+                          ⚠️ Disputed
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {/* ACTION BUTTONS */}
 
                   <div className="mt-auto flex gap-3 pt-6">

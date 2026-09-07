@@ -497,6 +497,49 @@ const problemSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // ========================================
+    // CITIZEN VERIFICATION & SATISFACTION FEEDBACK
+    // ========================================
+    citizenFeedback: {
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      isSatisfied: {
+        type: Boolean,
+        default: null,
+      },
+      rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+        default: null,
+      },
+      comments: {
+        type: String,
+        trim: true,
+        default: "",
+        maxlength: 1000,
+      },
+      verifiedAt: {
+        type: Date,
+        default: null,
+      },
+      reopened: {
+        type: Boolean,
+        default: false,
+      },
+      reopenReason: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      reopenedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
 
   {

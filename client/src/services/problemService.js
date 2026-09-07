@@ -101,3 +101,26 @@ export const getProblemById = async (
 
   return response.data;
 };
+
+
+// ========================================
+// SUBMIT CITIZEN FEEDBACK / VERIFICATION
+// ========================================
+
+export const submitCitizenFeedback = async (
+  problemId,
+  feedbackData,
+  token
+) => {
+  const response = await axios.post(
+    `${API_URL}/${problemId}/citizen-feedback`,
+    feedbackData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};

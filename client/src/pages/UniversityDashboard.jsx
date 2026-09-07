@@ -12,12 +12,21 @@ import ProposalForm from "../components/ProposalForm";
 // Shows assigned problems to the university
 // partner and allows submitting proposals.
 
-const UniversityDashboard = ({ setCurrentPage }) => {
+const UniversityDashboard = ({ setCurrentPage, setSelectedPartnerProjectId }) => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [selectedProblemId, setSelectedProblemId] = useState(null);
   const [activeTab, setActiveTab] = useState("proposals");
+
+  const handleOpenWorkspace = (projectId) => {
+    if (setSelectedPartnerProjectId && projectId) {
+      setSelectedPartnerProjectId(projectId);
+    }
+    if (setCurrentPage) {
+      setCurrentPage("workspace");
+    }
+  };
 
   // ========================================
   // FETCH PROBLEMS
@@ -108,6 +117,7 @@ const UniversityDashboard = ({ setCurrentPage }) => {
               <ProposalList
                 isAdmin={false}
                 problemId={selectedProblemId}
+                onOpenWorkspace={handleOpenWorkspace}
               />
             </div>
           </div>
@@ -149,7 +159,10 @@ const UniversityDashboard = ({ setCurrentPage }) => {
             {/* TAB: MY SUBMITTED PROPOSALS */}
             {activeTab === "proposals" && (
               <section className="space-y-6">
-                <ProposalList isAdmin={false} />
+                <ProposalList
+                  isAdmin={false}
+                  onOpenWorkspace={handleOpenWorkspace}
+                />
               </section>
             )}
 

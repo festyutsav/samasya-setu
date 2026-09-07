@@ -581,6 +581,11 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
                           <span>
                             Status finalized:{" "}
                             <strong className="capitalize">{proposal.status}</strong>
+                            {proposal.status === "approved" && (
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                                🚀 Project Workspace Active
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>

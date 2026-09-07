@@ -1,6 +1,7 @@
 const SolutionProposal = require("../models/SolutionProposal");
 const Problem = require("../models/Problem");
 const Partner = require("../models/Partner");
+const Project = require("../models/Project");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const { notifyAdmins, notifyPartnerUser, createNotification } = require("../services/notificationService");
@@ -121,6 +122,7 @@ const getProposalsForProblem = async (req, res) => {
 
     const proposals = await SolutionProposal.find({ problem: problemId })
       .populate("university", "name type location email website expertise")
+      .populate("project", "_id title status")
       .populate("submittedBy", "name email")
       .populate("reviewedBy", "name email")
       .sort({ createdAt: -1 });
@@ -152,6 +154,7 @@ const getAllProposals = async (req, res) => {
     const proposals = await SolutionProposal.find(filter)
       .populate("problem", "title category status location")
       .populate("university", "name type location email website expertise")
+      .populate("project", "_id title status")
       .populate("submittedBy", "name email")
       .populate("reviewedBy", "name email")
       .sort({ createdAt: -1 });
@@ -185,9 +188,29 @@ const getMyProposals = async (req, res) => {
       university: req.user.partner,
     })
       .populate("problem", "title description category status createdAt")
+      .populate("university", "name type location email website expertise")
+      .populate("project", "_id title status")
       .populate("submittedBy", "name email")
       .populate("reviewedBy", "name email")
       .sort({ createdAt: -1 });
+
+    // Self-healing: if an approved proposal doesn't have project linked yet, check Project model
+    for (const prop of proposals) {
+      if (prop.status === "approved" && !prop.project && prop.problem?._id) {
+        try {
+          const proj = await Project.findOne({
+            problem: prop.problem._id,
+            partner: req.user.partner,
+          }).select("_id title status");
+          if (proj) {
+            prop.project = proj;
+            await SolutionProposal.findByIdAndUpdate(prop._id, { project: proj._id });
+          }
+        } catch {
+          // ignore self-healing failure
+        }
+      }
+    }
 
     return res.status(200).json({
       count: proposals.length,
@@ -265,16 +288,88 @@ const reviewProposal = async (req, res) => {
       problemId: proposal.problem._id,
     });
 
-    // If the proposal was approved, advance problem status to in_progress and notify citizen
+    // If the proposal was approved, advance problem status to in_progress, assign partner, auto-initialize project workspace, and notify citizen
     if (status === "approved") {
+      const universityId = proposal.university._id || proposal.university;
+
       try {
         const problemDoc = await Problem.findById(proposal.problem._id);
-        if (problemDoc && (problemDoc.status === "assigned" || problemDoc.status === "under_review")) {
+        if (problemDoc) {
           problemDoc.status = "in_progress";
+          if (!problemDoc.assignedPartner) {
+            problemDoc.assignedPartner = universityId;
+          }
           await problemDoc.save();
         }
       } catch (err) {
         console.error("Failed to advance problem status to in_progress:", err.message);
+      }
+
+      // Auto-initialize Project workspace for this university proposal
+      try {
+        let project = await Project.findOne({
+          problem: proposal.problem._id,
+          partner: universityId,
+        });
+
+        if (!project) {
+          const team = Array.isArray(proposal.team) && proposal.team.length > 0
+            ? proposal.team.map((t) => ({
+                name: t.name || "Team Member",
+                role: (t.role && t.role.toLowerCase().includes("prof")) ? "professor" : "student",
+                department: "",
+                email: t.email || "",
+              }))
+            : [];
+
+          let milestones = [];
+          if (
+            proposal.timeline?.milestones &&
+            Array.isArray(proposal.timeline.milestones) &&
+            proposal.timeline.milestones.length > 0
+          ) {
+            milestones = proposal.timeline.milestones.map((m) => ({
+              title: m.title || "Project Milestone",
+              completed: m.status === "completed",
+              dueDate: m.dueDate || null,
+            }));
+          } else {
+            milestones = [
+              {
+                title: "Field Assessment & Problem Baseline Study",
+                completed: false,
+                dueDate: null,
+              },
+              {
+                title: "Engineering Prototype & Pilot Testing",
+                completed: false,
+                dueDate: null,
+              },
+              {
+                title: "Field Deployment, Validation & Citizen Handover",
+                completed: false,
+                dueDate: null,
+              },
+            ];
+          }
+
+          project = await Project.create({
+            title: proposal.title,
+            description: proposal.description,
+            problem: proposal.problem._id,
+            partner: universityId,
+            team,
+            milestones,
+            status: "active",
+            createdBy: proposal.submittedBy || req.user._id,
+          });
+        }
+
+        proposal.project = project._id;
+        await proposal.save();
+        await proposal.populate("project", "_id title status");
+      } catch (projErr) {
+        console.error("Failed to auto-create project workspace:", projErr.message);
       }
 
       if (proposal.problem.submittedBy) {

@@ -146,6 +146,63 @@ export default function ResolutionProof({
         </div>
       </div>
 
+      {/* CITIZEN VERIFICATION & AUDIT PROOF */}
+      {problem.citizenFeedback?.isVerified ? (
+        <div className="relative z-10 mt-6 rounded-xl border border-emerald-300 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-800">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">✓</span>
+              Citizen Ground Verification & Satisfaction Audit
+            </span>
+            <span className="text-[11px] text-slate-500">
+              Verified {problem.citizenFeedback.verifiedAt ? new Date(problem.citizenFeedback.verifiedAt).toLocaleDateString() : "Recently"}
+            </span>
+          </div>
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <svg
+                  key={s}
+                  viewBox="0 0 24 24"
+                  className={`h-4 w-4 ${
+                    s <= (problem.citizenFeedback.rating || 5)
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-none stroke-slate-300 text-slate-300"
+                  }`}
+                  strokeWidth="1.5"
+                >
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ))}
+              <span className="ml-1 text-xs font-bold text-slate-700">
+                {problem.citizenFeedback.rating || 5} / 5 Stars
+              </span>
+            </div>
+
+            {problem.citizenFeedback.isSatisfied && (
+              <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                Ground Reality Confirmed Fixed
+              </span>
+            )}
+          </div>
+
+          {problem.citizenFeedback.comments && (
+            <p className="mt-2 text-xs italic text-slate-600 bg-slate-50 rounded-lg p-2 border border-slate-100">
+              "{problem.citizenFeedback.comments}"
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="relative z-10 mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-800">
+          <span className="flex items-center gap-2">
+            <span className="animate-pulse">⏳</span>
+            <span>Awaiting Citizen Ground Verification & Satisfaction Rating</span>
+          </span>
+          <span className="text-[11px] font-medium text-amber-700">Pending Citizen Review</span>
+        </div>
+      )}
+
       {/* VERIFICATION SIGN-OFF */}
       <div className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#d8ebe4] pt-4 text-xs text-[#5c6f69]">
         <p>

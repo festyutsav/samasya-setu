@@ -152,6 +152,20 @@ function App() {
       } else if (user.role === "partner") {
         if (pagePart === "partner-problems") {
           setPartnerPage("problems");
+        } else if (pagePart === "partner-projects") {
+          setPartnerPage("projects");
+        } else if (pagePart === "workspace") {
+          if (idParam) {
+            setSelectedPartnerProjectId(idParam);
+          } else {
+            const savedId = sessionStorage.getItem("selectedPartnerProjectId");
+            if (savedId) setSelectedPartnerProjectId(savedId);
+          }
+          setPartnerPage("workspace");
+        } else if (pagePart === "collaborations") {
+          setPartnerPage("collaborations");
+        } else if (pagePart === "directory") {
+          setPartnerPage("directory");
         } else if (pagePart === "university") {
           setPartnerPage("university");
         } else {
@@ -526,6 +540,7 @@ function App() {
         {partnerPage === "university" && (
           <UniversityDashboard
             setCurrentPage={setPartnerPage}
+            setSelectedPartnerProjectId={setSelectedPartnerProjectId}
           />
         )}
 

@@ -4,6 +4,7 @@ import ProblemEvidence from "../components/ProblemEvidence";
 import LifecycleStepper from "../components/LifecycleStepper";
 import ResolutionProof from "../components/ResolutionProof";
 import ExportBriefButton from "../components/ExportBriefButton";
+import CitizenVerificationModal from "../components/CitizenVerificationModal";
 
 const ProblemDetails = ({
   problemId,
@@ -13,6 +14,16 @@ const ProblemDetails = ({
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+
+  // Current logged in user
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
 
   // ========================================
   // PHOTO VIEWER
@@ -156,6 +167,85 @@ const ProblemDetails = ({
           updatedAt={problem.updatedAt}
           className="mb-6"
         />
+
+        {/* ========================================
+            CITIZEN RESOLUTION VERIFICATION BANNER
+        ======================================== */}
+        {user?._id &&
+          problem?.submittedBy &&
+          String(problem.submittedBy._id || problem.submittedBy) === String(user._id) &&
+          (problem.status === "solved" || problem.resolutionSubmitted) && (
+            <div className="mb-6">
+              {!problem.citizenFeedback?.isVerified ? (
+                <div className="overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl text-white shadow-sm">
+                        ⭐
+                      </span>
+                      <div>
+                        <span className="inline-block rounded-md bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-900">
+                          Action Required: Ground Resolution Verification
+                        </span>
+                        <h3 className="mt-1 text-base font-bold text-emerald-950">
+                          Has this problem been satisfactorily resolved in your area?
+                        </h3>
+                        <p className="mt-0.5 text-xs text-emerald-800/80">
+                          As the reporting citizen, your verification confirms official completion or reopens the issue for administrative inspection.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsVerificationModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 transition"
+                    >
+                      Verify or Dispute Resolution →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className={`rounded-2xl border p-4 shadow-sm ${
+                  problem.citizenFeedback.isSatisfied
+                    ? "border-emerald-200 bg-emerald-50/70"
+                    : "border-amber-200 bg-amber-50/80"
+                }`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                      <span>{problem.citizenFeedback.isSatisfied ? "✓" : "⚠️"}</span>
+                      <span>
+                        {problem.citizenFeedback.isSatisfied
+                          ? `You verified this resolution on ${problem.citizenFeedback.verifiedAt ? new Date(problem.citizenFeedback.verifiedAt).toLocaleDateString() : "recently"}`
+                          : `You disputed this resolution on ${problem.citizenFeedback.reopenedAt ? new Date(problem.citizenFeedback.reopenedAt).toLocaleDateString() : "recently"}`}
+                      </span>
+                    </span>
+
+                    {problem.citizenFeedback.isSatisfied ? (
+                      <span className="flex items-center gap-1 text-xs font-bold text-amber-600">
+                        ⭐ {problem.citizenFeedback.rating} / 5 Stars
+                      </span>
+                    ) : (
+                      <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                        Grievance Reopened
+                      </span>
+                    )}
+                  </div>
+
+                  {problem.citizenFeedback.comments && (
+                    <p className="mt-2 text-xs italic text-slate-600 bg-white/70 p-2.5 rounded-xl border border-slate-200/50">
+                      "{problem.citizenFeedback.comments}"
+                    </p>
+                  )}
+
+                  {problem.citizenFeedback.reopenReason && (
+                    <p className="mt-2 text-xs text-amber-900 bg-white/70 p-2.5 rounded-xl border border-amber-200/50">
+                      <strong>Dispute Note:</strong> "{problem.citizenFeedback.reopenReason}"
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         {/* ========================================
             DUPLICATE MERGE BANNER
@@ -594,6 +684,16 @@ const ProblemDetails = ({
         </div>
 
       )}
+
+      {/* ========================================
+          CITIZEN VERIFICATION & DISPUTE MODAL
+      ======================================== */}
+      <CitizenVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        problem={problem}
+        onFeedbackSubmitted={(updated) => setProblem(updated)}
+      />
 
     </main>
   );
