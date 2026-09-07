@@ -304,6 +304,7 @@ const SubmitProblem = ({ setCurrentPage }) => {
     // ========================================
 
     const requestId = ++aiRequestId.current;
+    setAiLoading(true);
 
     // ========================================
     // WAIT BEFORE API REQUEST
@@ -312,8 +313,6 @@ const SubmitProblem = ({ setCurrentPage }) => {
     const timer = setTimeout(async () => {
       try {
         const token = localStorage.getItem("token") || "";
-
-        setAiLoading(true);
 
         // ========================================
         // CALL AI
