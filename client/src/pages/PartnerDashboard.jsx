@@ -7,6 +7,8 @@ import {
   updatePartnerProblemStatus,
 } from "../services/partnerService";
 import ConfirmationModal from "../components/ConfirmationModal";
+import CategoryBadge from "../components/CategoryBadge";
+import StatusBadge from "../components/StatusBadge";
 
 // ========================================
 // ICONS + STAT CARD
@@ -518,11 +520,7 @@ const PartnerDashboard = ({
                         )}
                       </div>
 
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(project.status)}`}
-                      >
-                        {formatStatus(project.status)}
-                      </span>
+                      <StatusBadge status={project.status} />
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
@@ -583,75 +581,75 @@ const PartnerDashboard = ({
         </section>
 
         {/* ========================================
-            ASSIGNED PROBLEMS
+            ASSIGNED PROBLEMS SECTION
         ======================================== */}
 
-        <section>
-          <div className="mb-5">
-            <h2 className="text-2xl font-bold text-[#173d3a]">
-              Assigned Problems
-            </h2>
+        <section className="mt-12">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-[#173d3a]">
+                Recent Assigned Problems
+              </h2>
+              <p className="mt-1 text-sm text-[#71827c]">
+                Community challenges routed to your organization by the government.
+              </p>
+            </div>
 
-            <p className="mt-1 text-sm text-[#71827c]">
-              Problems assigned to your organization.
-            </p>
+            {setPartnerPage && (
+              <button
+                type="button"
+                onClick={() => setPartnerPage("problems")}
+                className="text-sm font-semibold text-[#0b6b60] hover:underline"
+              >
+                View all ({problems.length}) →
+              </button>
+            )}
           </div>
 
           {problems.length === 0 ? (
-            <div className="rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e9f4f0] text-[#0b6b60]">
-                <Icon path={icons.assigned} className="h-7 w-7" />
-              </div>
-
-              <h3 className="mt-4 text-lg font-semibold text-[#315d56]">
-                No problems have been assigned yet
-              </h3>
-
-              <p className="mt-2 text-sm text-[#71827c]">
-                New assignments from the admin team will appear here.
+            <div className="mt-6 rounded-2xl border border-[#e3e9e3] bg-white p-10 text-center shadow-sm">
+              <p className="text-lg font-semibold text-[#173d3a]">
+                No Problems Assigned Yet
+              </p>
+              <p className="mx-auto mt-2 max-w-md text-sm text-[#71827c]">
+                When the government assigns problems to your organization, they will appear here.
               </p>
             </div>
           ) : (
-            <div className="grid gap-5 lg:grid-cols-2">
-              {problems.map((problem) => {
+            <div className="mt-6 grid gap-6">
+              {problems.slice(0, 5).map((problem) => {
                 const edgeColor =
-                  problem.status === "assigned"
-                    ? "#f3ce7a"
-                    : problem.status === "in_progress"
-                      ? "#e9a06b"
-                      : "#7fc8b2";
+                  problem.status === "in_progress"
+                    ? "#087f70"
+                    : problem.status === "assigned"
+                    ? "#a25a1b"
+                    : problem.status === "solved"
+                    ? "#164f47"
+                    : "#b5c4be";
 
                 return (
                   <article
                     key={problem._id}
                     style={{ "--ss-edge": edgeColor }}
-                    className="ss-accent-edge rounded-2xl border border-[#e3e9e3] bg-white p-6 pl-8 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                    className="ss-accent-edge group rounded-2xl border border-[#e3e9e3] bg-white p-6 pl-8 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
                   >
                     {/* PROBLEM HEADER */}
 
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <h3 className="text-xl font-bold text-[#173d3a]">
-                        {problem.title}
-                      </h3>
+                      <div>
+                        <h3 className="text-xl font-bold text-[#173d3a] group-hover:text-[#087f70] transition-colors">
+                          {problem.title}
+                        </h3>
 
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                          problem.status
-                        )}`}
-                      >
-                        {formatStatus(problem.status)}
-                      </span>
-                    </div>
-
-                    {/* CATEGORY */}
-
-                    {problem.category && (
-                      <div className="mt-2">
-                        <span className="rounded-full bg-[#f7f8f5] px-3 py-1 text-xs font-semibold capitalize text-[#5c6f69]">
-                          {problem.category}
-                        </span>
+                        {problem.category && (
+                          <div className="mt-2">
+                            <CategoryBadge category={problem.category} />
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      <StatusBadge status={problem.status} />
+                    </div>
 
                     {/* DESCRIPTION */}
 

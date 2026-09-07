@@ -3,6 +3,8 @@ import {
   getAllProposals,
   reviewProposal,
 } from "../services/proposalService";
+import ProposalReviewModal from "../components/ProposalReviewModal";
+import EmptyState from "../components/EmptyState";
 
 // ========================================
 // FORMAT HELPERS
@@ -82,13 +84,30 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
     fetchProposals();
   }, []);
 
+  const [reviewModalState, setReviewModalState] = useState({
+    isOpen: false,
+    proposal: null,
+    action: "approve",
+  });
+
   // ========================================
   // REVIEW PROPOSAL (APPROVE / REJECT)
   // ========================================
 
-  const handleReview = async (proposalId, status) => {
+  const openReviewModal = (proposal, action) => {
+    setReviewModalState({
+      isOpen: true,
+      proposal,
+      action,
+    });
+  };
+
+  const handleConfirmReview = async (reviewNotes) => {
+    const { proposal, action } = reviewModalState;
+    if (!proposal) return;
+
     try {
-      setReviewingId(proposalId);
+      setReviewingId(proposal._id);
       setMessage("");
 
       const token = localStorage.getItem("token");
@@ -98,21 +117,16 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
         return;
       }
 
-      const promptText =
-        status === "approved"
-          ? "Enter government approval remarks or directives (optional):"
-          : "Enter reason for rejection or required revisions:";
+      await reviewProposal(
+        proposal._id,
+        action,
+        reviewNotes?.trim() || "",
+        token,
+      );
 
-      const reviewNotes = window.prompt(promptText, "");
-      if (status === "rejected" && reviewNotes === null) {
-        setReviewingId(null);
-        return; // User cancelled prompt
-      }
-
-      await reviewProposal(proposalId, status, reviewNotes || "", token);
-
-      setMessage(`Proposal ${status === "approved" ? "approved" : "rejected"} successfully.`);
+      setMessage(`Proposal ${action === "approved" || action === "approve" ? "approved" : "rejected"} successfully.`);
       setMessageType("success");
+      setReviewModalState({ isOpen: false, proposal: null, action: "approve" });
 
       await fetchProposals();
     } catch (error) {
@@ -347,17 +361,15 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
             </p>
           </div>
         ) : filteredProposals.length === 0 ? (
-          <div className="rounded-2xl border border-[#e3e9e3] bg-white p-12 text-center shadow-xs">
-            <p className="text-3xl">📑</p>
-            <h3 className="mt-3 text-lg font-bold text-[#173d3a]">
-              No proposals found
-            </h3>
-            <p className="mt-1 text-sm text-[#71827c]">
-              {searchQuery
-                ? "Try refining your search terms or changing the status filter."
-                : "No proposals have been submitted under this category yet."}
-            </p>
-          </div>
+          <EmptyState
+            icon="📑"
+            title="No Proposals Found"
+            description={
+              searchQuery
+                ? "Try refining your search terms or selecting a different status filter."
+                : "No university proposals have been submitted under this category yet."
+            }
+          />
         ) : (
           <div className="space-y-6">
             {filteredProposals.map((proposal) => {
@@ -578,7 +590,7 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
                           <>
                             <button
                               type="button"
-                              onClick={() => handleReview(proposal._id, "approved")}
+                              onClick={() => openReviewModal(proposal, "approved")}
                               disabled={reviewingId === proposal._id}
                               className="inline-flex items-center gap-2 rounded-xl bg-[#0b6b60] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#087f70] disabled:opacity-50"
                             >
@@ -592,7 +604,7 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
 
                             <button
                               type="button"
-                              onClick={() => handleReview(proposal._id, "rejected")}
+                              onClick={() => openReviewModal(proposal, "rejected")}
                               disabled={reviewingId === proposal._id}
                               className="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-xs font-bold text-red-600 shadow-2xs transition hover:bg-red-50 disabled:opacity-50"
                             >
@@ -608,8 +620,8 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
                           <button
                             type="button"
                             onClick={() =>
-                              handleReview(
-                                proposal._id,
+                              openReviewModal(
+                                proposal,
                                 proposal.status === "approved"
                                   ? "rejected"
                                   : "approved"
@@ -632,6 +644,18 @@ const AdminProposals = ({ setAdminPage, setSelectedAdminProblemId }) => {
           </div>
         )}
       </div>
+
+      {/* PROPOSAL REVIEW MODAL */}
+      <ProposalReviewModal
+        isOpen={reviewModalState.isOpen}
+        onClose={() =>
+          setReviewModalState({ isOpen: false, proposal: null, action: "approve" })
+        }
+        onConfirm={handleConfirmReview}
+        proposal={reviewModalState.proposal}
+        action={reviewModalState.action === "approved" ? "approve" : "reject"}
+        isLoading={Boolean(reviewingId)}
+      />
     </main>
   );
 };
