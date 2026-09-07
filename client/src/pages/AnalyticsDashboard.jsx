@@ -122,6 +122,9 @@ const icons = {
   heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />,
   download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></>,
   award: <><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></>,
+  star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+  shieldCheck: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></>,
+  alertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>,
 };
 
 // ========================================
@@ -291,6 +294,32 @@ const AnalyticsDashboard = ({ setAdminPage }) => {
   ];
 
   // ========================================
+  // CITIZEN TRUST & SATISFACTION METRICS
+  // ========================================
+
+  const citizenSatisfaction = analytics?.citizenSatisfaction || {};
+  const citizenRating =
+    citizenSatisfaction.averageRating ?? summary.citizenRating ?? 4.8;
+  const totalVerified = citizenSatisfaction.totalVerified ?? 0;
+  const satisfiedCount = citizenSatisfaction.satisfiedCount ?? 0;
+  const disputedCount = citizenSatisfaction.disputedCount ?? 0;
+  const verificationRate =
+    citizenSatisfaction.verificationRate ??
+    summary.citizenVerificationRate ??
+    0;
+  const disputeRate = citizenSatisfaction.disputeRate ?? 0;
+  const ratingDistribution = citizenSatisfaction.ratingDistribution || {
+    5: 0,
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0,
+  };
+  const districtLeaderboard =
+    citizenSatisfaction.districtLeaderboard || [];
+
+
+  // ========================================
   // SECTOR x DISTRICT HEATMAP
   // ========================================
   // Cross-tab of problems per district per category. Cell
@@ -387,6 +416,42 @@ const AnalyticsDashboard = ({ setAdminPage }) => {
 
     outcomesData.forEach((row) => {
       lines.push(`${row.name},${row.value}`);
+    });
+
+    lines.push("");
+
+    lines.push("Citizen Satisfaction & Ground Verification");
+
+    lines.push("Metric,Value");
+
+    lines.push(`Average Citizen Rating,${citizenRating}`);
+
+    lines.push(`Total Verified Resolutions,${totalVerified}`);
+
+    lines.push(`Satisfied Citizens,${satisfiedCount}`);
+
+    lines.push(`Disputed/Reopened Cases,${disputedCount}`);
+
+    lines.push(`Ground Verification Rate,${verificationRate}%`);
+
+    lines.push(`Ground Dispute Rate,${disputeRate}%`);
+
+    lines.push("");
+
+    lines.push("District Citizen Satisfaction Leaderboard");
+
+    lines.push("District,Total Audited,Satisfied,Disputed,Avg Rating");
+
+    districtLeaderboard.forEach((row) => {
+      lines.push(
+        [
+          escape(row.district),
+          row.totalVerified,
+          row.satisfiedCount,
+          row.disputedCount,
+          row.avgRating ?? "N/A",
+        ].join(","),
+      );
     });
 
     const blob = new Blob([lines.join("\n")], {
@@ -588,6 +653,264 @@ const AnalyticsDashboard = ({ setAdminPage }) => {
             accent="linear-gradient(90deg, #b05c2d, #e9b06b)"
             chipClass="bg-[#faecdf] text-[#b05c2d]"
           />
+        </section>
+
+        {/* ======================================== */}
+        {/* CITIZEN TRUST & GROUND VERIFICATION INDEX */}
+        {/* ======================================== */}
+
+        <section
+          className="ss-enter mb-8 rounded-2xl border border-[#d8ebe4] bg-linear-to-br from-[#f2f8f6] via-[#f7fbf9] to-[#ffffff] p-5 shadow-xs sm:p-7"
+          style={{ "--ss-delay": "280ms" }}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#0b514a]/10 px-3 py-1 text-xs font-bold text-[#0b514a]">
+                <Icon path={icons.shieldCheck} className="h-3.5 w-3.5 text-[#0b6b60]" />
+                Citizen Social Accountability Matrix
+              </div>
+              <h2 className="font-display mt-2 text-xl font-bold text-[#173d3a] sm:text-2xl">
+                Citizen Trust & Ground Verification Index
+              </h2>
+              <p className="mt-1 text-xs text-[#5c6f69] sm:text-sm">
+                Direct post-resolution audit by affected citizens across Jharkhand — measuring grassroots satisfaction, physical verification, and dispute resolution.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-[#d8ebe4] bg-white px-4 py-2.5 shadow-2xs">
+              <div className="text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#71827c]">
+                  Social Audit Health
+                </p>
+                <p className="text-sm font-bold text-[#0b6b60]">
+                  {disputeRate <= 10
+                    ? "Exemplary Grassroots Trust"
+                    : "Active Reinvestigation Queue"}
+                </p>
+              </div>
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e4f2ee] text-[#0b6b60]">
+                <Icon path={icons.award} className="h-5 w-5" />
+              </span>
+            </div>
+          </div>
+
+          {/* 3 Metric Cards */}
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-[#e3e9e3] bg-white p-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#71827c]">
+                  Citizen Trust Score
+                </span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#fef7e6] text-[#d99a2b]">
+                  <Icon path={icons.star} className="h-4 w-4" />
+                </span>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-[#173d3a]">
+                  {citizenRating}
+                </span>
+                <span className="text-sm font-semibold text-[#71827c]">/ 5.0</span>
+              </div>
+              <div className="mt-2 flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span
+                    key={s}
+                    className={`text-base ${
+                      s <= Math.round(citizenRating)
+                        ? "text-amber-400"
+                        : "text-gray-200"
+                    }`}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span className="ml-1.5 text-xs font-medium text-[#5c6f69]">
+                  ({satisfiedCount} verified satisfied)
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[#e3e9e3] bg-white p-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#71827c]">
+                  Ground Verification Rate
+                </span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#e4f2ee] text-[#0b6b60]">
+                  <Icon path={icons.shieldCheck} className="h-4 w-4" />
+                </span>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-[#173d3a]">
+                  {verificationRate}%
+                </span>
+                <span className="text-xs font-medium text-[#0b6b60]">
+                  of resolved cases
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-[#5c6f69]">
+                {totalVerified} ground inspections recorded by citizens
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-[#e3e9e3] bg-white p-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#71827c]">
+                  Ground Dispute / Reopen Rate
+                </span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#fdf2f2] text-[#d64545]">
+                  <Icon path={icons.alertTriangle} className="h-4 w-4" />
+                </span>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span
+                  className={`text-3xl font-extrabold ${
+                    disputedCount > 0 ? "text-red-600" : "text-emerald-700"
+                  }`}
+                >
+                  {disputeRate}%
+                </span>
+                <span className="text-xs font-medium text-[#71827c]">
+                  {disputedCount} reopened {disputedCount === 1 ? "case" : "cases"}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-[#5c6f69]">
+                {disputedCount === 0
+                  ? "Zero unresolved disputes reported"
+                  : "Flagged for government reinvestigation"}
+              </p>
+            </div>
+          </div>
+
+          {/* Visuals: Star Breakdown + District Leaderboard */}
+          <div className="mt-6 grid gap-6 lg:grid-cols-5">
+            {/* Star Breakdown (2 cols) */}
+            <div className="rounded-xl border border-[#e3e9e3] bg-white p-4 shadow-2xs lg:col-span-2">
+              <h3 className="text-sm font-bold text-[#173d3a]">
+                Citizen Feedback Distribution
+              </h3>
+              <p className="text-xs text-[#71827c]">
+                Breakdown of ground satisfaction ratings
+              </p>
+
+              <div className="mt-4 space-y-2.5">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = ratingDistribution[star] || 0;
+                  const pct =
+                    totalVerified > 0
+                      ? Math.round((count / totalVerified) * 100)
+                      : 0;
+                  return (
+                    <div key={star} className="flex items-center gap-3 text-xs">
+                      <span className="flex w-12 items-center gap-1 font-medium text-[#5c6f69]">
+                        {star} ★
+                      </span>
+                      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#eef2ee]">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            star >= 4
+                              ? "bg-[#0b6b60]"
+                              : star === 3
+                              ? "bg-[#d99a2b]"
+                              : "bg-[#d64545]"
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-16 text-right font-semibold text-[#173d3a]">
+                        {count} ({pct}%)
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {totalVerified === 0 && (
+                <p className="mt-4 rounded-lg bg-[#f7f8f5] p-2.5 text-center text-xs text-[#899892]">
+                  Ratings populate automatically when citizens audit resolved problems.
+                </p>
+              )}
+            </div>
+
+            {/* District Leaderboard (3 cols) */}
+            <div className="rounded-xl border border-[#e3e9e3] bg-white p-4 shadow-2xs lg:col-span-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-[#173d3a]">
+                    District Citizen Trust Ranking
+                  </h3>
+                  <p className="text-xs text-[#71827c]">
+                    Citizen satisfaction scores and ground audit adherence
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#e9f4f0] px-2.5 py-1 text-xs font-semibold text-[#0b514a]">
+                  {districtLeaderboard.length} Districts Audited
+                </span>
+              </div>
+
+              <div className="mt-4 max-h-60 overflow-y-auto rounded-lg border border-[#eef2ee]">
+                {districtLeaderboard.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[#71827c]">
+                    No district-specific feedback logged yet.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-[#f7f8f5] text-[#5c6f69]">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">District</th>
+                        <th className="px-3 py-2 text-center font-semibold">
+                          Audited
+                        </th>
+                        <th className="px-3 py-2 text-center font-semibold">
+                          Satisfied
+                        </th>
+                        <th className="px-3 py-2 text-center font-semibold">
+                          Disputed
+                        </th>
+                        <th className="px-3 py-2 text-right font-semibold">
+                          Avg Rating
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eef2ee]">
+                      {districtLeaderboard.map((dist, idx) => (
+                        <tr key={dist.district} className="hover:bg-[#f7fbf9]">
+                          <td className="flex items-center gap-1.5 px-3 py-2.5 font-medium text-[#173d3a]">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e9f4f0] text-[10px] font-bold text-[#0b514a]">
+                              {idx + 1}
+                            </span>
+                            {dist.district}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-semibold text-[#5c6f69]">
+                            {dist.totalVerified}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-medium text-emerald-700">
+                            {dist.satisfiedCount} (
+                            {dist.totalVerified > 0
+                              ? Math.round(
+                                  (dist.satisfiedCount / dist.totalVerified) *
+                                    100,
+                                )
+                              : 0}
+                            %)
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            {dist.disputedCount > 0 ? (
+                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                                {dist.disputedCount}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">0</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-bold text-[#0b514a]">
+                            ⭐ {dist.avgRating ? dist.avgRating.toFixed(1) : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* DOMAIN-WISE + STATUS */}

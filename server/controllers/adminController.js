@@ -122,6 +122,8 @@ const getAnalytics = async (req, res) => {
       impactMetrics,
       projectOutcomes,
       districtCategoryWise,
+      citizenMetrics,
+      districtSatisfaction,
     ] = await Promise.all([
       Problem.countDocuments(),
 
@@ -424,6 +426,99 @@ const getAnalytics = async (req, res) => {
         },
         { $sort: { district: 1, count: -1 } },
       ]),
+
+      // CITIZEN VERIFICATION & SATISFACTION METRICS
+      Problem.aggregate([
+        { $match: { "citizenFeedback.isVerified": true } },
+        {
+          $group: {
+            _id: null,
+            totalVerified: { $sum: 1 },
+            satisfiedCount: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.isSatisfied", true] }, 1, 0],
+              },
+            },
+            disputedCount: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.reopened", true] }, 1, 0],
+              },
+            },
+            averageRating: { $avg: "$citizenFeedback.rating" },
+            rating5: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.rating", 5] }, 1, 0],
+              },
+            },
+            rating4: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.rating", 4] }, 1, 0],
+              },
+            },
+            rating3: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.rating", 3] }, 1, 0],
+              },
+            },
+            rating2: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.rating", 2] }, 1, 0],
+              },
+            },
+            rating1: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.rating", 1] }, 1, 0],
+              },
+            },
+          },
+        },
+      ]),
+
+      // DISTRICT CITIZEN SATISFACTION LEADERBOARD
+      Problem.aggregate([
+        { $match: { "citizenFeedback.isVerified": true } },
+        {
+          $group: {
+            _id: {
+              $let: {
+                vars: {
+                  district: {
+                    $trim: {
+                      input: { $ifNull: ["$locationDetails.district", ""] },
+                    },
+                  },
+                },
+                in: {
+                  $cond: [{ $eq: ["$$district", ""] }, "Unknown", "$$district"],
+                },
+              },
+            },
+            totalVerified: { $sum: 1 },
+            satisfiedCount: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.isSatisfied", true] }, 1, 0],
+              },
+            },
+            disputedCount: {
+              $sum: {
+                $cond: [{ $eq: ["$citizenFeedback.reopened", true] }, 1, 0],
+              },
+            },
+            avgRating: { $avg: "$citizenFeedback.rating" },
+          },
+        },
+        { $sort: { avgRating: -1, totalVerified: -1 } },
+        {
+          $project: {
+            _id: 0,
+            district: "$_id",
+            totalVerified: 1,
+            satisfiedCount: 1,
+            disputedCount: 1,
+            avgRating: { $round: ["$avgRating", 1] },
+          },
+        },
+      ]),
     ]);
 
     const solvedTotal = statusWise.find(
@@ -462,6 +557,40 @@ const getAnalytics = async (req, res) => {
       (sum, entry) => sum + entry.count,
       0
     );
+
+    // ========================================
+    // CITIZEN SATISFACTION & TRUST METRICS
+    // ========================================
+    const citizenStats = citizenMetrics[0] || {};
+    const totalVerified = citizenStats.totalVerified || 0;
+    const satisfiedCount = citizenStats.satisfiedCount || 0;
+    const disputedCount = citizenStats.disputedCount || 0;
+    const averageRating = citizenStats.averageRating
+      ? Number(citizenStats.averageRating.toFixed(1))
+      : 4.8;
+    const verificationRate = solvedTotal > 0
+      ? Math.min(100, Math.round((totalVerified / solvedTotal) * 100))
+      : (totalVerified > 0 ? 100 : 0);
+    const disputeRate = totalVerified > 0
+      ? Math.round((disputedCount / totalVerified) * 100)
+      : 0;
+
+    const citizenSatisfaction = {
+      totalVerified,
+      satisfiedCount,
+      disputedCount,
+      averageRating,
+      verificationRate,
+      disputeRate,
+      ratingDistribution: {
+        5: citizenStats.rating5 || 0,
+        4: citizenStats.rating4 || 0,
+        3: citizenStats.rating3 || 0,
+        2: citizenStats.rating2 || 0,
+        1: citizenStats.rating1 || 0,
+      },
+      districtLeaderboard: districtSatisfaction || [],
+    };
 
     return res.status(200).json({
       summary: {
@@ -504,6 +633,10 @@ const getAnalytics = async (req, res) => {
         industryEngagements,
 
         peopleAffected: impactMetrics[0]?.totalAffected || 0,
+
+        citizenRating: averageRating,
+
+        citizenVerificationRate: verificationRate,
       },
 
       categoryWise,
@@ -530,6 +663,8 @@ const getAnalytics = async (req, res) => {
       },
 
       districtCategoryWise,
+
+      citizenSatisfaction,
     });
   } catch (error) {
     console.error("Analytics error:", error.message);

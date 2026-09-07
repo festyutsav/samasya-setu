@@ -6,6 +6,12 @@ import { predictCategory } from "../services/aiService";
 
 import LocationPicker from "../components/LocationPicker";
 
+import {
+  saveOfflineProblem,
+  getOfflineCount,
+  syncOfflineQueue,
+} from "../utils/offlineStorage";
+
 // ========================================
 // INITIAL FORM DATA
 // ========================================
@@ -208,11 +214,67 @@ const SubmitProblem = ({ setCurrentPage }) => {
   // AI REQUEST TRACKING
   // ========================================
 
-  const aiRequestId = useRef(0);
+  // ========================================
+  // RURAL OFFLINE OUTBOX & CONNECTIVITY
+  // ========================================
 
-  // ========================================
-  // AI CATEGORY PREDICTION
-  // ========================================
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const refreshOfflineCount = async () => {
+    const count = await getOfflineCount();
+    setOfflineCount(count);
+  };
+
+  const handleAutoSync = async () => {
+    const count = await getOfflineCount();
+    if (count > 0 && !isSyncing) {
+      setIsSyncing(true);
+      try {
+        const { syncedCount } = await syncOfflineQueue(createProblem);
+        if (syncedCount > 0) {
+          setMessage(
+            `🎉 Successfully uploaded ${syncedCount} queued problem(s) from your offline outbox!`
+          );
+          setMessageType("success");
+        }
+      } catch (err) {
+        console.warn("Auto sync failed:", err);
+      } finally {
+        setIsSyncing(false);
+        refreshOfflineCount();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      const online = navigator.onLine;
+      setIsOnline(online);
+      if (online) {
+        handleAutoSync();
+      }
+    };
+
+    const handleSyncEvent = () => {
+      refreshOfflineCount();
+    };
+
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    window.addEventListener("samasya-offline-synced", handleSyncEvent);
+
+    refreshOfflineCount();
+
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+      window.removeEventListener("samasya-offline-synced", handleSyncEvent);
+    };
+  }, []);
 
   // ========================================
   // AI CATEGORY PREDICTION
@@ -644,6 +706,33 @@ const SubmitProblem = ({ setCurrentPage }) => {
       }
 
       // ========================================
+      // OFFLINE QUEUE CHECK
+      // ========================================
+      if (!navigator.onLine) {
+        await saveOfflineProblem({
+          formData,
+          images,
+          video,
+          documents,
+          token,
+        });
+
+        setMessage(
+          "📶 Rural Offline Outbox: Your report has been safely queued locally on your device! It will automatically submit once internet connectivity is restored."
+        );
+        setMessageType("success");
+        setFormData(initialFormData);
+        setImages([]);
+        setVideo(null);
+        setDocuments([]);
+        setAiSuggestion("");
+        setAiSuggestionLevel("");
+        manualCategoryChange.current = false;
+        refreshOfflineCount();
+        return;
+      }
+
+      // ========================================
       // CREATE FORMDATA
       // ========================================
 
@@ -780,6 +869,35 @@ const SubmitProblem = ({ setCurrentPage }) => {
     } catch (error) {
       console.error("Submit problem error:", error);
 
+      // Offline fallback if network dropped during submission
+      if (!navigator.onLine || error.code === "ERR_NETWORK" || !error.response) {
+        try {
+          await saveOfflineProblem({
+            formData,
+            images,
+            video,
+            documents,
+            token: localStorage.getItem("token"),
+          });
+
+          setMessage(
+            "📶 Connection drop detected: Your submission has been saved safely to your Offline Outbox and will automatically upload once network is restored!"
+          );
+          setMessageType("success");
+          setFormData(initialFormData);
+          setImages([]);
+          setVideo(null);
+          setDocuments([]);
+          setAiSuggestion("");
+          setAiSuggestionLevel("");
+          manualCategoryChange.current = false;
+          refreshOfflineCount();
+          return;
+        } catch (offlineErr) {
+          console.error("Failed to save to offline outbox:", offlineErr);
+        }
+      }
+
       setMessage(error.response?.data?.message || "Failed to submit problem.");
 
       setMessageType("error");
@@ -906,6 +1024,53 @@ const SubmitProblem = ({ setCurrentPage }) => {
         ======================================== */}
 
         <div className="rounded-2xl border border-[#e3e9e3] bg-white p-8 shadow-lg">
+          {/* OFFLINE STATUS & OUTBOX BAR */}
+          {!isOnline && (
+            <div className="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-3 w-3 rounded-full bg-amber-500 animate-ping" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                    Rural Offline Mode Active (Zero / Low Connectivity)
+                  </span>
+                </div>
+                <span className="rounded-md bg-amber-200/80 px-2.5 py-1 text-[11px] font-bold text-amber-950">
+                  {offlineCount} Outbox Report(s) Queued
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs text-amber-800 leading-relaxed">
+                You can fill in all details and attach ground photos. Your report will be safely preserved on your device and submitted automatically once mobile signal is restored.
+              </p>
+            </div>
+          )}
+
+          {isOnline && offlineCount > 0 && (
+            <div className="mb-6 rounded-2xl border-2 border-emerald-400/80 bg-emerald-50/90 p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white text-lg shadow-2xs">
+                  📥
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-emerald-950">
+                    {offlineCount} report(s) pending in your Rural Offline Outbox
+                  </p>
+                  <p className="text-[11px] text-emerald-800">
+                    Internet connection restored. Ready to sync with government servers.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAutoSync}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-2xs hover:bg-emerald-800 transition disabled:opacity-50"
+              >
+                {isSyncing ? "Syncing..." : "Sync Outbox Now →"}
+              </button>
+            </div>
+          )}
+
           {message && (
             <div
               className={`mb-6 rounded-xl p-4 text-center font-medium ${

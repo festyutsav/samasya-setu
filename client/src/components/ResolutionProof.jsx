@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import JharkhandEmblem from "./JharkhandEmblem";
+import ResolutionCertificateModal from "./ResolutionCertificateModal";
 
 export default function ResolutionProof({
   problem,
   project = null,
   className = "",
 }) {
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
+
   if (!problem || problem.status !== "solved") return null;
 
   const universityName =
@@ -211,17 +214,24 @@ export default function ResolutionProof({
 
         <button
           type="button"
-          onClick={() => window.print()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0b514a] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b514a] transition hover:bg-[#e9f4f0]"
+          onClick={() => setIsCertModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0b514a] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b514a] shadow-2xs transition hover:bg-[#e9f4f0]"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
             <polyline points="6 9 6 2 18 2 18 9" />
             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
             <rect x="6" y="14" width="12" height="8" />
           </svg>
-          Print Resolution Certificate
+          Official Resolution & CSR Certificate
         </button>
       </div>
+
+      <ResolutionCertificateModal
+        isOpen={isCertModalOpen}
+        onClose={() => setIsCertModalOpen(false)}
+        problem={problem}
+        project={project}
+      />
     </section>
   );
 }

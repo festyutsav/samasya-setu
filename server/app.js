@@ -19,12 +19,26 @@ const proposalRoutes = require("./routes/proposalRoutes");
 
 const notificationRoutes =
   require("./routes/notificationRoutes");
+const compression = require("compression");
 
 const app = express();
 
 // Middleware
 
 app.use(cors());
+
+// Enable streaming gzip/deflate response compression for payloads > 1KB
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  })
+);
 
 app.use(express.json());
 
