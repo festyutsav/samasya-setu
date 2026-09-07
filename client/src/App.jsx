@@ -42,14 +42,31 @@ import PartnerNavbar from "./components/PartnerNavbar";
 import InstallAppBanner from "./components/InstallAppBanner";
 import { API_BASE_URL } from "./config/api";
 import { getAuthUser, clearAuthSession } from "./utils/authStorage";
+import { syncOfflineQueue } from "./utils/offlineStorage";
+import { createProblem } from "./services/problemService";
 
 function App() {
   // ==================================================
-  // WARM UP SERVER IMMEDIATELY ON VISIT (Eliminates Render cold start)
+  // WARM UP SERVER & GLOBAL OFFLINE AUTO-SYNC
   // ==================================================
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/health`).catch(() => {});
+
+    const handleGlobalOnline = async () => {
+      try {
+        await syncOfflineQueue(createProblem);
+      } catch (err) {
+        console.warn("[AutoSync] Failed to sync offline queue:", err);
+      }
+    };
+
+    window.addEventListener("online", handleGlobalOnline);
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      handleGlobalOnline();
+    }
+
+    return () => window.removeEventListener("online", handleGlobalOnline);
   }, []);
   // ==================================================
   // AUTH USER

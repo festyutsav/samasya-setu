@@ -866,6 +866,36 @@ const AdminDashboard = ({ setAdminPage, setSelectedAdminProblemId }) => {
                         {statusLabels[problem.status] || problem.status}
                       </span>
 
+                      {/* CITIZEN GROUND VERIFICATION / AUDIT BADGE */}
+                      {problem.status === "solved" && problem.citizenFeedback?.isVerified && (
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            problem.citizenFeedback.reopened
+                              ? "bg-red-100 text-red-700"
+                              : problem.citizenFeedback.isSatisfied
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                          title={
+                            problem.citizenFeedback.feedbackText ||
+                            "Ground inspection recorded by citizen"
+                          }
+                        >
+                          {problem.citizenFeedback.reopened
+                            ? "⚠️ Ground Disputed"
+                            : `🛡️ Citizen Verified (${problem.citizenFeedback.rating || 5}★)`}
+                        </span>
+                      )}
+
+                      {problem.status === "solved" && !problem.citizenFeedback?.isVerified && (
+                        <span
+                          className="rounded-full bg-[#f4f7f6] px-3 py-1 text-xs font-medium text-[#71827c]"
+                          title="Resolved; awaiting ground verification from citizen"
+                        >
+                          ⏳ Awaiting Citizen Verification
+                        </span>
+                      )}
+
                       {problem.aiReviewStatus && problem.aiReviewStatus !== "pending" && (
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${
