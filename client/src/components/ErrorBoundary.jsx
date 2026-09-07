@@ -40,13 +40,26 @@ class ErrorBoundary extends React.Component {
             <p className="mt-2 text-sm text-[#71827c]">
               An unexpected error occurred. Your saved data is safe.
             </p>
-            <button
-              type="button"
-              onClick={this.handleReset}
-              className="mt-4 inline-flex items-center rounded-xl bg-[#0b514a] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#073f3a]"
-            >
-              Try Again
-            </button>
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={this.handleReset}
+                className="inline-flex items-center rounded-xl bg-[#0b514a] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#073f3a]"
+              >
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.hash = "home";
+                  window.location.reload();
+                }}
+                className="inline-flex items-center rounded-xl border border-[#dbe5df] bg-white px-4 py-2 text-sm font-semibold text-[#0b514a] shadow-sm transition hover:bg-[#e9f4f0]"
+              >
+                Go Home
+              </button>
+            </div>
           </div>
         </div>
       );
