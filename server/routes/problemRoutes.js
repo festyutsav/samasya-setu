@@ -11,6 +11,8 @@ const {
 
   deleteMyProblem,
 
+  submitCitizenFeedback,
+
 
   // General controllers
 
@@ -99,6 +101,21 @@ router.delete(
   authorizeRoles("citizen"),
 
   deleteMyProblem
+
+);
+
+
+// Citizen verifies problem resolution and submits rating/dispute
+
+router.post(
+
+  "/:id/citizen-feedback",
+
+  protect,
+
+  authorizeRoles("citizen"),
+
+  submitCitizenFeedback
 
 );
 

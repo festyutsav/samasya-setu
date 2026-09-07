@@ -164,6 +164,15 @@ const proposalSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // ========================================
+    // AUTO-INITIALIZED PROJECT WORKSPACE
+    // ========================================
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
+    },
   },
   {
     timestamps: true,

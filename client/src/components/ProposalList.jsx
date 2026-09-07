@@ -18,6 +18,7 @@ const ProposalList = ({
   isAdmin = false,
   problemId,
   onProposalReviewed,
+  onOpenWorkspace,
 }) => {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -338,6 +339,44 @@ const ProposalList = ({
                   </p>
                 </div>
               </div>
+
+              {/* UNIVERSITY WORKSPACE HANDOFF (FOR APPROVED PROPOSALS) */}
+              {!isAdmin && proposal.status === "approved" && (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50/70 p-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-700 text-sm text-white shadow-2xs">
+                      🚀
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-950">
+                        Project Workspace Auto-Initialized
+                      </p>
+                      <p className="text-[11px] text-emerald-800">
+                        Proposal approved. Team and milestones are initialized in your workspace.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const projId = proposal.project?._id || proposal.project;
+                      if (onOpenWorkspace) {
+                        onOpenWorkspace(projId);
+                      } else {
+                        if (projId) {
+                          sessionStorage.setItem("selectedPartnerProjectId", projId);
+                        }
+                        window.location.hash = projId ? `workspace?id=${projId}` : "workspace";
+                        window.dispatchEvent(new Event("hashchange"));
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    Launch Workspace →
+                  </button>
+                </div>
+              )}
 
               {/* ADMIN ACTIONS */}
 

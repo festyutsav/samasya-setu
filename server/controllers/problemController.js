@@ -1452,6 +1452,145 @@ const aiReviewProblem = async (req, res) => {
 };
 
 // ========================================
+// CITIZEN RESOLUTION VERIFICATION & FEEDBACK
+// ========================================
+// The citizen who originally submitted the problem verifies
+// whether the reported resolution fixed the ground reality.
+// They can confirm resolution with a 1-5 star rating and remarks,
+// or dispute and reopen the ticket if the problem persists.
+
+const submitCitizenFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isSatisfied, rating, comments, reopenReason } = req.body;
+
+    const problem = await Problem.findById(id);
+
+    if (!problem) {
+      return res.status(404).json({
+        message: "Problem not found.",
+      });
+    }
+
+    // Verify submitter ownership
+    if (String(problem.submittedBy) !== String(req.user._id)) {
+      return res.status(403).json({
+        message: "Only the citizen who submitted this problem can verify its resolution.",
+      });
+    }
+
+    // Verification is only valid on solved or resolution-submitted problems
+    if (problem.status !== "solved" && !problem.resolutionSubmitted) {
+      return res.status(400).json({
+        message: "This problem has not yet been marked as solved.",
+      });
+    }
+
+    // If reopening / unsatisfied:
+    if (isSatisfied === false) {
+      if (!reopenReason || reopenReason.trim().length < 5) {
+        return res.status(400).json({
+          message: "Please provide a reason for reopening this grievance (at least 5 characters).",
+        });
+      }
+
+      problem.citizenFeedback = {
+        isVerified: true,
+        isSatisfied: false,
+        rating: rating ? Number(rating) : 1,
+        comments: comments ? comments.trim() : "",
+        verifiedAt: new Date(),
+        reopened: true,
+        reopenReason: reopenReason.trim(),
+        reopenedAt: new Date(),
+      };
+
+      // Revert status to under_review so admin can inspect the dispute
+      problem.status = "under_review";
+      problem.resolutionSubmitted = false;
+
+      await problem.save();
+
+      // Notify Admins
+      await notifyAdmins({
+        type: "problem_status",
+        title: "⚠️ Citizen Disputed Resolution",
+        message: `Citizen ${req.user.name || "User"} reported that problem "${problem.title}" is not resolved on the ground. Reason: "${reopenReason.trim()}". Status reverted to Under Review.`,
+        problemId: problem._id,
+      });
+
+      // Notify Assigned Partner if present
+      if (problem.assignedPartner) {
+        await notifyPartnerUser({
+          partnerId: problem.assignedPartner,
+          type: "problem_status",
+          title: "Citizen Reopened Problem",
+          message: `The citizen reported that problem "${problem.title}" is still unresolved: "${reopenReason.trim()}".`,
+          problemId: problem._id,
+        });
+      }
+
+      const responseProblem = await buildProblemResponse(problem._id);
+      return res.status(200).json({
+        message: "Your dispute has been recorded and the issue has been reopened for government review.",
+        problem: responseProblem,
+      });
+    }
+
+    // Otherwise, citizen confirmed resolution (isSatisfied === true)
+    const numRating = Number(rating);
+    if (!numRating || numRating < 1 || numRating > 5) {
+      return res.status(400).json({
+        message: "Please provide a satisfaction rating between 1 and 5 stars.",
+      });
+    }
+
+    problem.citizenFeedback = {
+      isVerified: true,
+      isSatisfied: true,
+      rating: numRating,
+      comments: comments ? comments.trim() : "",
+      verifiedAt: new Date(),
+      reopened: false,
+      reopenReason: "",
+      reopenedAt: null,
+    };
+
+    await problem.save();
+
+    // Notify Admins
+    await notifyAdmins({
+      type: "problem_status",
+      title: "Citizen Verified Resolution ⭐",
+      message: `Citizen verified resolution for "${problem.title}" with a ${numRating}/5 star rating.`,
+      problemId: problem._id,
+    });
+
+    // Notify Assigned Partner
+    if (problem.assignedPartner) {
+      await notifyPartnerUser({
+        partnerId: problem.assignedPartner,
+        type: "problem_status",
+        title: "Resolution Verified by Citizen 🎉",
+        message: `The citizen rated the resolution of "${problem.title}" ${numRating}/5 stars!`,
+        problemId: problem._id,
+      });
+    }
+
+    const responseProblem = await buildProblemResponse(problem._id);
+    return res.status(200).json({
+      message: "Thank you! Your resolution verification and rating have been recorded.",
+      problem: responseProblem,
+    });
+  } catch (error) {
+    console.error("Submit citizen feedback error:", error.message);
+    return res.status(500).json({
+      message: "Server error while submitting citizen feedback.",
+    });
+  }
+};
+
+// ========================================
 // EXPORT CONTROLLERS
 // ========================================
 
@@ -1480,4 +1619,5 @@ module.exports = {
 
   reanalyzeDuplicates,
   rerunRouting,
+  submitCitizenFeedback,
 };
