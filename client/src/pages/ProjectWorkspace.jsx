@@ -5,6 +5,7 @@ import {
   updateProjectStatus,
   toggleProjectMilestone,
   setMilestoneDueDate,
+  updateProjectMilestones,
   updateProjectOutcomes,
   respondToCollaboration,
   addCollaborationContribution,
@@ -113,6 +114,11 @@ const ProjectWorkspace = ({
   const [dueDateEditIndex, setDueDateEditIndex] = useState(null);
 
   const [dueDateValue, setDueDateValue] = useState("");
+
+  // Milestone list editing (lead university only)
+  const [isEditingMilestones, setIsEditingMilestones] = useState(false);
+  const [editingMilestonesList, setEditingMilestonesList] = useState([]);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Captured after mount so the overdue check stays pure
   // during render (no Date.now() in the component body).
@@ -241,6 +247,59 @@ const ProjectWorkspace = ({
     setDueDateEditIndex(null);
 
     setDueDateValue("");
+  };
+
+  const startEditingMilestones = () => {
+    setEditingMilestonesList(
+      (project?.milestones || []).map((m) => ({
+        title: m.title || "",
+        completed: Boolean(m.completed),
+        dueDate: m.dueDate
+          ? new Date(m.dueDate).toISOString().slice(0, 10)
+          : "",
+      }))
+    );
+    setIsEditingMilestones(true);
+  };
+
+  const handleMilestoneFieldChange = (index, field, value) => {
+    setEditingMilestonesList((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleAddMilestoneRow = () => {
+    setEditingMilestonesList((prev) => [
+      ...prev,
+      { title: "", completed: false, dueDate: "" },
+    ]);
+  };
+
+  const handleRemoveMilestoneRow = (index) => {
+    setEditingMilestonesList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveMilestones = async () => {
+    const cleaned = editingMilestonesList
+      .filter((m) => m && m.title && m.title.trim())
+      .map((m) => ({
+        title: m.title.trim(),
+        completed: Boolean(m.completed),
+        dueDate: m.dueDate ? new Date(m.dueDate) : null,
+      }));
+
+    if (cleaned.length === 0) {
+      alert("Please provide at least one milestone with a valid title.");
+      return;
+    }
+
+    await runAction(async (token) => {
+      const data = await updateProjectMilestones(projectId, cleaned, token);
+      applyUpdate(data);
+      setIsEditingMilestones(false);
+    });
   };
 
   const handleOutcomes = async (event) => {
@@ -532,6 +591,42 @@ const ProjectWorkspace = ({
           </div>
         )}
 
+        {/* DEFAULT MILESTONES BANNER */}
+        {isLead && project?.milestonesFromDefaults && !bannerDismissed && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-xs">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                📋
+              </span>
+              <div>
+                <p className="text-sm font-bold text-amber-950">
+                  Default milestones were applied — customize them for your project
+                </p>
+                <p className="text-xs text-amber-800">
+                  Standard baseline milestones were assigned upon proposal approval. Update them anytime to reflect your actual deliverables.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={startEditingMilestones}
+                className="rounded-xl bg-amber-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-800 transition cursor-pointer"
+              >
+                Customize Milestones
+              </button>
+              <button
+                type="button"
+                onClick={() => setBannerDismissed(true)}
+                className="rounded-lg p-1 text-amber-700 hover:bg-amber-200/60 transition text-sm cursor-pointer"
+                aria-label="Dismiss banner"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-3">
           {/* MAIN COLUMN */}
 
@@ -812,146 +907,234 @@ const ProjectWorkspace = ({
           <div className="space-y-6">
             {/* MILESTONES */}
 
-            {totalMilestones > 0 && (
+            {(totalMilestones > 0 || isLead) && (
               <section className="rounded-2xl border border-[#e3e9e3] bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[#899892]">
                     Milestones
                   </h3>
 
-                  <span className="text-xs font-bold text-[#0b6b60]">
-                    {completedMilestones}/{totalMilestones}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#0b6b60]">
+                      {completedMilestones}/{totalMilestones}
+                    </span>
+
+                    {isLead && !isEditingMilestones && (
+                      <button
+                        type="button"
+                        onClick={startEditingMilestones}
+                        disabled={busy}
+                        className="rounded-lg border border-[#bcd9cf] bg-[#e9f4f0] px-2.5 py-1 text-xs font-semibold text-[#087f70] hover:bg-[#d8ebe4] transition cursor-pointer"
+                      >
+                        Edit Milestones
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="ss-progress-track mt-3">
-                  <div
-                    className="ss-progress-fill"
-                    style={{
-                      width: `${totalMilestones ? (completedMilestones / totalMilestones) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
+                {isEditingMilestones ? (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-xs text-[#5c6f69]">
+                      Add, remove, or rename milestones and set planned due dates.
+                    </p>
 
-                <ul className="mt-4 space-y-2">
-                  {project.milestones.map((milestone, index) => {
-                    const canToggle = isLead && !busy;
-
-                    const dueDate = milestone.dueDate
-                      ? new Date(milestone.dueDate)
-                      : null;
-
-                    const isOverdue =
-                      now !== null &&
-                      dueDate &&
-                      !milestone.completed &&
-                      dueDate.getTime() < now;
-
-                    return (
-                      <li key={index}>
+                    <div className="space-y-2">
+                      {editingMilestonesList.map((m, idx) => (
                         <div
-                          className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-sm ${
-                            canToggle
-                              ? "transition hover:bg-[#f7f8f5]"
-                              : ""
-                          }`}
+                          key={idx}
+                          className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e3e9e3] bg-[#fbfdfc] p-2.5"
                         >
+                          <span className="text-xs font-bold text-[#8fb5ad] w-5 text-center shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            value={m.title}
+                            onChange={(e) =>
+                              handleMilestoneFieldChange(idx, "title", e.target.value)
+                            }
+                            placeholder="Milestone title"
+                            className="flex-1 min-w-[140px] rounded-lg border border-[#dbe5df] bg-white px-2.5 py-1 text-xs text-[#173d3a] outline-none focus:border-[#62a99b]"
+                          />
+                          <input
+                            type="date"
+                            value={m.dueDate}
+                            onChange={(e) =>
+                              handleMilestoneFieldChange(idx, "dueDate", e.target.value)
+                            }
+                            className="rounded-lg border border-[#dbe5df] bg-white px-2 py-1 text-xs text-[#5c6f69] outline-none focus:border-[#62a99b]"
+                          />
                           <button
                             type="button"
-                            onClick={() =>
-                              canToggle && handleToggleMilestone(index)
-                            }
-                            disabled={!canToggle}
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold ${
-                              milestone.completed
-                                ? "border-[#087f70] bg-[#087f70] text-white"
-                                : "border-[#c4d2cb] bg-white text-transparent"
-                            }`}
+                            onClick={() => handleRemoveMilestoneRow(idx)}
+                            className="rounded-lg p-1 text-red-500 hover:bg-red-50 transition cursor-pointer"
+                            title="Remove row"
                           >
-                            ✓
+                            ✕
                           </button>
+                        </div>
+                      ))}
+                    </div>
 
-                          <span
-                            className={
-                              milestone.completed
-                                ? "text-[#a1aca7] line-through"
-                                : "text-[#315d56]"
-                            }
-                          >
-                            {milestone.title}
-                          </span>
+                    <button
+                      type="button"
+                      onClick={handleAddMilestoneRow}
+                      className="w-full rounded-xl border border-dashed border-[#bcd9cf] py-1.5 text-xs font-semibold text-[#087f70] hover:bg-[#e9f4f0] transition cursor-pointer"
+                    >
+                      + Add Milestone Row
+                    </button>
 
-                          <span className="ml-auto flex shrink-0 items-center gap-1.5">
-                            {dueDate && (
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                  isOverdue
-                                    ? "bg-[#fde5e0] text-[#b3402a]"
-                                    : "bg-[#eef2ee] text-[#5c6f69]"
-                                }`}
-                              >
-                                {isOverdue ? "Overdue · " : "Due "}
-                                {dueDate.toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                })}
-                              </span>
-                            )}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#eef2ee]">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingMilestones(false)}
+                        disabled={busy}
+                        className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-[#5c6f69] hover:bg-slate-50 transition cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveMilestones}
+                        disabled={busy}
+                        className="rounded-xl bg-[#0b514a] px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#073f3a] transition disabled:opacity-50 cursor-pointer"
+                      >
+                        {busy ? "Saving..." : "Save Milestones"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="ss-progress-track mt-3">
+                      <div
+                        className="ss-progress-fill"
+                        style={{
+                          width: `${totalMilestones ? (completedMilestones / totalMilestones) * 100 : 0}%`,
+                        }}
+                      />
+                    </div>
 
-                            {isLead && (
+                    <ul className="mt-4 space-y-2">
+                      {project.milestones.map((milestone, index) => {
+                        const canToggle = isLead && !busy;
+
+                        const dueDate = milestone.dueDate
+                          ? new Date(milestone.dueDate)
+                          : null;
+
+                        const isOverdue =
+                          now !== null &&
+                          dueDate &&
+                          !milestone.completed &&
+                          dueDate.getTime() < now;
+
+                        return (
+                          <li key={index}>
+                            <div
+                              className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-sm ${
+                                canToggle
+                                  ? "transition hover:bg-[#f7f8f5]"
+                                  : ""
+                              }`}
+                            >
                               <button
                                 type="button"
                                 onClick={() =>
-                                  openDueDateEditor(index, milestone.dueDate)
+                                  canToggle && handleToggleMilestone(index)
                                 }
-                                disabled={busy}
-                                title="Set due date"
-                                className="rounded-md px-1.5 py-0.5 text-xs text-[#899892] transition hover:bg-[#eef2ee] hover:text-[#0b6b60]"
+                                disabled={!canToggle}
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold ${
+                                  milestone.completed
+                                    ? "border-[#087f70] bg-[#087f70] text-white"
+                                    : "border-[#c4d2cb] bg-white text-transparent"
+                                }`}
                               >
-                                📅
+                                ✓
                               </button>
+
+                              <span
+                                className={
+                                  milestone.completed
+                                    ? "text-[#a1aca7] line-through"
+                                    : "text-[#315d56]"
+                                }
+                              >
+                                {milestone.title}
+                              </span>
+
+                              <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                                {dueDate && (
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                      isOverdue
+                                        ? "bg-[#fde5e0] text-[#b3402a]"
+                                        : "bg-[#eef2ee] text-[#5c6f69]"
+                                    }`}
+                                  >
+                                    {isOverdue ? "Overdue · " : "Due "}
+                                    {dueDate.toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "short",
+                                    })}
+                                  </span>
+                                )}
+
+                                {isLead && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openDueDateEditor(index, milestone.dueDate)
+                                    }
+                                    disabled={busy}
+                                    title="Set due date"
+                                    className="rounded-md px-1.5 py-0.5 text-xs text-[#899892] transition hover:bg-[#eef2ee] hover:text-[#0b6b60]"
+                                  >
+                                    📅
+                                  </button>
+                                )}
+                              </span>
+                            </div>
+
+                            {isLead && dueDateEditIndex === index && (
+                              <div className="mt-1 flex items-center gap-2 rounded-lg bg-[#f7f8f5] px-2 py-2">
+                                <input
+                                  type="date"
+                                  value={dueDateValue}
+                                  onChange={(event) =>
+                                    setDueDateValue(event.target.value)
+                                  }
+                                  className="rounded-md border border-[#dbe5df] bg-white px-2 py-1 text-xs text-[#315d56]"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveDueDate(index)}
+                                  disabled={busy}
+                                  className="rounded-md bg-[#0b514a] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#0d6157] disabled:opacity-50"
+                                >
+                                  Save
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setDueDateEditIndex(null)}
+                                  className="rounded-md px-2 py-1 text-xs font-semibold text-[#5c6f69] transition hover:bg-[#e3e9e3]"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             )}
-                          </span>
-                        </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
 
-                        {isLead && dueDateEditIndex === index && (
-                          <div className="mt-1 flex items-center gap-2 rounded-lg bg-[#f7f8f5] px-2 py-2">
-                            <input
-                              type="date"
-                              value={dueDateValue}
-                              onChange={(event) =>
-                                setDueDateValue(event.target.value)
-                              }
-                              className="rounded-md border border-[#dbe5df] bg-white px-2 py-1 text-xs text-[#315d56]"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => handleSaveDueDate(index)}
-                              disabled={busy}
-                              className="rounded-md bg-[#0b514a] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#0d6157] disabled:opacity-50"
-                            >
-                              Save
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setDueDateEditIndex(null)}
-                              className="rounded-md px-2 py-1 text-xs font-semibold text-[#5c6f69] transition hover:bg-[#e3e9e3]"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {!isLead && (
-                  <p className="mt-3 text-xs text-[#a1aca7]">
-                    Only the lead university can toggle milestones.
-                  </p>
+                    {!isLead && (
+                      <p className="mt-3 text-xs text-[#a1aca7]">
+                        Only the lead university can toggle milestones.
+                      </p>
+                    )}
+                  </>
                 )}
               </section>
             )}

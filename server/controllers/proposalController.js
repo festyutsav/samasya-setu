@@ -323,6 +323,7 @@ const reviewProposal = async (req, res) => {
             : [];
 
           let milestones = [];
+          let milestonesFromDefaults = false;
           if (
             proposal.timeline?.milestones &&
             Array.isArray(proposal.timeline.milestones) &&
@@ -330,10 +331,11 @@ const reviewProposal = async (req, res) => {
           ) {
             milestones = proposal.timeline.milestones.map((m) => ({
               title: m.title || "Project Milestone",
-              completed: m.status === "completed",
+              completed: Boolean(m.completed || m.status === "completed"),
               dueDate: m.dueDate || null,
             }));
           } else {
+            milestonesFromDefaults = true;
             milestones = [
               {
                 title: "Field Assessment & Problem Baseline Study",
@@ -360,6 +362,7 @@ const reviewProposal = async (req, res) => {
             partner: universityId,
             team,
             milestones,
+            milestonesFromDefaults,
             status: "active",
             createdBy: proposal.submittedBy || req.user._id,
           });

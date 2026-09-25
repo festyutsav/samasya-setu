@@ -10,9 +10,13 @@ export default function ProposalReviewModal({
 }) {
   const [reviewNotes, setReviewNotes] = useState("");
 
+  const handleClose = () => {
+    setReviewNotes("");
+    onClose();
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setReviewNotes("");
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -35,7 +39,7 @@ export default function ProposalReviewModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={() => {
-        if (!isLoading) onClose();
+        if (!isLoading) handleClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -56,7 +60,7 @@ export default function ProposalReviewModal({
         {/* Close Button */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           disabled={isLoading}
           className="absolute right-4 top-5 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition disabled:opacity-40"
           aria-label="Close"
@@ -118,6 +122,37 @@ export default function ProposalReviewModal({
                   <span>⏱️ {proposal.timeline.duration}</span>
                 )}
               </div>
+
+              {/* Proposed Milestones List */}
+              {proposal.timeline?.milestones && proposal.timeline.milestones.length > 0 && (
+                <div className="mt-2.5 pt-2.5 border-t border-[#e3e9e3]">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#315d56]">
+                      Proposed Milestone Plan
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#087f70]">
+                      {proposal.timeline.milestones.length} milestone{proposal.timeline.milestones.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <ul className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                    {proposal.timeline.milestones.map((milestone, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between rounded-lg border border-[#e8efe9] bg-white px-2.5 py-1 text-[11px] text-[#2c403b]"
+                      >
+                        <span className="truncate pr-2 font-medium">
+                          {idx + 1}. {milestone.title}
+                        </span>
+                        {milestone.dueDate && (
+                          <span className="shrink-0 text-[10px] text-[#71827c]">
+                            Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -143,7 +178,7 @@ export default function ProposalReviewModal({
           <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isLoading}
               className="w-full sm:w-auto rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs font-semibold text-[#5c6f69] transition hover:bg-[#f7f8f5] hover:text-[#173d3a] disabled:opacity-50"
             >

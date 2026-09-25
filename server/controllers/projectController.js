@@ -894,10 +894,17 @@ const toggleMilestone = async (req, res) => {
   try {
     const { milestoneIndex } = req.body;
 
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
     const project = await Project.findOne({
       _id: req.params.id,
-
-      partner: req.user.partner,
+      partner: { $in: partnerIds },
     });
 
     if (!project) {
@@ -1045,6 +1052,76 @@ const setMilestoneDueDate = async (req, res) => {
 
     return res.status(500).json({
       message: "Server error while updating milestone due date.",
+    });
+  }
+};
+
+// ========================================
+// REPLACE ALL MILESTONES (LEAD UNIVERSITY ONLY)
+// ========================================
+
+const updateMilestones = async (req, res) => {
+  try {
+    const { milestones } = req.body;
+
+    if (!Array.isArray(milestones)) {
+      return res.status(400).json({
+        message: "Milestones must be an array.",
+      });
+    }
+
+    const { partner, partnerIds } = await resolvePartnerForUser(req.user);
+
+    if (!partner || partnerIds.length === 0) {
+      return res.status(403).json({
+        message: "You are not linked to a partner organization.",
+      });
+    }
+
+    const project = await Project.findOne({
+      _id: req.params.id,
+      partner: { $in: partnerIds },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or you do not have permission to update it.",
+      });
+    }
+
+    const normalizedMilestones = milestones
+      .filter((m) => m && String(m.title || "").trim())
+      .map((m) => ({
+        title: String(m.title).trim(),
+        completed: Boolean(m.completed),
+        dueDate: m.dueDate ? new Date(m.dueDate) : null,
+      }));
+
+    if (normalizedMilestones.length === 0) {
+      return res.status(400).json({
+        message: "At least one milestone with a valid title is required.",
+      });
+    }
+
+    project.milestones = normalizedMilestones;
+    project.milestonesFromDefaults = false;
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate("problem", "title status category location description")
+      .populate("partner", "name type location")
+      .populate("collaborators.partner", "name type location expertise");
+
+    return res.status(200).json({
+      message: "Milestones updated successfully.",
+      project: populated,
+    });
+  } catch (error) {
+    console.error("Update milestones error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating milestones.",
     });
   }
 };
@@ -1472,6 +1549,7 @@ module.exports = {
   updateProjectStatus,
   toggleMilestone,
   setMilestoneDueDate,
+  updateMilestones,
 
   updateProjectOutcomes,
   inviteCollaborator,

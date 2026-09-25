@@ -5,6 +5,8 @@ import {
   deleteMyProblem,
 } from "../services/myProblemService";
 import { MiniLifecycleBar } from "../components/LifecycleStepper";
+import CitizenVerificationModal from "../components/CitizenVerificationModal";
+import Toast from "../components/Toast";
 
 
 // ========================================
@@ -114,6 +116,16 @@ const MyProblems = ({
   // ========================================
 
   const [deletingId, setDeletingId] =
+    useState(null);
+
+  // ========================================
+  // CITIZEN VERIFICATION MODAL & TOAST
+  // ========================================
+
+  const [verifyingProblem, setVerifyingProblem] =
+    useState(null);
+
+  const [toast, setToast] =
     useState(null);
 
 
@@ -654,7 +666,7 @@ const MyProblems = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleViewDetails(problem._id)}
+                        onClick={() => setVerifyingProblem(problem)}
                         className="shrink-0 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800 transition"
                       >
                         Verify Now →
@@ -711,6 +723,36 @@ const MyProblems = ({
           </div>
         )}
       </div>
+
+      {/* ========================================
+          INLINE CITIZEN VERIFICATION & DISPUTE MODAL
+      ======================================== */}
+      <CitizenVerificationModal
+        isOpen={Boolean(verifyingProblem)}
+        onClose={() => setVerifyingProblem(null)}
+        problem={verifyingProblem}
+        onFeedbackSubmitted={(updated) => {
+          setProblems((prev) =>
+            prev.map((p) =>
+              p._id === updated._id ? { ...p, ...updated } : p
+            )
+          );
+          setToast({
+            message: updated.citizenFeedback?.isSatisfied
+              ? "Thank you! Your resolution verification and rating have been recorded."
+              : "Dispute submitted. The problem has been reopened for administrative review.",
+            type: updated.citizenFeedback?.isSatisfied ? "success" : "info",
+          });
+        }}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </main>
   );
 };
