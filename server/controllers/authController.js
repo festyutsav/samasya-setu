@@ -84,6 +84,8 @@ const registerUser = async (req, res) => {
 
       user: {
 
+        _id: user._id,
+
         id: user._id,
 
         name: user.name,
@@ -210,6 +212,8 @@ const loginUser = async (req, res) => {
     // ========================================
 
     const userResponse = {
+
+      _id: user._id,
 
       id: user._id,
 
@@ -435,6 +439,7 @@ const verifyOtpAndRegister = async (req, res) => {
 
     const token = jwt.sign(
       {
+        userId: user._id,
         id: user._id,
         role: user.role,
       },
@@ -449,6 +454,7 @@ const verifyOtpAndRegister = async (req, res) => {
       message: "Email verified and account registered successfully.",
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,

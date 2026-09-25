@@ -5,6 +5,7 @@ import LifecycleStepper from "../components/LifecycleStepper";
 import ResolutionProof from "../components/ResolutionProof";
 import ExportBriefButton from "../components/ExportBriefButton";
 import CitizenVerificationModal from "../components/CitizenVerificationModal";
+import Toast from "../components/Toast";
 
 const ProblemDetails = ({
   problemId,
@@ -15,6 +16,7 @@ const ProblemDetails = ({
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Current logged in user
   const user = (() => {
@@ -24,6 +26,7 @@ const ProblemDetails = ({
       return {};
     }
   })();
+  const currentUserId = user?.id ?? user?._id;
 
   // ========================================
   // PHOTO VIEWER
@@ -171,9 +174,9 @@ const ProblemDetails = ({
         {/* ========================================
             CITIZEN RESOLUTION VERIFICATION BANNER
         ======================================== */}
-        {user?._id &&
+        {currentUserId &&
           problem?.submittedBy &&
-          String(problem.submittedBy._id || problem.submittedBy) === String(user._id) &&
+          String(problem.submittedBy._id || problem.submittedBy) === String(currentUserId) &&
           (problem.status === "solved" || problem.resolutionSubmitted) && (
             <div className="mb-6">
               {!problem.citizenFeedback?.isVerified ? (
@@ -692,8 +695,24 @@ const ProblemDetails = ({
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         problem={problem}
-        onFeedbackSubmitted={(updated) => setProblem(updated)}
+        onFeedbackSubmitted={(updated) => {
+          setProblem(updated);
+          setToast({
+            message: updated.citizenFeedback?.isSatisfied
+              ? "Thank you! Your resolution verification and rating have been recorded."
+              : "Dispute submitted. The problem has been reopened for administrative review.",
+            type: updated.citizenFeedback?.isSatisfied ? "success" : "info",
+          });
+        }}
       />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
     </main>
   );

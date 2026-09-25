@@ -8,6 +8,7 @@ const {
   updateProjectOutcomes,
   toggleMilestone,
   setMilestoneDueDate,
+  updateMilestones,
   inviteCollaborator,
   respondToInvite,
   withdrawCollaborator,
@@ -45,6 +46,10 @@ router.patch("/:id/status", updateProjectStatus);
 // Toggle a milestone's completion
 
 router.patch("/:id/milestones", toggleMilestone);
+
+// Replace milestone list (lead university only)
+
+router.put("/:id/milestones", updateMilestones);
 
 // Set a milestone's due date (lead university only)
 

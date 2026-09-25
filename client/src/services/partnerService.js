@@ -246,6 +246,27 @@ export const toggleProjectMilestone = async (
 
 
 // ========================================
+// UPDATE PROJECT MILESTONES (LEAD UNIVERSITY ONLY)
+// ========================================
+
+export const updateProjectMilestones = async (
+  projectId,
+  milestones,
+  token,
+) => {
+  const response = await axios.put(
+    `${PROJECT_API_URL}/${projectId}/milestones`,
+    {
+      milestones,
+    },
+    getAuthConfig(token),
+  );
+
+  return response.data;
+};
+
+
+// ========================================
 // SET MILESTONE DUE DATE
 // PARTNER (LEAD UNIVERSITY) ONLY
 // ========================================

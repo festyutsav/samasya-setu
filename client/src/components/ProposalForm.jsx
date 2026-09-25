@@ -41,6 +41,81 @@ const ProposalForm = ({
   };
 
   // ========================================
+  // MILESTONE BUILDER HELPERS
+  // ========================================
+
+  const addMilestone = () => {
+    setFormData((current) => ({
+      ...current,
+      timeline: {
+        ...current.timeline,
+        milestones: [
+          ...(current.timeline?.milestones || []),
+          { title: "", dueDate: "" },
+        ],
+      },
+    }));
+  };
+
+  const removeMilestone = (index) => {
+    setFormData((current) => ({
+      ...current,
+      timeline: {
+        ...current.timeline,
+        milestones: (current.timeline?.milestones || []).filter(
+          (_, i) => i !== index
+        ),
+      },
+    }));
+  };
+
+  const handleMilestoneChange = (index, field, value) => {
+    setFormData((current) => {
+      const updated = [...(current.timeline?.milestones || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...current,
+        timeline: {
+          ...current.timeline,
+          milestones: updated,
+        },
+      };
+    });
+  };
+
+  // ========================================
+  // TEAM BUILDER HELPERS
+  // ========================================
+
+  const addTeamMember = () => {
+    setFormData((current) => ({
+      ...current,
+      team: [
+        ...(current.team || []),
+        { name: "", role: "professor", email: "" },
+      ],
+    }));
+  };
+
+  const removeTeamMember = (index) => {
+    setFormData((current) => ({
+      ...current,
+      team: (current.team || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleTeamMemberChange = (index, field, value) => {
+    setFormData((current) => {
+      const updated = [...(current.team || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...current,
+        team: updated,
+      };
+    });
+  };
+
+  // ========================================
   // HANDLE SUBMIT
   // ========================================
 
@@ -60,16 +135,51 @@ const ProposalForm = ({
         return;
       }
 
+      // Filter and clean milestones
+      const validMilestones = (formData.timeline?.milestones || [])
+        .filter((m) => m && m.title && m.title.trim())
+        .map((m) => ({
+          title: m.title.trim(),
+          dueDate: m.dueDate ? new Date(m.dueDate) : null,
+          status: "pending",
+        }));
+
+      // Validate team members: if any field entered, require name and email
+      const rawTeam = formData.team || [];
+      const incompleteMember = rawTeam.some(
+        (m) =>
+          (m.name?.trim() || m.email?.trim()) &&
+          (!m.name?.trim() || !m.email?.trim())
+      );
+
+      if (incompleteMember) {
+        setMessage("Please provide both name and email for every team member added.");
+        setMessageType("error");
+        setSubmitting(false);
+        return;
+      }
+
+      const validTeam = rawTeam
+        .filter((m) => m && m.name && m.name.trim() && m.email && m.email.trim())
+        .map((m) => ({
+          name: m.name.trim(),
+          role: m.role === "professor" ? "professor" : "student",
+          email: m.email.trim().toLowerCase(),
+        }));
+
       const payload = {
         problemId,
-        ...formData,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        approach: formData.approach.trim(),
         timeline: {
-          ...formData.timeline,
           startDate: formData.timeline.startDate || new Date(),
-          endDate: formData.timeline.endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-          milestones: formData.timeline.milestones || [],
+          endDate:
+            formData.timeline.endDate ||
+            new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+          milestones: validMilestones,
         },
-        team: formData.team || [],
+        team: validTeam,
         documents: [],
       };
 
@@ -233,6 +343,145 @@ const ProposalForm = ({
               className="w-full rounded-xl border border-[#dbe5df] px-4 py-2.5 outline-none focus:border-[#62a99b] focus:ring-2 focus:ring-[#dff1eb]"
             />
           </div>
+        </div>
+
+        {/* MILESTONES BUILDER */}
+        <div className="rounded-xl border border-[#dbe5df] bg-[#fbfdfc] p-4.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <label className="block text-sm font-semibold text-[#315d56]">
+                Milestone Plan (Optional)
+              </label>
+              <p className="text-xs text-[#71827c]">
+                Define specific project deliverables and completion dates for your workspace.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addMilestone}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#bcd9cf] bg-[#e9f4f0] px-3 py-1.5 text-xs font-semibold text-[#087f70] hover:bg-[#d8ebe4] transition"
+            >
+              + Add Milestone
+            </button>
+          </div>
+
+          {(formData.timeline?.milestones || []).length === 0 ? (
+            <p className="mt-3 text-xs italic text-[#a1aca7]">
+              No custom milestones added. If approved, default baseline milestones will be applied.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2.5">
+              {(formData.timeline?.milestones || []).map((milestone, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e3e9e3] bg-white p-2.5 shadow-xs"
+                >
+                  <span className="text-xs font-bold text-[#8fb5ad] w-6 text-center shrink-0">
+                    #{idx + 1}
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Milestone title (e.g. Field Assessment & Baseline Study)"
+                    value={milestone.title}
+                    onChange={(e) => handleMilestoneChange(idx, "title", e.target.value)}
+                    required
+                    className="flex-1 min-w-[200px] rounded-lg border border-[#dbe5df] px-3 py-1.5 text-xs outline-none focus:border-[#62a99b] focus:ring-1 focus:ring-[#62a99b]"
+                  />
+                  <input
+                    type="date"
+                    value={milestone.dueDate}
+                    onChange={(e) => handleMilestoneChange(idx, "dueDate", e.target.value)}
+                    className="rounded-lg border border-[#dbe5df] px-2.5 py-1.5 text-xs text-[#5c6f69] outline-none focus:border-[#62a99b]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeMilestone(idx)}
+                    className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 transition shrink-0"
+                    title="Remove milestone"
+                    aria-label={`Remove milestone ${idx + 1}`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* TEAM MEMBERS BUILDER */}
+        <div className="rounded-xl border border-[#dbe5df] bg-[#fbfdfc] p-4.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <label className="block text-sm font-semibold text-[#315d56]">
+                Team Members (Optional)
+              </label>
+              <p className="text-xs text-[#71827c]">
+                List professors and student researchers collaborating on this proposal.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addTeamMember}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#bcd9cf] bg-[#e9f4f0] px-3 py-1.5 text-xs font-semibold text-[#087f70] hover:bg-[#d8ebe4] transition"
+            >
+              + Add Member
+            </button>
+          </div>
+
+          {(formData.team || []).length === 0 ? (
+            <p className="mt-3 text-xs italic text-[#a1aca7]">
+              No team members added yet. Team structure can also be updated inside the project workspace.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2.5">
+              {(formData.team || []).map((member, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e3e9e3] bg-white p-2.5 shadow-xs"
+                >
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={member.name}
+                    onChange={(e) => handleTeamMemberChange(idx, "name", e.target.value)}
+                    required
+                    className="flex-1 min-w-[130px] rounded-lg border border-[#dbe5df] px-3 py-1.5 text-xs outline-none focus:border-[#62a99b] focus:ring-1 focus:ring-[#62a99b]"
+                  />
+                  <select
+                    value={member.role}
+                    onChange={(e) => handleTeamMemberChange(idx, "role", e.target.value)}
+                    className="rounded-lg border border-[#dbe5df] px-2.5 py-1.5 text-xs text-[#315d56] outline-none focus:border-[#62a99b] bg-white"
+                  >
+                    <option value="professor">Professor / Mentor</option>
+                    <option value="student">Student / Researcher</option>
+                  </select>
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={member.email}
+                    onChange={(e) => handleTeamMemberChange(idx, "email", e.target.value)}
+                    required
+                    className="flex-1 min-w-[140px] rounded-lg border border-[#dbe5df] px-3 py-1.5 text-xs outline-none focus:border-[#62a99b] focus:ring-1 focus:ring-[#62a99b]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeTeamMember(idx)}
+                    className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 transition shrink-0"
+                    title="Remove member"
+                    aria-label={`Remove team member ${idx + 1}`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* SUBMIT */}

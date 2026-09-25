@@ -202,6 +202,11 @@ const projectSchema = new mongoose.Schema(
       },
     ],
 
+    milestonesFromDefaults: {
+      type: Boolean,
+      default: false,
+    },
+
     // ========================================
     // INNOVATION OUTCOMES
     // ========================================
